@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }) {
     if (!isLoading && !isAuthenticated) {
       setShowUnauthorized(true);
       setTimeout(() => {
-        router.push('/f8e7d6c5b4a398765432109876543210/login');
+        router.push('/admin/login');
       }, 2000);
     }
   }, [isAuthenticated, isLoading, router]);

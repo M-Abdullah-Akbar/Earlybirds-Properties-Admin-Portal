@@ -7,7 +7,7 @@ export default function RootPage() {
 
   useEffect(() => {
     // Redirect to token-prefixed dashboard
-    router.replace('/f8e7d6c5b4a398765432109876543210/dashboard');
+    router.replace('/admin/dashboard');
   }, [router]);
 
   return (

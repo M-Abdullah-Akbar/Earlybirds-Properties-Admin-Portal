@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 
-export default function TokenLoginPage() {
+export default function AdminLoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,7 +31,7 @@ export default function TokenLoginPage() {
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push(`/${token}/dashboard`);
+      router.push(`/admin/dashboard`);
     }
   }, [isAuthenticated, isLoading, router, token]);
 
@@ -47,7 +47,7 @@ export default function TokenLoginPage() {
         // Auto-login with token
         const result = await login({ token: authToken });
         if (result.success) {
-          router.push(`/${token}/dashboard`);
+          router.push(`/admin/dashboard`);
         } else {
           setError('Invalid or expired access token');
         }

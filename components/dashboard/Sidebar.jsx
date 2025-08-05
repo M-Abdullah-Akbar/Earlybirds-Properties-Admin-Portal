@@ -10,8 +10,8 @@ export default function Sidebar() {
   // Helper function to check if a route is active
   const isActiveRoute = (route) => {
     // Check for token-prefixed routes
-    if (pathname.includes('/f8e7d6c5b4a398765432109876543210/')) {
-      return pathname.includes(`/f8e7d6c5b4a398765432109876543210/${route}`);
+    if (pathname.includes('/admin/')) {
+      return pathname.includes(`/admin/${route}`);
     }
     // Fallback for non-token routes
     return pathname === `/${route}`;
@@ -20,8 +20,8 @@ export default function Sidebar() {
   // Helper function to get the correct href for a route
   const getRouteHref = (route) => {
     // If we're on a token-prefixed route, use token-prefixed href
-    if (pathname.includes('/f8e7d6c5b4a398765432109876543210/')) {
-      return `/f8e7d6c5b4a398765432109876543210/${route}`;
+    if (pathname.includes('/admin/')) {
+      return `/admin/${route}`;
     }
     // Fallback for non-token routes
     return `/${route}`;

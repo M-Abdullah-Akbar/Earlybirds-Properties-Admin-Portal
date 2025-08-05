@@ -6,7 +6,7 @@ export const metadata = {
   description: "Proty - Real Estate React Nextjs Template",
 };
 
-export default function TokenAddPropertyPage() {
+export default function AdminAddPropertyPage() {
   return (
     <>
       <AddProperty />

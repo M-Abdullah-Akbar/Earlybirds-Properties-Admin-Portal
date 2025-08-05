@@ -9,7 +9,7 @@ export const metadata = {
   title: "Page Not Found || Proty - Real Estate React Nextjs Template",
   description: "Proty - Real Estate React Nextjs Template",
 };
-export default function page() {
+export default function NotFound() {
   return (
     <>
       <div id="wrapper" >

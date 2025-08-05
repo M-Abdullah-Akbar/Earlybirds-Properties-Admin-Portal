@@ -28,10 +28,10 @@ export default function RootLayout({ children }) {
                           pathname?.startsWith('/edit-property');*/}
 
   // Check if current route is a token-prefixed route
-  const isTokenRoute = pathname?.includes('/f8e7d6c5b4a398765432109876543210/');
+  const isTokenRoute = pathname?.includes('/admin/');
   
   // Extract the path after the token for dashboard route checking
-  const pathAfterToken = pathname?.split('/f8e7d6c5b4a398765432109876543210/')[1];
+  const pathAfterToken = pathname?.split('/admin/')[1];
   const isTokenDashboardRoute = pathAfterToken && (
     pathAfterToken.startsWith('dashboard') || 
     pathAfterToken.startsWith('my-profile') || 

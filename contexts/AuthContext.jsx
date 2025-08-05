@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
         const response = await new Promise((resolve) => {
           setTimeout(() => {
             // Validate the specific hex token
-            const validToken = 'f8e7d6c5b4a398765432109876543210';
+            const validToken = 'admin';
             if (credentials.token === validToken) {
               resolve({
                 success: true,
@@ -185,7 +185,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     
     // Redirect to token-prefixed login
-    router.push('/f8e7d6c5b4a398765432109876543210/login');
+    router.push('/admin/login');
   };
 
   const checkAuth = () => {

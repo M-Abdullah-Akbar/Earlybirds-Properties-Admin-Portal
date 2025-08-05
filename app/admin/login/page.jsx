@@ -1,11 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -272,5 +272,51 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="auth-loading-container">
+      <div className="auth-loading-content">
+        <div className="auth-loading-logo">
+          <Image
+            src="/images/logo/logo.png"
+            alt="EarlyBirds Properties"
+            width={140}
+            height={50}
+            priority
+          />
+        </div>
+        
+        <div className="auth-loading-spinner">
+          <div className="spinner-ring">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+        
+        <div className="auth-loading-text">
+          <h3>Welcome to EarlyBirds Properties</h3>
+          <p>Loading...</p>
+        </div>
+        
+        <div className="auth-loading-progress">
+          <div className="progress-bar">
+            <div className="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AdminLoginContent />
+    </Suspense>
   );
 } 

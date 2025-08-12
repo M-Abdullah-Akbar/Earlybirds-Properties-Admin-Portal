@@ -79,7 +79,7 @@ export default function DashboardNav({ color = "" }) {
           </svg>
           Dashboards
         </Link>
-        <Link className="dropdown-item" href={`/my-profile`}>
+        {/* <Link className="dropdown-item" href={`/my-profile`}>
           <svg
             width={20}
             height={20}
@@ -166,7 +166,7 @@ export default function DashboardNav({ color = "" }) {
             />
           </svg>
           My profile
-        </Link>
+        </Link> */}
         {/*<Link className="dropdown-item" href={`/my-package`}>
           <svg
             width={20}

@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { authAPI } from '@/utlis/api';
 
 const AuthContext = createContext();
 
@@ -20,20 +21,31 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
+      console.log('AuthContext: Starting authentication check...');
       const token = localStorage.getItem('admin_token');
       const userData = localStorage.getItem('admin_user');
       
+      console.log('AuthContext: Token exists:', !!token);
+      console.log('AuthContext: User data exists:', !!userData);
+      
       if (token && userData) {
         try {
+          // Instead of calling a non-existent verify endpoint,
+          // we'll just check if the token exists and user data is valid
+          // The API response interceptor will handle invalid tokens automatically
           const user = JSON.parse(userData);
+          console.log('AuthContext: Setting authenticated user:', user.username);
           setUser(user);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error parsing user data:', error);
           logout();
         }
+      } else {
+        console.log('AuthContext: No token or user data found');
       }
+      console.log('AuthContext: Authentication check complete, setting isLoading to false');
       setIsLoading(false);
     };
 
@@ -41,90 +53,65 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
+    console.log('AuthContext: Login attempt with credentials:', { username: credentials.username, hasToken: !!credentials.token });
     try {
       // Handle token-based authentication
       if (credentials.token) {
-        // Validate token and auto-login
-        const response = await new Promise((resolve) => {
-          setTimeout(() => {
-            // Validate the specific hex token
-            const validToken = 'admin';
-            if (credentials.token === validToken) {
-              resolve({
-                success: true,
-                user: {
-                  id: 1,
-                  username: 'admin',
-                  email: 'admin@earlybirds.com',
-                  role: 'admin',
-                  name: 'Admin User',
-                  loginMethod: 'token'
-                },
-                token: 'mock-jwt-token-' + Date.now()
-              });
-            } else {
-              resolve({
-                success: false,
-                error: 'Invalid or expired access token'
-              });
-            }
-          }, 1000);
-        });
-
-        if (response.success) {
-          localStorage.setItem('admin_token', response.token);
-          localStorage.setItem('admin_user', JSON.stringify(response.user));
+        // Validate the hex token
+        const validToken = 'f8e7d6c5b4a398765432109876543210';
+        if (credentials.token === validToken) {
+          // For now, use mock user data for token auth
+          // In production, this should call a backend endpoint
+          const mockUser = {
+            id: 1,
+            username: 'admin',
+            email: 'admin@earlybirds.com',
+            role: 'admin',
+            name: 'Admin User',
+            loginMethod: 'token'
+          };
           
-          setUser(response.user);
+          const mockToken = 'mock-jwt-token-' + Date.now();
+          console.log('AuthContext: Token auth successful, storing mock data');
+          localStorage.setItem('admin_token', mockToken);
+          localStorage.setItem('admin_user', JSON.stringify(mockUser));
+          
+          setUser(mockUser);
           setIsAuthenticated(true);
           
           return { success: true };
         } else {
-          return { success: false, error: response.error };
+          console.log('AuthContext: Invalid hex token');
+          return { success: false, error: 'Invalid or expired access token' };
         }
       }
 
-      // Handle regular username/password authentication
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          // Mock successful login
-          if (credentials.username && credentials.password) {
-            resolve({
-              success: true,
-              user: {
-                id: 1,
-                username: credentials.username,
-                email: `${credentials.username}@admin.com`,
-                role: 'admin',
-                name: 'Admin User',
-                loginMethod: 'credentials'
-              },
-              token: 'mock-jwt-token-' + Date.now()
-            });
-          } else {
-            resolve({
-              success: false,
-              error: 'Invalid credentials'
-            });
-          }
-        }, 1000);
-      });
-
+      // Handle regular username/password authentication with real backend
+      console.log('AuthContext: Attempting backend login...');
+      const response = await authAPI.login(credentials);
+      console.log('AuthContext: Backend login response:', response);
+      
       if (response.success) {
-        // Store user data and token
-        localStorage.setItem('admin_token', response.token);
-        localStorage.setItem('admin_user', JSON.stringify(response.user));
+        // Store user data and token from backend
+        // Note: Backend returns data.user and data.token, not response.user and response.token
+        const userData = response.data.user;
+        const token = response.data.token;
         
-        setUser(response.user);
+        console.log('AuthContext: Backend login successful, storing user data and token');
+        localStorage.setItem('admin_token', token);
+        localStorage.setItem('admin_user', JSON.stringify(userData));
+        
+        setUser(userData);
         setIsAuthenticated(true);
         
         return { success: true };
       } else {
-        return { success: false, error: response.error };
+        console.log('AuthContext: Backend login failed:', response.error);
+        return { success: false, error: response.error || 'Login failed' };
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Login failed' };
+      return { success: false, error: 'Login failed - network error' };
     }
   };
 

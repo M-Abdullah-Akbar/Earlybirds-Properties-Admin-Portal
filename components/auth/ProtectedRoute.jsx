@@ -5,21 +5,33 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, checkAuth } = useAuth();
   const router = useRouter();
   const [showUnauthorized, setShowUnauthorized] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Wait for AuthContext to complete its initial check
+    if (!isLoading) {
+      console.log('ProtectedRoute: AuthContext loading complete, setting hasCheckedAuth to true');
+      setHasCheckedAuth(true);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    // Only redirect after we've completed the initial auth check
+    console.log('ProtectedRoute: Auth state changed:', { hasCheckedAuth, isLoading, isAuthenticated: !!isAuthenticated });
+    if (hasCheckedAuth && !isLoading && !isAuthenticated) {
+      console.log('ProtectedRoute: User not authenticated, showing unauthorized message and redirecting');
       setShowUnauthorized(true);
       setTimeout(() => {
         router.push('/admin/login');
       }, 2000);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, hasCheckedAuth, router]);
 
   // Show enhanced loading screen while checking authentication
-  if (isLoading) {
+  if (isLoading || !hasCheckedAuth) {
     return (
       <div className="auth-loading-container">
         <div className="auth-loading-content">

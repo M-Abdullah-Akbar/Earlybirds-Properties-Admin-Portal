@@ -6,10 +6,12 @@ export const metadata = {
   description: "Proty - Real Estate React Nextjs Template",
 };
 
-export default function AdminEditPropertyPage() {
+export default async function AdminEditPropertyPage({ params }) {
+  const { id } = await params;
+  
   return (
     <>
-      <EditProperty />
+      <EditProperty propertyId={id} />
     </>
   );
 } 

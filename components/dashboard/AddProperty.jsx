@@ -1,86 +1,226 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
 
 export default function AddProperty() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    location: "",
+    propertyType: "",
     price: "",
-    type: "",
-    status: "Active",
-    beds: "",
-    baths: "",
-    sqft: "",
-    garage: "",
-    yearBuilt: "",
-    lotSize: "",
-    agent: "",
+    currency: "AED",
+    priceType: "total",
+    listingType: "",
+    status: "draft",
     featured: false,
-    images: [],
+    location: {
+      address: "",
+      emirate: "",
+      area: "",
+      country: "UAE",
+      neighborhood: ""
+    },
+    details: {
+      bedrooms: "",
+      bathrooms: "",
+      area: "",
+      areaUnit: "sqft",
+      floorLevel: "",
+      totalFloors: "",
+      landArea: "",
+      yearBuilt: "",
+      parking: {
+        available: false,
+        type: "",
+        spaces: 0
+      }
+    },
     amenities: [],
-    address: {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "United States"
-    },
-    coordinates: {
-      lat: "",
-      lng: ""
-    },
-    // Additional fields from original component
-    propertyId: "",
-    rooms: "",
-    garagesSize: "",
-    unitPrice: "",
-    beforePriceLabel: "",
-    afterPriceLabel: "",
-    propertyLabel: "",
-    landArea: "",
-    videoUrl: "",
-    virtualTourCode: "",
-    floorPlan: {
-      enabled: false,
-      floors: []
-    }
+    images: []
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [emirates, setEmirates] = useState([]);
+  const [areas, setAreas] = useState([]);
+  const [amenities, setAmenities] = useState([]);
 
-  const propertyTypes = [
-    "Apartment", "Villa", "Cottage", "Mansion", "Townhouse", 
-    "Condo", "Studio", "Penthouse", "Duplex", "Loft"
-  ];
+  // Constants from adminUtils
+  const propertyStatuses = adminUtils.getPropertyStatuses();
+  const listingTypes = adminUtils.getListingTypes();
+  const priceTypes = adminUtils.getPriceTypes();
+  const areaUnits = adminUtils.getAreaUnits();
+  const parkingTypes = adminUtils.getParkingTypes();
+  const currencies = adminUtils.getCurrencies();
 
-  const propertyStatuses = ["For Rent", "For Sale"];
-  const propertyLabels = ["New Listing", "Open House", "Featured"];
+  // Fetch initial data on component mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        
+        // Check if user is authenticated
+        const adminToken = localStorage.getItem("admin_token");
+        if (!adminToken) {
+          console.error("No admin token found. User not authenticated.");
+          router.push("/admin/login");
+          return;
+        }
+        
+        console.log("Admin token found, fetching initial data...");
+        
+        // Fetch property types from API
+        const typesResponse = await propertyAPI.getPropertyTypes();
+        console.log("Property types API response:", typesResponse);
+        
+        if (typesResponse.success && typesResponse.data && Array.isArray(typesResponse.data.propertyTypes)) {
+          // Extract the name property from each property type object
+          const propertyTypeNames = typesResponse.data.propertyTypes.map(type => type.name);
+          setPropertyTypes(propertyTypeNames);
+          console.log("Property types set successfully:", propertyTypeNames);
+        } else {
+          console.warn("Property types response structure is incorrect:", typesResponse);
+          // Set fallback property types if API fails
+          setPropertyTypes(adminUtils.getPropertyTypes());
+        }
+        
+        // Set emirates from adminUtils
+        setEmirates(adminUtils.getEmirates());
+        
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        
+        // Check if it's an authentication error
+        if (error.response?.status === 401) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          router.push("/admin/login");
+          return;
+        }
+        
+        // Set fallback values if API fails
+        setPropertyTypes(adminUtils.getPropertyTypes());
+        setEmirates(adminUtils.getEmirates());
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const amenitiesList = [
-    "Swimming Pool", "Gym", "Parking", "Garden", "Balcony",
-    "Fireplace", "Air Conditioning", "Heating", "Dishwasher",
-    "Washing Machine", "Dryer", "Security System", "Elevator",
-    "Smoke alarm", "Self check-in with lockbox", "Carbon monoxide alarm",
-    "Security cameras", "Hangers", "Extra pillows & blankets",
-    "Bed linens", "TV with standard cable", "Refrigerator",
-    "Microwave", "Coffee maker"
-  ];
+    fetchInitialData();
+  }, [router]);
+
+  // Fetch areas when emirate changes
+  useEffect(() => {
+    const fetchAreas = async () => {
+      if (formData.location.emirate) {
+        try {
+          // Check if user is authenticated
+          const adminToken = localStorage.getItem("admin_token");
+          if (!adminToken) {
+            console.error("No admin token found when fetching areas. User not authenticated.");
+            setAreas([]);
+            return;
+          }
+          
+          console.log("Fetching areas for emirate:", formData.location.emirate);
+          const areasResponse = await propertyAPI.getAreasForEmirate(formData.location.emirate);
+          console.log("Areas API response:", areasResponse);
+          
+          if (areasResponse.success && areasResponse.data && Array.isArray(areasResponse.data.areas)) {
+            setAreas(areasResponse.data.areas);
+            console.log("Areas set successfully:", areasResponse.data.areas);
+          } else {
+            console.warn("Areas response structure is incorrect:", areasResponse);
+            // Use fallback areas from adminUtils
+            setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
+          }
+        } catch (error) {
+          console.error("Error fetching areas:", error);
+          
+          // Check if it's an authentication error
+          if (error.response?.status === 401) {
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("admin_user");
+            router.push("/admin/login");
+            return;
+          }
+          
+          // Use fallback areas from adminUtils
+          setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
+        }
+      } else {
+        setAreas([]);
+      }
+    };
+
+    fetchAreas();
+  }, [formData.location.emirate, router]);
+
+  // Fetch amenities when property type changes
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      if (formData.propertyType) {
+        try {
+          // Check if user is authenticated
+          const adminToken = localStorage.getItem("admin_token");
+          if (!adminToken) {
+            console.error("No admin token found when fetching amenities. User not authenticated.");
+            setAmenities([]);
+            return;
+          }
+          
+          console.log("Fetching amenities for property type:", formData.propertyType);
+          const amenitiesResponse = await propertyAPI.getAmenitiesForPropertyType(formData.propertyType);
+          console.log("Amenities API response:", amenitiesResponse);
+          
+          if (amenitiesResponse.success && amenitiesResponse.data && Array.isArray(amenitiesResponse.data.all)) {
+            setAmenities(amenitiesResponse.data.all);
+            console.log("Amenities set successfully:", amenitiesResponse.data.all);
+          } else {
+            console.warn("Amenities response structure is incorrect:", amenitiesResponse);
+            // Use fallback amenities from adminUtils
+            setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+          }
+        } catch (error) {
+          console.error("Error fetching amenities:", error);
+          
+          // Check if it's an authentication error
+          if (error.response?.status === 401) {
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("admin_user");
+            router.push("/admin/login");
+            return;
+          }
+          
+          // Use fallback amenities from adminUtils
+          setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+        }
+      } else {
+        setAmenities([]);
+      }
+    };
+
+    fetchAmenities();
+  }, [formData.propertyType, router]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     
     if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+      const [parent, child, subChild] = name.split('.');
       setFormData(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
+          [child]: subChild ? {
+            ...prev[parent]?.[child],
+            [subChild]: type === 'checkbox' ? checked : value
+          } : (type === 'checkbox' ? checked : value)
         }
       }));
     } else {
@@ -102,47 +242,66 @@ export default function AddProperty() {
   const handleAmenityChange = (amenity) => {
     setFormData(prev => ({
       ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
+      amenities: Array.isArray(prev.amenities) 
+        ? (prev.amenities.includes(amenity)
+            ? prev.amenities.filter(a => a !== amenity)
+            : [...prev.amenities, amenity])
+        : [amenity]
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
+    
+    // Create image objects with file references for API
+    const newImages = files.map((file, index) => ({
+      file: file,
+      preview: URL.createObjectURL(file),
+      order: (Array.isArray(formData.images) ? formData.images.length : 0) + index,
+      isMain: (!Array.isArray(formData.images) || formData.images.length === 0) && index === 0
+    }));
     
     setFormData(prev => ({
       ...prev,
-      images: [...prev.images, ...imageUrls]
+      images: Array.isArray(prev.images) ? [...prev.images, ...newImages] : newImages
     }));
   };
 
   const removeImage = (index) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: Array.isArray(prev.images) ? prev.images.filter((_, i) => i !== index) : []
     }));
   };
 
   const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.title.trim()) newErrors.title = "Property title is required";
-    if (!formData.description.trim()) newErrors.description = "Description is required";
-    if (!formData.location.trim()) newErrors.location = "Location is required";
-    if (!formData.price) newErrors.price = "Price is required";
-    if (!formData.type) newErrors.type = "Property type is required";
-    if (!formData.beds) newErrors.beds = "Number of bedrooms is required";
-    if (!formData.baths) newErrors.baths = "Number of bathrooms is required";
-    if (!formData.sqft) newErrors.sqft = "Square footage is required";
-    if (!formData.address.street.trim()) newErrors.street = "Street address is required";
-    if (!formData.address.city.trim()) newErrors.city = "City is required";
-    if (!formData.address.state.trim()) newErrors.state = "State is required";
-    if (!formData.address.zipCode.trim()) newErrors.zipCode = "ZIP code is required";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Use adminUtils validation function
+    const validation = adminUtils.validatePropertyData(formData);
+    if (!validation.isValid) {
+      // Map validation errors to form field names
+      const mappedErrors = {};
+      validation.errors.forEach(error => {
+        // Map common field names
+        if (error.includes('title')) mappedErrors.title = error;
+        else if (error.includes('description')) mappedErrors.description = error;
+        else if (error.includes('property type')) mappedErrors.propertyType = error;
+        else if (error.includes('price')) mappedErrors.price = error;
+        else if (error.includes('listing type')) mappedErrors.listingType = error;
+        else if (error.includes('emirate')) mappedErrors.emirate = error;
+        else if (error.includes('address')) mappedErrors.address = error;
+        else if (error.includes('area')) mappedErrors.area = error;
+        else if (error.includes('bedrooms')) mappedErrors.bedrooms = error;
+        else if (error.includes('bathrooms')) mappedErrors.bathrooms = error;
+        else if (error.includes('images')) mappedErrors.images = error;
+        else mappedErrors.submit = error;
+      });
+      setErrors(mappedErrors);
+      return false;
+    }
+    
+    // Clear previous errors
+    setErrors({});
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -155,48 +314,175 @@ export default function AddProperty() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // First, upload images if any
+      let uploadedImages = [];
+      if (Array.isArray(formData.images) && formData.images.length > 0) {
+        const formDataImages = new FormData();
+        formData.images.forEach((image, index) => {
+          formDataImages.append('images', image.file);
+        });
+
+        console.log("Uploading images...");
+        const uploadResponse = await uploadAPI.uploadImages(formDataImages);
+        
+        if (uploadResponse.success && uploadResponse.data && uploadResponse.data.images) {
+          uploadedImages = uploadResponse.data.images;
+          console.log("Images uploaded successfully:", uploadedImages);
+        } else {
+          throw new Error("Failed to upload images");
+        }
+      }
+
+      // Prepare property data for API
+      const propertyData = {
+        title: formData.title,
+        description: formData.description,
+        propertyType: formData.propertyType,
+        price: parseFloat(formData.price),
+        currency: formData.currency,
+        priceType: formData.priceType,
+        listingType: formData.listingType,
+        status: formData.status,
+        featured: formData.featured || false,
+        location: {
+          address: formData.location.address.trim(),
+          emirate: formData.location.emirate,
+          area: formData.location.area,
+          country: formData.location.country,
+          neighborhood: formData.location.neighborhood?.trim() || ''
+        },
+        details: {
+          bedrooms: parseInt(formData.details.bedrooms),
+          bathrooms: parseInt(formData.details.bathrooms),
+          area: parseFloat(formData.details.area),
+          areaUnit: formData.details.areaUnit,
+          floorLevel: formData.details.floorLevel || null,
+          totalFloors: formData.details.totalFloors ? parseInt(formData.details.totalFloors) : null,
+          landArea: formData.details.landArea ? parseFloat(formData.details.landArea) : null,
+          yearBuilt: formData.details.yearBuilt ? parseInt(formData.details.yearBuilt) : null,
+          parking: {
+            available: formData.details.parking.available,
+            type: formData.details.parking.type || null,
+            spaces: formData.details.parking.spaces || 0
+          }
+        },
+        amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
+        images: uploadedImages
+      };
       
-      // In a real app, you would send the data to your API
-      console.log("Property data:", formData);
+      // Log the data being sent for debugging
+      console.log("AddProperty: Property data being sent:", propertyData);
+      console.log("AddProperty: Images count:", uploadedImages.length);
+
+      // Create property using the API
+      const response = await propertyAPI.createProperty(propertyData);
       
-      // Show success message
-      alert("Property added successfully!");
-      
-      // Redirect to property management
-      router.push("/my-property");
+      if (response.success) {
+        // Redirect immediately without showing alert
+        router.push("/admin/property-management");
+      } else {
+        setErrors(prev => ({ 
+          ...prev, 
+          submit: response.error || "Failed to add property" 
+        }));
+      }
     } catch (error) {
       console.error("Error adding property:", error);
-      alert("Error adding property. Please try again.");
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+
+      let errorMessage = "Failed to add property";
+
+      // Handle specific error types with user-friendly messages
+      if (error.message) {
+        if (error.message.includes('CORS Error')) {
+          errorMessage = "CORS Error: The server is blocking requests from your browser. Please contact support.";
+        } else if (error.message.includes('File too large')) {
+          errorMessage = "File too large: Please compress your images or use smaller files (under 10MB each).";
+        } else if (error.message.includes('Network Error')) {
+          errorMessage = "Network Error: Unable to connect to the server. Please check your internet connection.";
+        } else if (error.message.includes('Authentication failed')) {
+          errorMessage = "Authentication failed: Please log in again.";
+        } else if (error.message.includes('Access denied')) {
+          errorMessage = "Access denied: You do not have permission to create properties.";
+        } else if (error.message.includes('Upload failed')) {
+          errorMessage = error.message; // Use the specific upload error message
+        } else {
+          errorMessage = error.message; // Use the error message from the API
+        }
+      } else if (error.response?.data) {
+        if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+
+          // If there are detailed validation errors, set them as field errors
+          if (
+            error.response.data.details &&
+            Array.isArray(error.response.data.details)
+          ) {
+            const fieldErrors = {};
+            error.response.data.details.forEach((detail) => {
+              fieldErrors[detail.field] = detail.message;
+            });
+            setErrors(fieldErrors);
+            return; // Don't show alert, errors are now displayed on fields
+          }
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (typeof error.response.data === "string") {
+          errorMessage = error.response.data;
+        }
+      }
+
+      setErrors(prev => ({ 
+        ...prev, 
+        submit: errorMessage 
+      }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="main-content w-100">
+        <div className="main-content-inner">
+          <div className="widget-box-2 mb-20">
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+              <p className="mt-3">Loading property types and areas...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="main-content w-100">
-      <div className="main-content-inner wrap-dashboard-content">
-        <div className="widget-box-2 wd-listing">
-          <div className="d-flex justify-content-between align-items-center mb-20">
-            <h3 className="title">Add New Property</h3>
-            <button 
-              onClick={() => router.back()}
-              className="tf-btn bg-color-secondary pd-13"
-            >
-              Back to Properties
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="property-form">
-            {/* Upload Media Section */}
+      <div className="main-content-inner">
+        {/* Header */}
         <div className="widget-box-2 mb-20">
-          <h3 className="title">Upload Media</h3>
+          <h3 className="title">Add New Property</h3>
+          <p>Create a new property listing with all necessary details</p>
+        </div>
+
+        {/* Submit Error */}
+        {errors.submit && (
+          <div className="alert alert-danger mb-20">
+            {errors.submit}
+          </div>
+        )}
+
+        {/* Upload Media Section */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">Upload Media</h5>
           <div className="box-uploadfile text-center">
             <div className="uploadfile">
               <a
                 href="#"
-                    className="tf-btn bg-color-primary pd-10 btn-upload mx-auto"
+                className="tf-btn bg-color-primary pd-10 btn-upload mx-auto"
               >
                 <svg
                   width={21}
@@ -214,13 +500,13 @@ export default function AddProperty() {
                   />
                 </svg>
                 Select photos
-                    <input 
-                      type="file" 
-                      className="ip-file" 
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
+                <input 
+                  type="file" 
+                  className="ip-file" 
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
               </a>
               <p className="file-name fw-5">
                 or drag photos here <br />
@@ -229,515 +515,466 @@ export default function AddProperty() {
             </div>
           </div>
 
-              {/* Image Preview */}
-              {formData.images.length > 0 && (
-          <div className="box-img-upload">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="item-upload file-delete">
-              <Image
-                alt="img"
-                width={615}
-                height={405}
-                        src={image}
-                      />
-                      <span 
-                        className="icon icon-trashcan1 remove-file"
-                        onClick={() => removeImage(index)}
-                        style={{ cursor: 'pointer' }}
-                      />
-            </div>
-                  ))}
-            </div>
-              )}
-            </div>
+          {errors.images && <span className="error-text">{errors.images}</span>}
 
-            {/* Basic Information */}
-        <div className="widget-box-2 mb-20">
-          <h5 className="title">Information</h5>
-              <div className="box-info-property">
-            <fieldset className="box box-fieldset">
-              <label htmlFor="title">
-                Title:<span>*</span>
-              </label>
-              <input
-                type="text"
-                    name="title"
-                    className={`form-control ${errors.title ? 'error' : ''}`}
-                    placeholder="Enter property title"
-                    value={formData.title}
-                    onChange={handleInputChange}
+          {/* Image Preview */}
+          {Array.isArray(formData.images) && formData.images.length > 0 && (
+            <div className="box-img-upload">
+              {formData.images.map((image, index) => (
+                <div key={index} className="item-upload file-delete">
+                  <Image
+                    alt="img"
+                    width={615}
+                    height={405}
+                    src={image.preview}
                   />
-                  {errors.title && <span className="error-text">{errors.title}</span>}
-            </fieldset>
-            <fieldset className="box box-fieldset">
-              <label htmlFor="desc">Description:</label>
-              <textarea
-                    name="description"
-                    className={`textarea ${errors.description ? 'error' : ''}`}
-                    placeholder="Your Description"
-                    value={formData.description}
-                    onChange={handleInputChange}
+                  <span 
+                    className="icon icon-trashcan1 remove-file"
+                    onClick={() => removeImage(index)}
+                    style={{ cursor: 'pointer' }}
                   />
-                  {errors.description && <span className="error-text">{errors.description}</span>}
-            </fieldset>
-            <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="address">
-                  Full Address:<span>*</span>
-                </label>
-                <input
-                  type="text"
-                      name="address.street"
-                      className={`form-control ${errors.street ? 'error' : ''}`}
-                  placeholder="Enter property full address"
-                      value={formData.address.street}
-                      onChange={handleInputChange}
-                />
-                    {errors.street && <span className="error-text">{errors.street}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset">
-                <label htmlFor="zip">
-                  Zip Code:<span>*</span>
-                </label>
-                <input
-                  type="text"
-                      name="address.zipCode"
-                      className={`form-control ${errors.zipCode ? 'error' : ''}`}
-                  placeholder="Enter property zip code"
-                      value={formData.address.zipCode}
-                      onChange={handleInputChange}
-                />
-                    {errors.zipCode && <span className="error-text">{errors.zipCode}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset">
-                <label htmlFor="country">
-                  Country:<span>*</span>
-                </label>
-                    <input
-                      type="text"
-                      name="address.country"
-                      className="form-control"
-                      value={formData.address.country}
-                      onChange={handleInputChange}
-                />
-              </fieldset>
+                </div>
+              ))}
             </div>
-            <div className="box grid-layout-2 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="state">
-                  Province/State:<span>*</span>
-                </label>
-                    <input
-                      type="text"
-                      name="address.state"
-                      className={`form-control ${errors.state ? 'error' : ''}`}
-                      placeholder="Enter state"
-                      value={formData.address.state}
-                      onChange={handleInputChange}
-                    />
-                    {errors.state && <span className="error-text">{errors.state}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset">
-                    <label htmlFor="city">
-                      City:<span>*</span>
-                </label>
-                    <input
-                      type="text"
-                      name="address.city"
-                      className={`form-control ${errors.city ? 'error' : ''}`}
-                      placeholder="Enter city"
-                      value={formData.address.city}
-                      onChange={handleInputChange}
-                    />
-                    {errors.city && <span className="error-text">{errors.city}</span>}
-              </fieldset>
-            </div>
-            <div className="box box-fieldset">
-              <label htmlFor="location">
-                Location:<span>*</span>
-              </label>
-              <div className="box-ip">
-                <input
-                  type="text"
-                      name="location"
-                      className={`form-control ${errors.location ? 'error' : ''}`}
-                      placeholder="Enter location (e.g., Brooklyn, NY)"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                />
-                <a href="#" className="btn-location">
-                  <i className="icon icon-location" />
-                </a>
-              </div>
-                  {errors.location && <span className="error-text">{errors.location}</span>}
-              <iframe
-                className="map"
-                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d135905.11693909427!2d-73.95165795400088!3d41.17584829642291!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2s!4v1727094281524!5m2!1sen!2s"
-                width="100%"
-                height={456}
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-              </div>
+          )}
         </div>
 
-            {/* Price Section */}
+        {/* Basic Information */}
         <div className="widget-box-2 mb-20">
-          <h3 className="title">Price</h3>
-          <div className="box-price-property">
-                <div className="box grid-2 gap-30">
-              <fieldset className="box-fieldset mb-30">
+          <h5 className="title">Basic Information</h5>
+          <form className="box-info-property">
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="title">
+                  Title:<span>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  className={`form-control ${errors.title ? 'error' : ''}`}
+                  placeholder="Enter property title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                />
+                {errors.title && <span className="error-text">{errors.title}</span>}
+              </fieldset>
+            </div>
+            
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="description">Description:</label>
+                <textarea
+                  name="description"
+                  className={`textarea ${errors.description ? 'error' : ''}`}
+                  placeholder="Your Description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                />
+                {errors.description && <span className="error-text">{errors.description}</span>}
+              </fieldset>
+            </div>
+
+            <div className="box grid-layout-3 gap-30">
+              <fieldset className="box-fieldset">
+                <label htmlFor="propertyType">
+                  Property Type:<span>*</span>
+                </label>
+                <select
+                  name="propertyType"
+                  className={`form-control ${errors.propertyType ? 'error' : ''}`}
+                  value={formData.propertyType}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Property Type</option>
+                  {Array.isArray(propertyTypes) && propertyTypes.map(type => (
+                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                  ))}
+                </select>
+                {errors.propertyType && <span className="error-text">{errors.propertyType}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="listingType">
+                  Listing Type:<span>*</span>
+                </label>
+                <select
+                  name="listingType"
+                  className={`form-control ${errors.listingType ? 'error' : ''}`}
+                  value={formData.listingType}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Listing Type</option>
+                  {Array.isArray(listingTypes) && listingTypes.map(type => (
+                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                  ))}
+                </select>
+                {errors.listingType && <span className="error-text">{errors.listingType}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="status">Status:</label>
+                <select
+                  name="status"
+                  className="form-control"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                >
+                  {Array.isArray(propertyStatuses) && propertyStatuses.map(status => (
+                    <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+                  ))}
+                </select>
+              </fieldset>
+            </div>
+          </form>
+        </div>
+
+        {/* Location Information */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">Location Information</h5>
+          <form className="box-info-property">
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="address">
+                  Address:<span>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="location.address"
+                  className={`form-control ${errors.address ? 'error' : ''}`}
+                  placeholder="Enter property address"
+                  value={formData.location.address}
+                  onChange={handleInputChange}
+                />
+                {errors.address && <span className="error-text">{errors.address}</span>}
+              </fieldset>
+            </div>
+
+            <div className="box grid-layout-2 gap-30">
+              <fieldset className="box-fieldset">
+                <label htmlFor="emirate">
+                  Emirate:<span>*</span>
+                </label>
+                <select
+                  name="location.emirate"
+                  className={`form-control ${errors.emirate ? 'error' : ''}`}
+                  value={formData.location.emirate}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Emirate</option>
+                  {Array.isArray(emirates) && emirates.map(emirate => (
+                    <option key={emirate} value={emirate}>{emirate}</option>
+                  ))}
+                </select>
+                {errors.emirate && <span className="error-text">{errors.emirate}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="area">
+                  Area:<span>*</span>
+                </label>
+                <select
+                  name="location.area"
+                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  value={formData.location.area}
+                  onChange={handleInputChange}
+                  disabled={!formData.location.emirate}
+                >
+                  <option value="">Select Area</option>
+                  {Array.isArray(areas) && areas.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+                {errors.area && <span className="error-text">{errors.area}</span>}
+              </fieldset>
+            </div>
+
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="neighborhood">Neighborhood:</label>
+                <input
+                  type="text"
+                  name="location.neighborhood"
+                  className="form-control"
+                  placeholder="Enter neighborhood (optional)"
+                  value={formData.location.neighborhood}
+                  onChange={handleInputChange}
+                />
+              </fieldset>
+            </div>
+          </form>
+        </div>
+
+        {/* Price Section */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">Price</h5>
+          <form className="box-info-property">
+            <div className="box grid-layout-3 gap-30">
+              <fieldset className="box-fieldset">
                 <label htmlFor="price">
                   Price:<span>*</span>
                 </label>
                 <input
-                      type="number"
-                      name="price"
-                      className={`form-control ${errors.price ? 'error' : ''}`}
-                  placeholder="Example value: 12345.67"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                />
-                    {errors.price && <span className="error-text">{errors.price}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset mb-30">
-                    <label htmlFor="unitPrice">
-                  Unit Price:<span>*</span>
-                </label>
-                    <input
-                      type="number"
-                      name="unitPrice"
-                      className="form-control"
-                      placeholder="Unit price"
-                      value={formData.unitPrice}
-                      onChange={handleInputChange}
-                />
-              </fieldset>
-              <div className="grid-layout-2 gap-30">
-                <fieldset className="box-fieldset">
-                      <label htmlFor="beforePriceLabel">
-                    Before Price Label:<span>*</span>
-                  </label>
-                      <input 
-                        type="text" 
-                        name="beforePriceLabel"
-                        className="form-control"
-                        value={formData.beforePriceLabel}
-                        onChange={handleInputChange}
-                      />
-                </fieldset>
-                <fieldset className="box-fieldset">
-                      <label htmlFor="afterPriceLabel">
-                    After Price Label:<span>*</span>
-                  </label>
-                      <input 
-                        type="text" 
-                        name="afterPriceLabel"
-                        className="form-control"
-                        value={formData.afterPriceLabel}
-                        onChange={handleInputChange}
-                      />
-                </fieldset>
-                  </div>
-                </div>
-              </div>
-          </div>
-
-            {/* Additional Information */}
-        <div className="widget-box-2 mb-20">
-              <h3 className="title">Additional Information</h3>
-            <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="type">
-                  Property Type:<span>*</span>
-                </label>
-                  <select
-                    name="type"
-                    className={`form-control ${errors.type ? 'error' : ''}`}
-                    value={formData.type}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select Property Type</option>
-                    {propertyTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                  {errors.type && <span className="error-text">{errors.type}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset">
-                <label htmlFor="status">
-                  Property Status:<span>*</span>
-                </label>
-                  <select
-                    name="status"
-                    className="form-control"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Choose</option>
-                    {propertyStatuses.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
-              </fieldset>
-              <fieldset className="box-fieldset">
-                  <label htmlFor="propertyLabel">
-                  Property Label:<span>*</span>
-                </label>
-                  <select
-                    name="propertyLabel"
-                    className="form-control"
-                    value={formData.propertyLabel}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Choose</option>
-                    {propertyLabels.map(label => (
-                      <option key={label} value={label}>{label}</option>
-                    ))}
-                  </select>
-              </fieldset>
-            </div>
-            <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                  <label htmlFor="sqft">
-                  Size (SqFt):<span>*</span>
-                </label>
-                  <input 
-                    type="number" 
-                    name="sqft"
-                    className={`form-control ${errors.sqft ? 'error' : ''}`}
-                    placeholder="Square footage"
-                    value={formData.sqft}
-                    onChange={handleInputChange}
-                  />
-                  {errors.sqft && <span className="error-text">{errors.sqft}</span>}
-              </fieldset>
-              <fieldset className="box-fieldset">
-                  <label htmlFor="landArea">
-                  Land Area (SqFt):<span>*</span>
-                </label>
-                  <input 
-                    type="number" 
-                    name="landArea"
-                    className="form-control"
-                    placeholder="Land area"
-                    value={formData.landArea}
-                    onChange={handleInputChange}
-                  />
-              </fieldset>
-              <fieldset className="box-fieldset">
-                  <label htmlFor="propertyId">
-                  Property ID:<span>*</span>
-                </label>
-                  <input 
-                    type="text" 
-                    name="propertyId"
-                    className="form-control"
-                    placeholder="Property ID"
-                    value={formData.propertyId}
-                    onChange={handleInputChange}
-                  />
-              </fieldset>
-            </div>
-            <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                  <label htmlFor="rooms">
-                  Rooms:<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="rooms"
-                    className="form-control"
-                    placeholder="Number of rooms"
-                    value={formData.rooms}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-                <fieldset className="box-fieldset">
-                  <label htmlFor="beds">
-                    Bedrooms:<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="beds"
-                    className={`form-control ${errors.beds ? 'error' : ''}`}
-                    placeholder="Number of bedrooms"
-                    value={formData.beds}
-                    onChange={handleInputChange}
-                  />
-                  {errors.beds && <span className="error-text">{errors.beds}</span>}
-                </fieldset>
-                <fieldset className="box-fieldset">
-                  <label htmlFor="baths">
-                    Bathrooms:<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="baths"
-                    className={`form-control ${errors.baths ? 'error' : ''}`}
-                    placeholder="Number of bathrooms"
-                    value={formData.baths}
-                    onChange={handleInputChange}
-                  />
-                  {errors.baths && <span className="error-text">{errors.baths}</span>}
-                </fieldset>
-              </div>
-              <div className="box grid-layout-3 gap-30">
-                <fieldset className="box-fieldset">
-                  <label htmlFor="garage">
-                    Garages:<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="garage"
-                    className="form-control"
-                    placeholder="Number of garages"
-                    value={formData.garage}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-                <fieldset className="box-fieldset">
-                  <label htmlFor="garagesSize">
-                    Garages Size (SqFt):<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="garagesSize"
-                    className="form-control"
-                    placeholder="Garage size"
-                    value={formData.garagesSize}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-                <fieldset className="box-fieldset">
-                  <label htmlFor="yearBuilt">
-                    Year Built:<span>*</span>
-                  </label>
-                  <input 
-                    type="number" 
-                    name="yearBuilt"
-                    className="form-control"
-                    placeholder="Year built"
-                    value={formData.yearBuilt}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-              </div>
-            </div>
-
-            {/* Amenities */}
-            <div className="widget-box-2 mb-20">
-              <h5 className="title">
-                Amenities<span>*</span>
-              </h5>
-              <div className="box-amenities-property">
-                <div className="amenities-grid">
-                  {amenitiesList.map(amenity => (
-                    <label key={amenity} className="amenity-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={formData.amenities.includes(amenity)}
-                        onChange={() => handleAmenityChange(amenity)}
-                      />
-                      <span>{amenity}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Virtual Tour 360 */}
-            <div className="widget-box-2 mb-20">
-              <h3 className="title">Virtual Tour 360</h3>
-              <div className="box-radio-check">
-                <div className="text-btn mb-16">Virtual Tour Type:</div>
-                <div className="radio-item">
-                  <label>
-                    <span className="text-1">Embedded code</span>
-                    <input type="radio" name="virtualTourType" value="embedded" />
-                    <span className="btn-radio" />
-                  </label>
-                </div>
-                <div className="radio-item style-1">
-                  <label>
-                    <span className="text-1">Upload image</span>
-                    <input type="radio" name="virtualTourType" value="upload" />
-                    <span className="btn-radio" />
-                  </label>
-                </div>
-                <fieldset className="box-fieldset">
-                  <label htmlFor="virtualTourCode">Embedded Code Virtual 360</label>
-                  <textarea 
-                    name="virtualTourCode"
-                    className="textarea"
-                    value={formData.virtualTourCode}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-              </div>
-            </div>
-
-            {/* Videos */}
-        <div className="widget-box-2 mb-20">
-              <h3 className="title">Videos</h3>
-              <fieldset className="box-fieldset">
-                <label htmlFor="videoUrl" className="text-btn">
-                Video URL:
-              </label>
-              <input
-                type="text"
-                  name="videoUrl"
-                className="form-control"
-                placeholder="Youtube, vimeo url"
-                  value={formData.videoUrl}
+                  type="number"
+                  name="price"
+                  className={`form-control ${errors.price ? 'error' : ''}`}
+                  placeholder="Enter price"
+                  value={formData.price}
                   onChange={handleInputChange}
-              />
-            </fieldset>
+                />
+                {errors.price && <span className="error-text">{errors.price}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="currency">Currency:</label>
+                <select
+                  name="currency"
+                  className="form-control"
+                  value={formData.currency}
+                  onChange={handleInputChange}
+                >
+                  {Array.isArray(currencies) && currencies.map(currency => (
+                    <option key={currency} value={currency}>{currency}</option>
+                  ))}
+                </select>
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="priceType">Price Type:</label>
+                <select
+                  name="priceType"
+                  className="form-control"
+                  value={formData.priceType}
+                  onChange={handleInputChange}
+                >
+                  {Array.isArray(priceTypes) && priceTypes.map(type => (
+                    <option key={type} value={type}>{type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}</option>
+                  ))}
+                </select>
+              </fieldset>
+            </div>
+          </form>
+        </div>
+
+        {/* Property Details */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">Property Details</h5>
+          <form className="box-info-property">
+            <div className="box grid-layout-3 gap-30">
+              <fieldset className="box-fieldset">
+                <label htmlFor="bedrooms">
+                  Bedrooms:<span>*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="details.bedrooms"
+                  className={`form-control ${errors.bedrooms ? 'error' : ''}`}
+                  placeholder="Number of bedrooms"
+                  value={formData.details.bedrooms}
+                  onChange={handleInputChange}
+                />
+                {errors.bedrooms && <span className="error-text">{errors.bedrooms}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="bathrooms">
+                  Bathrooms:<span>*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="details.bathrooms"
+                  className={`form-control ${errors.bathrooms ? 'error' : ''}`}
+                  placeholder="Number of bathrooms"
+                  value={formData.details.bathrooms}
+                  onChange={handleInputChange}
+                />
+                {errors.bathrooms && <span className="error-text">{errors.bathrooms}</span>}
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="area">
+                  Area Size:<span>*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="details.area"
+                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  placeholder="Area size"
+                  value={formData.details.area}
+                  onChange={handleInputChange}
+                />
+                {errors.area && <span className="error-text">{errors.area}</span>}
+              </fieldset>
             </div>
 
-            {/* Agent Information */}
+            <div className="box grid-layout-3 gap-30">
+              <fieldset className="box-fieldset">
+                <label htmlFor="areaUnit">Area Unit:</label>
+                <select
+                  name="details.areaUnit"
+                  className="form-control"
+                  value={formData.details.areaUnit}
+                  onChange={handleInputChange}
+                >
+                  {Array.isArray(areaUnits) && areaUnits.map(unit => (
+                    <option key={unit} value={unit}>{unit.toUpperCase()}</option>
+                  ))}
+                </select>
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="floorLevel">Floor Level:</label>
+                <input
+                  type="text"
+                  name="details.floorLevel"
+                  className="form-control"
+                  placeholder="Floor level (optional)"
+                  value={formData.details.floorLevel}
+                  onChange={handleInputChange}
+                />
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="totalFloors">Total Floors:</label>
+                <input
+                  type="number"
+                  name="details.totalFloors"
+                  className="form-control"
+                  placeholder="Total floors (optional)"
+                  value={formData.details.totalFloors}
+                  onChange={handleInputChange}
+                />
+              </fieldset>
+            </div>
+
+            <div className="box grid-layout-3 gap-30">
+              <fieldset className="box-fieldset">
+                <label htmlFor="landArea">Land Area:</label>
+                <input
+                  type="number"
+                  name="details.landArea"
+                  className="form-control"
+                  placeholder="Land area (optional)"
+                  value={formData.details.landArea}
+                  onChange={handleInputChange}
+                />
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="yearBuilt">Year Built:</label>
+                <input
+                  type="number"
+                  name="details.yearBuilt"
+                  className="form-control"
+                  placeholder="Year built (optional)"
+                  value={formData.details.yearBuilt}
+                  onChange={handleInputChange}
+                />
+              </fieldset>
+
+              <fieldset className="box-fieldset">
+                <label htmlFor="parkingAvailable">Parking Available:</label>
+                <div className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    name="details.parking.available"
+                    id="parkingAvailable"
+                    checked={formData.details.parking.available}
+                    onChange={handleInputChange}
+                  />
+                  <label htmlFor="parkingAvailable" className="checkbox-label">
+                    Available
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+
+            {formData.details.parking.available && (
+              <div className="box grid-layout-2 gap-30">
+                <fieldset className="box-fieldset">
+                  <label htmlFor="parkingType">Parking Type:</label>
+                  <select
+                    name="details.parking.type"
+                    className="form-control"
+                    value={formData.details.parking.type}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select parking type</option>
+                    {Array.isArray(parkingTypes) && parkingTypes.map(type => (
+                      <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                    ))}
+                  </select>
+                </fieldset>
+
+                <fieldset className="box-fieldset">
+                  <label htmlFor="parkingSpaces">Parking Spaces:</label>
+                  <input
+                    type="number"
+                    name="details.parking.spaces"
+                    className="form-control"
+                    placeholder="Number of parking spaces"
+                    value={formData.details.parking.spaces}
+                    onChange={handleInputChange}
+                  />
+                </fieldset>
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Amenities */}
         <div className="widget-box-2 mb-20">
-              <h3 className="title">Agent Information</h3>
-          <div className="box-radio-check">
-            <div className="text-1 mb-16">Choose type agent information?</div>
-            <fieldset className="radio-item mb-8">
-              <label>
-                <span className="text-1">Your current user information</span>
-                    <input type="radio" name="agentType" value="current" />
-                <span className="btn-radio" />
-              </label>
-            </fieldset>
-                <fieldset className="radio-item style-1">
-              <label>
-                <span className="text-1">Other contact</span>
-                    <input type="radio" name="agentType" value="other" />
-                <span className="btn-radio" />
-              </label>
-            </fieldset>
+          <h5 className="title">Amenities</h5>
+          <div className="box-amenities-property">
+            <div className="amenities-grid">
+              {Array.isArray(amenities) && amenities.map(amenity => (
+                <label key={amenity} className="amenity-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={Array.isArray(formData.amenities) && formData.amenities.includes(amenity)}
+                    onChange={() => handleAmenityChange(amenity)}
+                  />
+                  <span>{amenity}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
-            {/* Submit Buttons */}
-        <div className="box-btn">
-              <button
-                type="submit"
-                className="tf-btn bg-color-primary pd-13"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Adding Property..." : "Add Property"}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="tf-btn style-border pd-10"
-              >
-                Save & Preview
-              </button>
+        {/* Featured Property */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">Featured Property</h5>
+          <div className="box-radio-check">
+            <div className="radio-item">
+              <label>
+                <span className="text-1">Mark as Featured Property</span>
+                <input 
+                  type="checkbox" 
+                  name="featured"
+                  checked={formData.featured}
+                  onChange={handleInputChange}
+                />
+                <span className="btn-radio" />
+              </label>
             </div>
-          </form>
+          </div>
+        </div>
+
+        {/* Submit Buttons */}
+        <div className="box-btn">
+          <button
+            type="submit"
+            className="tf-btn bg-color-primary pd-13"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Adding Property..." : "Add Property"}
+          </button>
+          <a
+            href="/admin/property-management"
+            className="tf-btn style-border pd-10"
+          >
+            Cancel
+          </a>
         </div>
 
         {/* .footer-dashboard */}
@@ -755,7 +992,7 @@ export default function AddProperty() {
             </li>
           </ul>
         </div>
-        {/* .footer-dashboard */}
+        {/* /.footer-dashboard */}
       </div>
       <div className="overlay-dashboard" />
     </div>

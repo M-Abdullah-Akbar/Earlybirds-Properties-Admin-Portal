@@ -290,8 +290,8 @@ export default function AddProperty() {
         else if (error.includes('emirate')) mappedErrors.emirate = error;
         else if (error.includes('address')) mappedErrors.address = error;
         else if (error.includes('area')) mappedErrors.area = error;
-        else if (error.includes('bedrooms')) mappedErrors.bedrooms = error;
-        else if (error.includes('bathrooms')) mappedErrors.bathrooms = error;
+        //else if (error.includes('bedrooms')) mappedErrors.bedrooms = error;
+        //else if (error.includes('bathrooms')) mappedErrors.bathrooms = error;
         else if (error.includes('images')) mappedErrors.images = error;
         else mappedErrors.submit = error;
       });

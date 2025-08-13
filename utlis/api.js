@@ -1036,13 +1036,13 @@ export const adminUtils = {
       errors.push('Area is required');
     }
     
-    if (!propertyData.details?.bedrooms || propertyData.details.bedrooms < 0) {
-      errors.push('Number of bedrooms must be 0 or greater');
-    }
+    //if (!propertyData.details?.bedrooms || propertyData.details.bedrooms < 0) {
+    //  errors.push('Number of bedrooms must be 0 or greater');
+    //}
     
-    if (!propertyData.details?.bathrooms || propertyData.details.bathrooms < 0) {
-      errors.push('Number of bathrooms must be 0 or greater');
-    }
+    //if (!propertyData.details?.bathrooms || propertyData.details.bathrooms < 0) {
+    //  errors.push('Number of bathrooms must be 0 or greater');
+    //}
     
     if (!propertyData.details?.area || propertyData.details.area <= 0) {
       errors.push('Area must be greater than 0');

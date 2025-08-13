@@ -63,7 +63,7 @@ export default function EditProperty({ propertyId }) {
     "rented",
     "archived",
   ];
-  const listingTypes = ["sale", "rent"];
+  const listingTypes = ["sale", "rent", "off plan"];
   const priceTypes = ["total", "per_sqft", "per_sqm"];
   const areaUnits = ["sqft", "sqm"];
   const parkingTypes = ["covered", "open", "garage", "street"];

@@ -546,7 +546,8 @@ export const adminUtils = {
   getListingTypes: () => {
     return [
       "sale",
-      "rent"
+      "rent",
+      "off plan"
     ];
   },
 

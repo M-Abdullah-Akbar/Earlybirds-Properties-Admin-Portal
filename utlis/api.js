@@ -1,14 +1,11 @@
 import axios from "axios";
 
 // Base API configuration
-const API_BASE_URL = "https://556778af93ac.ngrok-free.app/api";
+const API_BASE_URL = "http://13.60.13.251/api";
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "ngrok-skip-browser-warning": "true"
-  }
 });
 
 // Add request interceptor to include auth token

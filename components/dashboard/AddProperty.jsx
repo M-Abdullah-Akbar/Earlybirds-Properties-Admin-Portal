@@ -21,7 +21,7 @@ export default function AddProperty() {
       emirate: "",
       area: "",
       country: "UAE",
-      neighborhood: ""
+      neighborhood: "",
     },
     details: {
       bedrooms: "",
@@ -35,11 +35,11 @@ export default function AddProperty() {
       parking: {
         available: false,
         type: "",
-        spaces: 0
-      }
+        spaces: 0,
+      },
     },
     amenities: [],
-    images: []
+    images: [],
   });
 
   const [errors, setErrors] = useState({});
@@ -63,7 +63,7 @@ export default function AddProperty() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        
+
         // Check if user is authenticated
         const adminToken = localStorage.getItem("admin_token");
         if (!adminToken) {
@@ -71,30 +71,38 @@ export default function AddProperty() {
           router.push("/admin/login");
           return;
         }
-        
+
         console.log("Admin token found, fetching initial data...");
-        
+
         // Fetch property types from API
         const typesResponse = await propertyAPI.getPropertyTypes();
         console.log("Property types API response:", typesResponse);
-        
-        if (typesResponse.success && typesResponse.data && Array.isArray(typesResponse.data.propertyTypes)) {
+
+        if (
+          typesResponse.success &&
+          typesResponse.data &&
+          Array.isArray(typesResponse.data.propertyTypes)
+        ) {
           // Extract the name property from each property type object
-          const propertyTypeNames = typesResponse.data.propertyTypes.map(type => type.name);
+          const propertyTypeNames = typesResponse.data.propertyTypes.map(
+            (type) => type.name
+          );
           setPropertyTypes(propertyTypeNames);
           console.log("Property types set successfully:", propertyTypeNames);
         } else {
-          console.warn("Property types response structure is incorrect:", typesResponse);
+          console.warn(
+            "Property types response structure is incorrect:",
+            typesResponse
+          );
           // Set fallback property types if API fails
           setPropertyTypes(adminUtils.getPropertyTypes());
         }
-        
+
         // Set emirates from adminUtils
         setEmirates(adminUtils.getEmirates());
-        
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        
+
         // Check if it's an authentication error
         if (error.response?.status === 401) {
           localStorage.removeItem("admin_token");
@@ -102,7 +110,7 @@ export default function AddProperty() {
           router.push("/admin/login");
           return;
         }
-        
+
         // Set fallback values if API fails
         setPropertyTypes(adminUtils.getPropertyTypes());
         setEmirates(adminUtils.getEmirates());
@@ -122,26 +130,37 @@ export default function AddProperty() {
           // Check if user is authenticated
           const adminToken = localStorage.getItem("admin_token");
           if (!adminToken) {
-            console.error("No admin token found when fetching areas. User not authenticated.");
+            console.error(
+              "No admin token found when fetching areas. User not authenticated."
+            );
             setAreas([]);
             return;
           }
-          
+
           console.log("Fetching areas for emirate:", formData.location.emirate);
-          const areasResponse = await propertyAPI.getAreasForEmirate(formData.location.emirate);
+          const areasResponse = await propertyAPI.getAreasForEmirate(
+            formData.location.emirate
+          );
           console.log("Areas API response:", areasResponse);
-          
-          if (areasResponse.success && areasResponse.data && Array.isArray(areasResponse.data.areas)) {
+
+          if (
+            areasResponse.success &&
+            areasResponse.data &&
+            Array.isArray(areasResponse.data.areas)
+          ) {
             setAreas(areasResponse.data.areas);
             console.log("Areas set successfully:", areasResponse.data.areas);
           } else {
-            console.warn("Areas response structure is incorrect:", areasResponse);
+            console.warn(
+              "Areas response structure is incorrect:",
+              areasResponse
+            );
             // Use fallback areas from adminUtils
             setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
           }
         } catch (error) {
           console.error("Error fetching areas:", error);
-          
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             localStorage.removeItem("admin_token");
@@ -149,7 +168,7 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
-          
+
           // Use fallback areas from adminUtils
           setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
         }
@@ -169,26 +188,46 @@ export default function AddProperty() {
           // Check if user is authenticated
           const adminToken = localStorage.getItem("admin_token");
           if (!adminToken) {
-            console.error("No admin token found when fetching amenities. User not authenticated.");
+            console.error(
+              "No admin token found when fetching amenities. User not authenticated."
+            );
             setAmenities([]);
             return;
           }
-          
-          console.log("Fetching amenities for property type:", formData.propertyType);
-          const amenitiesResponse = await propertyAPI.getAmenitiesForPropertyType(formData.propertyType);
+
+          console.log(
+            "Fetching amenities for property type:",
+            formData.propertyType
+          );
+          const amenitiesResponse =
+            await propertyAPI.getAmenitiesForPropertyType(
+              formData.propertyType
+            );
           console.log("Amenities API response:", amenitiesResponse);
-          
-          if (amenitiesResponse.success && amenitiesResponse.data && Array.isArray(amenitiesResponse.data.all)) {
+
+          if (
+            amenitiesResponse.success &&
+            amenitiesResponse.data &&
+            Array.isArray(amenitiesResponse.data.all)
+          ) {
             setAmenities(amenitiesResponse.data.all);
-            console.log("Amenities set successfully:", amenitiesResponse.data.all);
+            console.log(
+              "Amenities set successfully:",
+              amenitiesResponse.data.all
+            );
           } else {
-            console.warn("Amenities response structure is incorrect:", amenitiesResponse);
+            console.warn(
+              "Amenities response structure is incorrect:",
+              amenitiesResponse
+            );
             // Use fallback amenities from adminUtils
-            setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+            setAmenities(
+              adminUtils.getAmenitiesForPropertyType(formData.propertyType)
+            );
           }
         } catch (error) {
           console.error("Error fetching amenities:", error);
-          
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             localStorage.removeItem("admin_token");
@@ -196,9 +235,11 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
-          
+
           // Use fallback amenities from adminUtils
-          setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+          setAmenities(
+            adminUtils.getAmenitiesForPropertyType(formData.propertyType)
+          );
         }
       } else {
         setAmenities([]);
@@ -210,67 +251,78 @@ export default function AddProperty() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child, subChild] = name.split('.');
-      setFormData(prev => ({
+
+    if (name.includes(".")) {
+      const [parent, child, subChild] = name.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: subChild ? {
-            ...prev[parent]?.[child],
-            [subChild]: type === 'checkbox' ? checked : value
-          } : (type === 'checkbox' ? checked : value)
-        }
+          [child]: subChild
+            ? {
+                ...prev[parent]?.[child],
+                [subChild]: type === "checkbox" ? checked : value,
+              }
+            : type === "checkbox"
+            ? checked
+            : value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: type === "checkbox" ? checked : value,
       }));
     }
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
 
   const handleAmenityChange = (amenity) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      amenities: Array.isArray(prev.amenities) 
-        ? (prev.amenities.includes(amenity)
-            ? prev.amenities.filter(a => a !== amenity)
-            : [...prev.amenities, amenity])
-        : [amenity]
+      amenities: Array.isArray(prev.amenities)
+        ? prev.amenities.includes(amenity)
+          ? prev.amenities.filter((a) => a !== amenity)
+          : [...prev.amenities, amenity]
+        : [amenity],
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    
+
     // Create image objects with file references for API
     const newImages = files.map((file, index) => ({
       file: file,
       preview: URL.createObjectURL(file),
-      order: (Array.isArray(formData.images) ? formData.images.length : 0) + index,
-      isMain: (!Array.isArray(formData.images) || formData.images.length === 0) && index === 0
+      order:
+        (Array.isArray(formData.images) ? formData.images.length : 0) + index,
+      isMain:
+        (!Array.isArray(formData.images) || formData.images.length === 0) &&
+        index === 0,
     }));
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      images: Array.isArray(prev.images) ? [...prev.images, ...newImages] : newImages
+      images: Array.isArray(prev.images)
+        ? [...prev.images, ...newImages]
+        : newImages,
     }));
   };
 
   const removeImage = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: Array.isArray(prev.images) ? prev.images.filter((_, i) => i !== index) : []
+      images: Array.isArray(prev.images)
+        ? prev.images.filter((_, i) => i !== index)
+        : [],
     }));
   };
 
@@ -280,25 +332,28 @@ export default function AddProperty() {
     if (!validation.isValid) {
       // Map validation errors to form field names
       const mappedErrors = {};
-      validation.errors.forEach(error => {
+      validation.errors.forEach((error) => {
         // Map common field names
-        if (error.includes('title')) mappedErrors.title = error;
-        else if (error.includes('description')) mappedErrors.description = error;
-        else if (error.includes('property type')) mappedErrors.propertyType = error;
-        else if (error.includes('price')) mappedErrors.price = error;
-        else if (error.includes('listing type')) mappedErrors.listingType = error;
-        else if (error.includes('emirate')) mappedErrors.emirate = error;
-        else if (error.includes('address')) mappedErrors.address = error;
-        else if (error.includes('area')) mappedErrors.area = error;
+        if (error.includes("title")) mappedErrors.title = error;
+        else if (error.includes("description"))
+          mappedErrors.description = error;
+        else if (error.includes("property type"))
+          mappedErrors.propertyType = error;
+        else if (error.includes("price")) mappedErrors.price = error;
+        else if (error.includes("listing type"))
+          mappedErrors.listingType = error;
+        else if (error.includes("emirate")) mappedErrors.emirate = error;
+        else if (error.includes("address")) mappedErrors.address = error;
+        else if (error.includes("area")) mappedErrors.area = error;
         //else if (error.includes('bedrooms')) mappedErrors.bedrooms = error;
         //else if (error.includes('bathrooms')) mappedErrors.bathrooms = error;
-        else if (error.includes('images')) mappedErrors.images = error;
+        else if (error.includes("images")) mappedErrors.images = error;
         else mappedErrors.submit = error;
       });
       setErrors(mappedErrors);
       return false;
     }
-    
+
     // Clear previous errors
     setErrors({});
     return true;
@@ -306,7 +361,7 @@ export default function AddProperty() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -319,13 +374,17 @@ export default function AddProperty() {
       if (Array.isArray(formData.images) && formData.images.length > 0) {
         const formDataImages = new FormData();
         formData.images.forEach((image, index) => {
-          formDataImages.append('images', image.file);
+          formDataImages.append("images", image.file);
         });
 
         console.log("Uploading images...");
         const uploadResponse = await uploadAPI.uploadImages(formDataImages);
-        
-        if (uploadResponse.success && uploadResponse.data && uploadResponse.data.images) {
+
+        if (
+          uploadResponse.success &&
+          uploadResponse.data &&
+          uploadResponse.data.images
+        ) {
           uploadedImages = uploadResponse.data.images;
           console.log("Images uploaded successfully:", uploadedImages);
         } else {
@@ -349,7 +408,7 @@ export default function AddProperty() {
           emirate: formData.location.emirate,
           area: formData.location.area,
           country: formData.location.country,
-          neighborhood: formData.location.neighborhood?.trim() || ''
+          neighborhood: formData.location.neighborhood?.trim() || "",
         },
         details: {
           bedrooms: parseInt(formData.details.bedrooms),
@@ -357,33 +416,39 @@ export default function AddProperty() {
           area: parseFloat(formData.details.area),
           areaUnit: formData.details.areaUnit,
           floorLevel: formData.details.floorLevel || null,
-          totalFloors: formData.details.totalFloors ? parseInt(formData.details.totalFloors) : null,
-          landArea: formData.details.landArea ? parseFloat(formData.details.landArea) : null,
-          yearBuilt: formData.details.yearBuilt ? parseInt(formData.details.yearBuilt) : null,
+          totalFloors: formData.details.totalFloors
+            ? parseInt(formData.details.totalFloors)
+            : null,
+          landArea: formData.details.landArea
+            ? parseFloat(formData.details.landArea)
+            : null,
+          yearBuilt: formData.details.yearBuilt
+            ? parseInt(formData.details.yearBuilt)
+            : null,
           parking: {
             available: formData.details.parking.available,
             type: formData.details.parking.type || null,
-            spaces: formData.details.parking.spaces || 0
-          }
+            spaces: formData.details.parking.spaces || 0,
+          },
         },
         amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
-        images: uploadedImages
+        images: uploadedImages,
       };
-      
+
       // Log the data being sent for debugging
       console.log("AddProperty: Property data being sent:", propertyData);
       console.log("AddProperty: Images count:", uploadedImages.length);
 
       // Create property using the API
       const response = await propertyAPI.createProperty(propertyData);
-      
+
       if (response.success) {
         // Redirect immediately without showing alert
         router.push("/admin/property-management");
       } else {
-        setErrors(prev => ({ 
-          ...prev, 
-          submit: response.error || "Failed to add property" 
+        setErrors((prev) => ({
+          ...prev,
+          submit: response.error || "Failed to add property",
         }));
       }
     } catch (error) {
@@ -395,17 +460,21 @@ export default function AddProperty() {
 
       // Handle specific error types with user-friendly messages
       if (error.message) {
-        if (error.message.includes('CORS Error')) {
-          errorMessage = "CORS Error: The server is blocking requests from your browser. Please contact support.";
-        } else if (error.message.includes('File too large')) {
-          errorMessage = "File too large: Please compress your images or use smaller files (under 10MB each).";
-        } else if (error.message.includes('Network Error')) {
-          errorMessage = "Network Error: Unable to connect to the server. Please check your internet connection.";
-        } else if (error.message.includes('Authentication failed')) {
+        if (error.message.includes("CORS Error")) {
+          errorMessage =
+            "CORS Error: The server is blocking requests from your browser. Please contact support.";
+        } else if (error.message.includes("File too large")) {
+          errorMessage =
+            "File too large: Please compress your images or use smaller files (under 10MB each).";
+        } else if (error.message.includes("Network Error")) {
+          errorMessage =
+            "Network Error: Unable to connect to the server. Please check your internet connection.";
+        } else if (error.message.includes("Authentication failed")) {
           errorMessage = "Authentication failed: Please log in again.";
-        } else if (error.message.includes('Access denied')) {
-          errorMessage = "Access denied: You do not have permission to create properties.";
-        } else if (error.message.includes('Upload failed')) {
+        } else if (error.message.includes("Access denied")) {
+          errorMessage =
+            "Access denied: You do not have permission to create properties.";
+        } else if (error.message.includes("Upload failed")) {
           errorMessage = error.message; // Use the specific upload error message
         } else {
           errorMessage = error.message; // Use the error message from the API
@@ -433,9 +502,9 @@ export default function AddProperty() {
         }
       }
 
-      setErrors(prev => ({ 
-        ...prev, 
-        submit: errorMessage 
+      setErrors((prev) => ({
+        ...prev,
+        submit: errorMessage,
       }));
     } finally {
       setIsSubmitting(false);
@@ -470,9 +539,7 @@ export default function AddProperty() {
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="alert alert-danger mb-20">
-            {errors.submit}
-          </div>
+          <div className="alert alert-danger mb-20">{errors.submit}</div>
         )}
 
         {/* Upload Media Section */}
@@ -500,9 +567,9 @@ export default function AddProperty() {
                   />
                 </svg>
                 Select photos
-                <input 
-                  type="file" 
-                  className="ip-file" 
+                <input
+                  type="file"
+                  className="ip-file"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
@@ -528,10 +595,10 @@ export default function AddProperty() {
                     height={405}
                     src={image.preview}
                   />
-                  <span 
+                  <span
                     className="icon icon-trashcan1 remove-file"
                     onClick={() => removeImage(index)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   />
                 </div>
               ))}
@@ -551,26 +618,30 @@ export default function AddProperty() {
                 <input
                   type="text"
                   name="title"
-                  className={`form-control ${errors.title ? 'error' : ''}`}
+                  className={`form-control ${errors.title ? "error" : ""}`}
                   placeholder="Enter property title"
                   value={formData.title}
                   onChange={handleInputChange}
                 />
-                {errors.title && <span className="error-text">{errors.title}</span>}
+                {errors.title && (
+                  <span className="error-text">{errors.title}</span>
+                )}
               </fieldset>
             </div>
-            
+
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
                 <textarea
                   name="description"
-                  className={`textarea ${errors.description ? 'error' : ''}`}
+                  className={`textarea ${errors.description ? "error" : ""}`}
                   placeholder="Your Description"
                   value={formData.description}
                   onChange={handleInputChange}
                 />
-                {errors.description && <span className="error-text">{errors.description}</span>}
+                {errors.description && (
+                  <span className="error-text">{errors.description}</span>
+                )}
               </fieldset>
             </div>
 
@@ -581,16 +652,23 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="propertyType"
-                  className={`form-control ${errors.propertyType ? 'error' : ''}`}
+                  className={`form-control ${
+                    errors.propertyType ? "error" : ""
+                  }`}
                   value={formData.propertyType}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Property Type</option>
-                  {Array.isArray(propertyTypes) && propertyTypes.map(type => (
-                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                  ))}
+                  {Array.isArray(propertyTypes) &&
+                    propertyTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
                 </select>
-                {errors.propertyType && <span className="error-text">{errors.propertyType}</span>}
+                {errors.propertyType && (
+                  <span className="error-text">{errors.propertyType}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -599,16 +677,23 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="listingType"
-                  className={`form-control ${errors.listingType ? 'error' : ''}`}
+                  className={`form-control ${
+                    errors.listingType ? "error" : ""
+                  }`}
                   value={formData.listingType}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Listing Type</option>
-                  {Array.isArray(listingTypes) && listingTypes.map(type => (
-                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                  ))}
+                  {Array.isArray(listingTypes) &&
+                    listingTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
                 </select>
-                {errors.listingType && <span className="error-text">{errors.listingType}</span>}
+                {errors.listingType && (
+                  <span className="error-text">{errors.listingType}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -619,9 +704,12 @@ export default function AddProperty() {
                   value={formData.status}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(propertyStatuses) && propertyStatuses.map(status => (
-                    <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
-                  ))}
+                  {Array.isArray(propertyStatuses) &&
+                    propertyStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
             </div>
@@ -640,12 +728,14 @@ export default function AddProperty() {
                 <input
                   type="text"
                   name="location.address"
-                  className={`form-control ${errors.address ? 'error' : ''}`}
+                  className={`form-control ${errors.address ? "error" : ""}`}
                   placeholder="Enter property address"
                   value={formData.location.address}
                   onChange={handleInputChange}
                 />
-                {errors.address && <span className="error-text">{errors.address}</span>}
+                {errors.address && (
+                  <span className="error-text">{errors.address}</span>
+                )}
               </fieldset>
             </div>
 
@@ -656,16 +746,21 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="location.emirate"
-                  className={`form-control ${errors.emirate ? 'error' : ''}`}
+                  className={`form-control ${errors.emirate ? "error" : ""}`}
                   value={formData.location.emirate}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Emirate</option>
-                  {Array.isArray(emirates) && emirates.map(emirate => (
-                    <option key={emirate} value={emirate}>{emirate}</option>
-                  ))}
+                  {Array.isArray(emirates) &&
+                    emirates.map((emirate) => (
+                      <option key={emirate} value={emirate}>
+                        {emirate}
+                      </option>
+                    ))}
                 </select>
-                {errors.emirate && <span className="error-text">{errors.emirate}</span>}
+                {errors.emirate && (
+                  <span className="error-text">{errors.emirate}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -674,17 +769,22 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="location.area"
-                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  className={`form-control ${errors.area ? "error" : ""}`}
                   value={formData.location.area}
                   onChange={handleInputChange}
                   disabled={!formData.location.emirate}
                 >
                   <option value="">Select Area</option>
-                  {Array.isArray(areas) && areas.map(area => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
+                  {Array.isArray(areas) &&
+                    areas.map((area) => (
+                      <option key={area} value={area}>
+                        {area}
+                      </option>
+                    ))}
                 </select>
-                {errors.area && <span className="error-text">{errors.area}</span>}
+                {errors.area && (
+                  <span className="error-text">{errors.area}</span>
+                )}
               </fieldset>
             </div>
 
@@ -716,12 +816,14 @@ export default function AddProperty() {
                 <input
                   type="number"
                   name="price"
-                  className={`form-control ${errors.price ? 'error' : ''}`}
+                  className={`form-control ${errors.price ? "error" : ""}`}
                   placeholder="Enter price"
                   value={formData.price}
                   onChange={handleInputChange}
                 />
-                {errors.price && <span className="error-text">{errors.price}</span>}
+                {errors.price && (
+                  <span className="error-text">{errors.price}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -732,9 +834,12 @@ export default function AddProperty() {
                   value={formData.currency}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(currencies) && currencies.map(currency => (
-                    <option key={currency} value={currency}>{currency}</option>
-                  ))}
+                  {Array.isArray(currencies) &&
+                    currencies.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
 
@@ -746,9 +851,13 @@ export default function AddProperty() {
                   value={formData.priceType}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(priceTypes) && priceTypes.map(type => (
-                    <option key={type} value={type}>{type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}</option>
-                  ))}
+                  {Array.isArray(priceTypes) &&
+                    priceTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.replace("_", " ").charAt(0).toUpperCase() +
+                          type.replace("_", " ").slice(1)}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
             </div>
@@ -764,45 +873,51 @@ export default function AddProperty() {
                 <label htmlFor="bedrooms">
                   Bedrooms:<span>*</span>
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="details.bedrooms"
-                  className={`form-control ${errors.bedrooms ? 'error' : ''}`}
+                  className={`form-control ${errors.bedrooms ? "error" : ""}`}
                   placeholder="Number of bedrooms"
                   value={formData.details.bedrooms}
                   onChange={handleInputChange}
                 />
-                {errors.bedrooms && <span className="error-text">{errors.bedrooms}</span>}
+                {errors.bedrooms && (
+                  <span className="error-text">{errors.bedrooms}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
                   Bathrooms:<span>*</span>
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="details.bathrooms"
-                  className={`form-control ${errors.bathrooms ? 'error' : ''}`}
+                  className={`form-control ${errors.bathrooms ? "error" : ""}`}
                   placeholder="Number of bathrooms"
                   value={formData.details.bathrooms}
                   onChange={handleInputChange}
                 />
-                {errors.bathrooms && <span className="error-text">{errors.bathrooms}</span>}
+                {errors.bathrooms && (
+                  <span className="error-text">{errors.bathrooms}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
                   Area Size:<span>*</span>
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="details.area"
-                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  className={`form-control ${errors.area ? "error" : ""}`}
                   placeholder="Area size"
                   value={formData.details.area}
                   onChange={handleInputChange}
                 />
-                {errors.area && <span className="error-text">{errors.area}</span>}
+                {errors.area && (
+                  <span className="error-text">{errors.area}</span>
+                )}
               </fieldset>
             </div>
 
@@ -815,9 +930,12 @@ export default function AddProperty() {
                   value={formData.details.areaUnit}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(areaUnits) && areaUnits.map(unit => (
-                    <option key={unit} value={unit}>{unit.toUpperCase()}</option>
-                  ))}
+                  {Array.isArray(areaUnits) &&
+                    areaUnits.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit.toUpperCase()}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
 
@@ -899,9 +1017,12 @@ export default function AddProperty() {
                     onChange={handleInputChange}
                   >
                     <option value="">Select parking type</option>
-                    {Array.isArray(parkingTypes) && parkingTypes.map(type => (
-                      <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                    ))}
+                    {Array.isArray(parkingTypes) &&
+                      parkingTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </option>
+                      ))}
                   </select>
                 </fieldset>
 
@@ -926,16 +1047,20 @@ export default function AddProperty() {
           <h5 className="title">Amenities</h5>
           <div className="box-amenities-property">
             <div className="amenities-grid">
-              {Array.isArray(amenities) && amenities.map(amenity => (
-                <label key={amenity} className="amenity-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={Array.isArray(formData.amenities) && formData.amenities.includes(amenity)}
-                    onChange={() => handleAmenityChange(amenity)}
-                  />
-                  <span>{amenity}</span>
-                </label>
-              ))}
+              {Array.isArray(amenities) &&
+                amenities.map((amenity) => (
+                  <label key={amenity} className="amenity-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={
+                        Array.isArray(formData.amenities) &&
+                        formData.amenities.includes(amenity)
+                      }
+                      onChange={() => handleAmenityChange(amenity)}
+                    />
+                    <span>{amenity}</span>
+                  </label>
+                ))}
             </div>
           </div>
         </div>
@@ -947,8 +1072,8 @@ export default function AddProperty() {
             <div className="radio-item">
               <label>
                 <span className="text-1">Mark as Featured Property</span>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   name="featured"
                   checked={formData.featured}
                   onChange={handleInputChange}

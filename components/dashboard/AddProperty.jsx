@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
+import { safeLocalStorage } from "@/utlis/clientUtils";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function AddProperty() {
       emirate: "",
       area: "",
       country: "UAE",
-      neighborhood: ""
+      neighborhood: "",
     },
     details: {
       bedrooms: "",
@@ -35,11 +36,11 @@ export default function AddProperty() {
       parking: {
         available: false,
         type: "",
-        spaces: 0
-      }
+        spaces: 0,
+      },
     },
     amenities: [],
-    images: []
+    images: [],
   });
 
   const [errors, setErrors] = useState({});
@@ -49,7 +50,6 @@ export default function AddProperty() {
   const [emirates, setEmirates] = useState([]);
   const [areas, setAreas] = useState([]);
   const [amenities, setAmenities] = useState([]);
-
   // Constants from adminUtils
   const propertyStatuses = adminUtils.getPropertyStatuses();
   const listingTypes = adminUtils.getListingTypes();
@@ -58,51 +58,124 @@ export default function AddProperty() {
   const parkingTypes = adminUtils.getParkingTypes();
   const currencies = adminUtils.getCurrencies();
 
+  // Helper function to determine if bedrooms should be shown (prevents hydration issues)
+  const shouldShowBedrooms = () => {
+    // Always return the same logic regardless of mount state to prevent hydration mismatch
+    return (
+      formData.propertyType !== "office" && formData.propertyType !== "studio"
+    );
+  };
+
+  // Helper function to determine if we're in office/studio mode (prevents hydration issues)
+  const isOfficeOrStudio = () => {
+    // Always return the same logic regardless of mount state to prevent hydration mismatch
+    return (
+      formData.propertyType === "office" || formData.propertyType === "studio"
+    );
+  };
+
+  // Helper function to determine if totalFloors should be shown (prevents hydration issues)
+  const shouldShowTotalFloors = () => {
+    // totalFloors should always be shown for all property types - it's optional
+    return true;
+  };
+
+  // Helper function to determine if floorLevel should be shown (prevents hydration issues)
+  const shouldShowFloorLevel = () => {
+    // floorLevel should NOT be shown for villa and townhouse only
+    return (
+      formData.propertyType !== "villa" && formData.propertyType !== "townhouse"
+    );
+  };
+
+  // Helper function to determine if landArea should be shown (prevents hydration issues)
+  const shouldShowLandArea = () => {
+    // landArea should be shown for villa, townhouse, and office only
+    return (
+      formData.propertyType === "villa" ||
+      formData.propertyType === "townhouse" ||
+      formData.propertyType === "office"
+    );
+  };
+
+  // Helper function to determine if we're in villa/townhouse mode (for floorLevel)
+  const isVillaTownhouse = () => {
+    return (
+      formData.propertyType === "villa" || formData.propertyType === "townhouse"
+    );
+  };
+
+  // Helper function to determine if we're in apartment/penthouse/studio mode (for landArea)
+  const isApartmentPenthouseStudio = () => {
+    return (
+      formData.propertyType === "apartment" ||
+      formData.propertyType === "penthouse" ||
+      formData.propertyType === "studio"
+    );
+  };
+
+  // Helper function to determine if we're in villa/townhouse/penthouse mode (for layout)
+  const isVillaTownhousePenthouse = () => {
+    return (
+      formData.propertyType === "villa" ||
+      formData.propertyType === "townhouse" ||
+      formData.propertyType === "penthouse"
+    );
+  };
+
   // Fetch initial data on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        
+
         // Check if user is authenticated
-        const adminToken = localStorage.getItem("admin_token");
+        const adminToken = safeLocalStorage.getItem("admin_token");
         if (!adminToken) {
           console.error("No admin token found. User not authenticated.");
           router.push("/admin/login");
           return;
         }
-        
+
         console.log("Admin token found, fetching initial data...");
-        
+
         // Fetch property types from API
         const typesResponse = await propertyAPI.getPropertyTypes();
         console.log("Property types API response:", typesResponse);
-        
-        if (typesResponse.success && typesResponse.data && Array.isArray(typesResponse.data.propertyTypes)) {
+
+        if (
+          typesResponse.success &&
+          typesResponse.data &&
+          Array.isArray(typesResponse.data.propertyTypes)
+        ) {
           // Extract the name property from each property type object
-          const propertyTypeNames = typesResponse.data.propertyTypes.map(type => type.name);
+          const propertyTypeNames = typesResponse.data.propertyTypes.map(
+            (type) => type.name
+          );
           setPropertyTypes(propertyTypeNames);
           console.log("Property types set successfully:", propertyTypeNames);
         } else {
-          console.warn("Property types response structure is incorrect:", typesResponse);
+          console.warn(
+            "Property types response structure is incorrect:",
+            typesResponse
+          );
           // Set fallback property types if API fails
           setPropertyTypes(adminUtils.getPropertyTypes());
         }
-        
+
         // Set emirates from adminUtils
         setEmirates(adminUtils.getEmirates());
-        
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        
+
         // Check if it's an authentication error
         if (error.response?.status === 401) {
-          localStorage.removeItem("admin_token");
-          localStorage.removeItem("admin_user");
+          safeLocalStorage.removeItem("admin_token");
+          safeLocalStorage.removeItem("admin_user");
           router.push("/admin/login");
           return;
         }
-        
+
         // Set fallback values if API fails
         setPropertyTypes(adminUtils.getPropertyTypes());
         setEmirates(adminUtils.getEmirates());
@@ -120,36 +193,47 @@ export default function AddProperty() {
       if (formData.location.emirate) {
         try {
           // Check if user is authenticated
-          const adminToken = localStorage.getItem("admin_token");
+          const adminToken = safeLocalStorage.getItem("admin_token");
           if (!adminToken) {
-            console.error("No admin token found when fetching areas. User not authenticated.");
+            console.error(
+              "No admin token found when fetching areas. User not authenticated."
+            );
             setAreas([]);
             return;
           }
-          
+
           console.log("Fetching areas for emirate:", formData.location.emirate);
-          const areasResponse = await propertyAPI.getAreasForEmirate(formData.location.emirate);
+          const areasResponse = await propertyAPI.getAreasForEmirate(
+            formData.location.emirate
+          );
           console.log("Areas API response:", areasResponse);
-          
-          if (areasResponse.success && areasResponse.data && Array.isArray(areasResponse.data.areas)) {
+
+          if (
+            areasResponse.success &&
+            areasResponse.data &&
+            Array.isArray(areasResponse.data.areas)
+          ) {
             setAreas(areasResponse.data.areas);
             console.log("Areas set successfully:", areasResponse.data.areas);
           } else {
-            console.warn("Areas response structure is incorrect:", areasResponse);
+            console.warn(
+              "Areas response structure is incorrect:",
+              areasResponse
+            );
             // Use fallback areas from adminUtils
             setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
           }
         } catch (error) {
           console.error("Error fetching areas:", error);
-          
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
-            localStorage.removeItem("admin_token");
-            localStorage.removeItem("admin_user");
+            safeLocalStorage.removeItem("admin_token");
+            safeLocalStorage.removeItem("admin_user");
             router.push("/admin/login");
             return;
           }
-          
+
           // Use fallback areas from adminUtils
           setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
         }
@@ -167,38 +251,60 @@ export default function AddProperty() {
       if (formData.propertyType) {
         try {
           // Check if user is authenticated
-          const adminToken = localStorage.getItem("admin_token");
+          const adminToken = safeLocalStorage.getItem("admin_token");
           if (!adminToken) {
-            console.error("No admin token found when fetching amenities. User not authenticated.");
+            console.error(
+              "No admin token found when fetching amenities. User not authenticated."
+            );
             setAmenities([]);
             return;
           }
-          
-          console.log("Fetching amenities for property type:", formData.propertyType);
-          const amenitiesResponse = await propertyAPI.getAmenitiesForPropertyType(formData.propertyType);
+
+          console.log(
+            "Fetching amenities for property type:",
+            formData.propertyType
+          );
+          const amenitiesResponse =
+            await propertyAPI.getAmenitiesForPropertyType(
+              formData.propertyType
+            );
           console.log("Amenities API response:", amenitiesResponse);
-          
-          if (amenitiesResponse.success && amenitiesResponse.data && Array.isArray(amenitiesResponse.data.all)) {
+
+          if (
+            amenitiesResponse.success &&
+            amenitiesResponse.data &&
+            Array.isArray(amenitiesResponse.data.all)
+          ) {
             setAmenities(amenitiesResponse.data.all);
-            console.log("Amenities set successfully:", amenitiesResponse.data.all);
+            console.log(
+              "Amenities set successfully:",
+              amenitiesResponse.data.all
+            );
           } else {
-            console.warn("Amenities response structure is incorrect:", amenitiesResponse);
+            console.warn(
+              "Amenities response structure is incorrect:",
+              amenitiesResponse
+            );
             // Use fallback amenities from adminUtils
-            setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+            setAmenities(
+              adminUtils.getAmenitiesForPropertyType(formData.propertyType)
+            );
           }
         } catch (error) {
           console.error("Error fetching amenities:", error);
-          
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
-            localStorage.removeItem("admin_token");
-            localStorage.removeItem("admin_user");
+            safeLocalStorage.removeItem("admin_token");
+            safeLocalStorage.removeItem("admin_user");
             router.push("/admin/login");
             return;
           }
-          
+
           // Use fallback amenities from adminUtils
-          setAmenities(adminUtils.getAmenitiesForPropertyType(formData.propertyType));
+          setAmenities(
+            adminUtils.getAmenitiesForPropertyType(formData.propertyType)
+          );
         }
       } else {
         setAmenities([]);
@@ -210,103 +316,136 @@ export default function AddProperty() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child, subChild] = name.split('.');
-      setFormData(prev => ({
+
+    if (name.includes(".")) {
+      const [parent, child, subChild] = name.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: subChild ? {
-            ...prev[parent]?.[child],
-            [subChild]: type === 'checkbox' ? checked : value
-          } : (type === 'checkbox' ? checked : value)
-        }
+          [child]: subChild
+            ? {
+                ...prev[parent]?.[child],
+                [subChild]: type === "checkbox" ? checked : value,
+              }
+            : type === "checkbox"
+            ? checked
+            : value,
+        },
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }));
+      setFormData((prev) => {
+        const newFormData = {
+          ...prev,
+          [name]: type === "checkbox" ? checked : value,
+        };
+
+        // Clear bedrooms when property type changes to office or studio
+        if (
+          name === "propertyType" &&
+          (value === "office" || value === "studio")
+        ) {
+          newFormData.details = {
+            ...newFormData.details,
+            bedrooms: "",
+          };
+        }
+
+        // Clear floorLevel when property type changes to villa or townhouse
+        if (
+          name === "propertyType" &&
+          (value === "villa" || value === "townhouse")
+        ) {
+          newFormData.details = {
+            ...newFormData.details,
+            floorLevel: "",
+          };
+        }
+
+        // Clear landArea when property type changes to apartment, penthouse, or studio
+        if (
+          name === "propertyType" &&
+          (value === "apartment" || value === "penthouse" || value === "studio")
+        ) {
+          newFormData.details = {
+            ...newFormData.details,
+            landArea: "",
+          };
+        }
+
+        return newFormData;
+      });
     }
 
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
+    let errorKey = name;
+
+    // Map field names to their corresponding error keys
+    if (name === "location.area") {
+      errorKey = "locationArea";
+    } else if (name.includes(".")) {
+      const parts = name.split(".");
+      errorKey = parts[parts.length - 1]; // Use the last part for other nested fields
+    }
+
+    if (errors[errorKey]) {
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [errorKey]: "",
       }));
     }
   };
 
   const handleAmenityChange = (amenity) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      amenities: Array.isArray(prev.amenities) 
-        ? (prev.amenities.includes(amenity)
-            ? prev.amenities.filter(a => a !== amenity)
-            : [...prev.amenities, amenity])
-        : [amenity]
+      amenities: Array.isArray(prev.amenities)
+        ? prev.amenities.includes(amenity)
+          ? prev.amenities.filter((a) => a !== amenity)
+          : [...prev.amenities, amenity]
+        : [amenity],
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    
+
     // Create image objects with file references for API
     const newImages = files.map((file, index) => ({
       file: file,
       preview: URL.createObjectURL(file),
-      order: (Array.isArray(formData.images) ? formData.images.length : 0) + index,
-      isMain: (!Array.isArray(formData.images) || formData.images.length === 0) && index === 0
+      order:
+        (Array.isArray(formData.images) ? formData.images.length : 0) + index,
+      isMain:
+        (!Array.isArray(formData.images) || formData.images.length === 0) &&
+        index === 0,
     }));
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      images: Array.isArray(prev.images) ? [...prev.images, ...newImages] : newImages
+      images: Array.isArray(prev.images)
+        ? [...prev.images, ...newImages]
+        : newImages,
     }));
   };
 
   const removeImage = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: Array.isArray(prev.images) ? prev.images.filter((_, i) => i !== index) : []
+      images: Array.isArray(prev.images)
+        ? prev.images.filter((_, i) => i !== index)
+        : [],
     }));
   };
 
   const validateForm = () => {
-    // Use adminUtils validation function
-    const validation = adminUtils.validatePropertyData(formData);
-    if (!validation.isValid) {
-      // Map validation errors to form field names
-      const mappedErrors = {};
-      validation.errors.forEach(error => {
-        // Map common field names
-        if (error.includes('title')) mappedErrors.title = error;
-        else if (error.includes('description')) mappedErrors.description = error;
-        else if (error.includes('property type')) mappedErrors.propertyType = error;
-        else if (error.includes('price')) mappedErrors.price = error;
-        else if (error.includes('listing type')) mappedErrors.listingType = error;
-        else if (error.includes('emirate')) mappedErrors.emirate = error;
-        else if (error.includes('address')) mappedErrors.address = error;
-        else if (error.includes('area')) mappedErrors.area = error;
-        //else if (error.includes('bedrooms')) mappedErrors.bedrooms = error;
-        //else if (error.includes('bathrooms')) mappedErrors.bathrooms = error;
-        else if (error.includes('images')) mappedErrors.images = error;
-        else mappedErrors.submit = error;
-      });
-      setErrors(mappedErrors);
-      return false;
-    }
-    
-    // Clear previous errors
-    setErrors({});
+    // Let the server handle all validation for consistency
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -319,13 +458,17 @@ export default function AddProperty() {
       if (Array.isArray(formData.images) && formData.images.length > 0) {
         const formDataImages = new FormData();
         formData.images.forEach((image, index) => {
-          formDataImages.append('images', image.file);
+          formDataImages.append("images", image.file);
         });
 
         console.log("Uploading images...");
         const uploadResponse = await uploadAPI.uploadImages(formDataImages);
-        
-        if (uploadResponse.success && uploadResponse.data && uploadResponse.data.images) {
+
+        if (
+          uploadResponse.success &&
+          uploadResponse.data &&
+          uploadResponse.data.images
+        ) {
           uploadedImages = uploadResponse.data.images;
           console.log("Images uploaded successfully:", uploadedImages);
         } else {
@@ -349,63 +492,196 @@ export default function AddProperty() {
           emirate: formData.location.emirate,
           area: formData.location.area,
           country: formData.location.country,
-          neighborhood: formData.location.neighborhood?.trim() || ''
+          neighborhood: formData.location.neighborhood?.trim() || "",
         },
         details: {
-          bedrooms: parseInt(formData.details.bedrooms),
+          // Only include bedrooms for property types other than office and studio
+          ...(shouldShowBedrooms() && {
+            bedrooms: parseInt(formData.details.bedrooms),
+          }),
           bathrooms: parseInt(formData.details.bathrooms),
           area: parseFloat(formData.details.area),
           areaUnit: formData.details.areaUnit,
-          floorLevel: formData.details.floorLevel || null,
-          totalFloors: formData.details.totalFloors ? parseInt(formData.details.totalFloors) : null,
-          landArea: formData.details.landArea ? parseFloat(formData.details.landArea) : null,
-          yearBuilt: formData.details.yearBuilt ? parseInt(formData.details.yearBuilt) : null,
+          // Only include floorLevel for property types other than villa, townhouse, penthouse
+          ...(shouldShowFloorLevel() &&
+            formData.details.floorLevel && {
+              floorLevel: formData.details.floorLevel,
+            }),
+          // Include totalFloors if provided (optional for all property types)
+          ...(formData.details.totalFloors && {
+            totalFloors: parseInt(formData.details.totalFloors),
+          }),
+          landArea: formData.details.landArea
+            ? parseFloat(formData.details.landArea)
+            : null,
+          yearBuilt: formData.details.yearBuilt
+            ? parseInt(formData.details.yearBuilt)
+            : null,
           parking: {
             available: formData.details.parking.available,
             type: formData.details.parking.type || null,
-            spaces: formData.details.parking.spaces || 0
-          }
+            spaces: formData.details.parking.spaces || 0,
+          },
         },
         amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
-        images: uploadedImages
+        images: uploadedImages,
       };
-      
+
       // Log the data being sent for debugging
       console.log("AddProperty: Property data being sent:", propertyData);
       console.log("AddProperty: Images count:", uploadedImages.length);
 
       // Create property using the API
       const response = await propertyAPI.createProperty(propertyData);
-      
+
+      console.log("API Response:", response);
+
       if (response.success) {
         // Redirect immediately without showing alert
         router.push("/admin/property-management");
       } else {
-        setErrors(prev => ({ 
-          ...prev, 
-          submit: response.error || "Failed to add property" 
-        }));
+        console.log("Response failed, checking for validation errors...");
+        console.log("Response details:", response.details);
+
+        // Handle backend validation errors
+        if (response.details && Array.isArray(response.details)) {
+          console.log("Found validation details, mapping to field errors...");
+          const fieldErrors = {};
+          response.details.forEach((detail) => {
+            console.log("Processing detail:", detail);
+
+            // Map backend field names to frontend field names if needed
+            let fieldName = detail.field;
+
+            // Map backend field names to frontend field names, preserving nested structure for unique keys
+            if (fieldName === "propertyType") fieldName = "propertyType";
+            else if (fieldName === "listingType") fieldName = "listingType";
+            else if (fieldName === "location.emirate") fieldName = "emirate";
+            else if (fieldName === "location.area") fieldName = "locationArea";
+            else if (fieldName === "location.address") fieldName = "address";
+            else if (fieldName === "details.bedrooms") fieldName = "bedrooms";
+            else if (fieldName === "details.bathrooms") fieldName = "bathrooms";
+            else if (fieldName === "details.area") fieldName = "area";
+            else if (fieldName === "details.totalFloors")
+              fieldName = "totalFloors";
+            else if (fieldName === "details.floorLevel")
+              fieldName = "floorLevel";
+            else if (fieldName === "details.landArea") fieldName = "landArea";
+            else if (fieldName === "details.parking.type")
+              fieldName = "parkingType";
+            else if (fieldName === "details.parking.spaces")
+              fieldName = "parkingSpaces";
+            else if (fieldName === "details.parking.available")
+              fieldName = "parkingAvailable";
+            // Handle any other nested fields by keeping the full path as fallback
+            else if (fieldName.includes(".")) {
+              fieldName = fieldName.replace(".", "_"); // Convert dots to underscores for unique keys
+            }
+
+            fieldErrors[fieldName] = detail.message;
+          });
+          console.log("Final field errors:", fieldErrors);
+          setErrors(fieldErrors);
+        } else {
+          setErrors((prev) => ({
+            ...prev,
+            submit: response.error || "Failed to add property",
+          }));
+        }
       }
     } catch (error) {
-      console.error("Error adding property:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
+      // Handle validation errors (400) differently from other errors
+      if (error.response?.status === 400 && error.response?.data) {
+        // This is expected validation error - handle gracefully without console noise
+        if (
+          error.response.data.details &&
+          Array.isArray(error.response.data.details)
+        ) {
+          const fieldErrors = {};
+          error.response.data.details.forEach((detail) => {
+            // Map backend field names to frontend field names if needed
+            let fieldName = detail.field;
+
+            // Map backend field names to frontend field names, preserving nested structure for unique keys
+            if (fieldName === "propertyType") fieldName = "propertyType";
+            else if (fieldName === "listingType") fieldName = "listingType";
+            else if (fieldName === "location.emirate") fieldName = "emirate";
+            else if (fieldName === "location.area") fieldName = "locationArea";
+            else if (fieldName === "location.address") fieldName = "address";
+            else if (fieldName === "details.bedrooms") fieldName = "bedrooms";
+            else if (fieldName === "details.bathrooms") fieldName = "bathrooms";
+            else if (fieldName === "details.area") fieldName = "area";
+            else if (fieldName === "details.totalFloors")
+              fieldName = "totalFloors";
+            else if (fieldName === "details.floorLevel")
+              fieldName = "floorLevel";
+            else if (fieldName === "details.landArea") fieldName = "landArea";
+            else if (fieldName === "details.parking.type")
+              fieldName = "parkingType";
+            else if (fieldName === "details.parking.spaces")
+              fieldName = "parkingSpaces";
+            else if (fieldName === "details.parking.available")
+              fieldName = "parkingAvailable";
+            // Handle any other nested fields by keeping the full path as fallback
+            else if (fieldName.includes(".")) {
+              fieldName = fieldName.replace(".", "_"); // Convert dots to underscores for unique keys
+            }
+
+            // If there are multiple errors for the same field, combine them
+            if (fieldErrors[fieldName]) {
+              fieldErrors[fieldName] += "; " + detail.message;
+            } else {
+              fieldErrors[fieldName] = detail.message;
+            }
+          });
+
+          setErrors(fieldErrors);
+          return; // Don't process other error types
+        }
+
+        // Handle other 400 errors
+        let errorMessage = "Please fix the validation errors below";
+        if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (typeof error.response.data === "string") {
+          errorMessage = error.response.data;
+        }
+
+        setErrors((prev) => ({
+          ...prev,
+          submit: errorMessage,
+        }));
+        return;
+      }
+
+      // This is an unexpected error - log it for debugging
+      console.error("Unexpected error adding property:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
 
       let errorMessage = "Failed to add property";
 
       // Handle specific error types with user-friendly messages
       if (error.message) {
-        if (error.message.includes('CORS Error')) {
-          errorMessage = "CORS Error: The server is blocking requests from your browser. Please contact support.";
-        } else if (error.message.includes('File too large')) {
-          errorMessage = "File too large: Please compress your images or use smaller files (under 10MB each).";
-        } else if (error.message.includes('Network Error')) {
-          errorMessage = "Network Error: Unable to connect to the server. Please check your internet connection.";
-        } else if (error.message.includes('Authentication failed')) {
+        if (error.message.includes("CORS Error")) {
+          errorMessage =
+            "CORS Error: The server is blocking requests from your browser. Please contact support.";
+        } else if (error.message.includes("File too large")) {
+          errorMessage =
+            "File too large: Please compress your images or use smaller files (under 10MB each).";
+        } else if (error.message.includes("Network Error")) {
+          errorMessage =
+            "Network Error: Unable to connect to the server. Please check your internet connection.";
+        } else if (error.message.includes("Authentication failed")) {
           errorMessage = "Authentication failed: Please log in again.";
-        } else if (error.message.includes('Access denied')) {
-          errorMessage = "Access denied: You do not have permission to create properties.";
-        } else if (error.message.includes('Upload failed')) {
+        } else if (error.message.includes("Access denied")) {
+          errorMessage =
+            "Access denied: You do not have permission to create properties.";
+        } else if (error.message.includes("Upload failed")) {
           errorMessage = error.message; // Use the specific upload error message
         } else {
           errorMessage = error.message; // Use the error message from the API
@@ -413,19 +689,6 @@ export default function AddProperty() {
       } else if (error.response?.data) {
         if (error.response.data.error) {
           errorMessage = error.response.data.error;
-
-          // If there are detailed validation errors, set them as field errors
-          if (
-            error.response.data.details &&
-            Array.isArray(error.response.data.details)
-          ) {
-            const fieldErrors = {};
-            error.response.data.details.forEach((detail) => {
-              fieldErrors[detail.field] = detail.message;
-            });
-            setErrors(fieldErrors);
-            return; // Don't show alert, errors are now displayed on fields
-          }
         } else if (error.response.data.message) {
           errorMessage = error.response.data.message;
         } else if (typeof error.response.data === "string") {
@@ -433,9 +696,9 @@ export default function AddProperty() {
         }
       }
 
-      setErrors(prev => ({ 
-        ...prev, 
-        submit: errorMessage 
+      setErrors((prev) => ({
+        ...prev,
+        submit: errorMessage,
       }));
     } finally {
       setIsSubmitting(false);
@@ -470,9 +733,7 @@ export default function AddProperty() {
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="alert alert-danger mb-20">
-            {errors.submit}
-          </div>
+          <div className="alert alert-danger mb-20">{errors.submit}</div>
         )}
 
         {/* Upload Media Section */}
@@ -500,9 +761,9 @@ export default function AddProperty() {
                   />
                 </svg>
                 Select photos
-                <input 
-                  type="file" 
-                  className="ip-file" 
+                <input
+                  type="file"
+                  className="ip-file"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
@@ -528,10 +789,10 @@ export default function AddProperty() {
                     height={405}
                     src={image.preview}
                   />
-                  <span 
+                  <span
                     className="icon icon-trashcan1 remove-file"
                     onClick={() => removeImage(index)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   />
                 </div>
               ))}
@@ -551,26 +812,30 @@ export default function AddProperty() {
                 <input
                   type="text"
                   name="title"
-                  className={`form-control ${errors.title ? 'error' : ''}`}
+                  className={`form-control ${errors.title ? "error" : ""}`}
                   placeholder="Enter property title"
                   value={formData.title}
                   onChange={handleInputChange}
                 />
-                {errors.title && <span className="error-text">{errors.title}</span>}
+                {errors.title && (
+                  <span className="error-text">{errors.title}</span>
+                )}
               </fieldset>
             </div>
-            
+
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
                 <textarea
                   name="description"
-                  className={`textarea ${errors.description ? 'error' : ''}`}
+                  className={`textarea ${errors.description ? "error" : ""}`}
                   placeholder="Your Description"
                   value={formData.description}
                   onChange={handleInputChange}
                 />
-                {errors.description && <span className="error-text">{errors.description}</span>}
+                {errors.description && (
+                  <span className="error-text">{errors.description}</span>
+                )}
               </fieldset>
             </div>
 
@@ -581,16 +846,23 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="propertyType"
-                  className={`form-control ${errors.propertyType ? 'error' : ''}`}
+                  className={`form-control ${
+                    errors.propertyType ? "error" : ""
+                  }`}
                   value={formData.propertyType}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Property Type</option>
-                  {Array.isArray(propertyTypes) && propertyTypes.map(type => (
-                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                  ))}
+                  {Array.isArray(propertyTypes) &&
+                    propertyTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
                 </select>
-                {errors.propertyType && <span className="error-text">{errors.propertyType}</span>}
+                {errors.propertyType && (
+                  <span className="error-text">{errors.propertyType}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -599,16 +871,23 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="listingType"
-                  className={`form-control ${errors.listingType ? 'error' : ''}`}
+                  className={`form-control ${
+                    errors.listingType ? "error" : ""
+                  }`}
                   value={formData.listingType}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Listing Type</option>
-                  {Array.isArray(listingTypes) && listingTypes.map(type => (
-                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                  ))}
+                  {Array.isArray(listingTypes) &&
+                    listingTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
                 </select>
-                {errors.listingType && <span className="error-text">{errors.listingType}</span>}
+                {errors.listingType && (
+                  <span className="error-text">{errors.listingType}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -619,9 +898,12 @@ export default function AddProperty() {
                   value={formData.status}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(propertyStatuses) && propertyStatuses.map(status => (
-                    <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
-                  ))}
+                  {Array.isArray(propertyStatuses) &&
+                    propertyStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
             </div>
@@ -640,12 +922,14 @@ export default function AddProperty() {
                 <input
                   type="text"
                   name="location.address"
-                  className={`form-control ${errors.address ? 'error' : ''}`}
+                  className={`form-control ${errors.address ? "error" : ""}`}
                   placeholder="Enter property address"
                   value={formData.location.address}
                   onChange={handleInputChange}
                 />
-                {errors.address && <span className="error-text">{errors.address}</span>}
+                {errors.address && (
+                  <span className="error-text">{errors.address}</span>
+                )}
               </fieldset>
             </div>
 
@@ -656,16 +940,21 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="location.emirate"
-                  className={`form-control ${errors.emirate ? 'error' : ''}`}
+                  className={`form-control ${errors.emirate ? "error" : ""}`}
                   value={formData.location.emirate}
                   onChange={handleInputChange}
                 >
                   <option value="">Select Emirate</option>
-                  {Array.isArray(emirates) && emirates.map(emirate => (
-                    <option key={emirate} value={emirate}>{emirate}</option>
-                  ))}
+                  {Array.isArray(emirates) &&
+                    emirates.map((emirate) => (
+                      <option key={emirate} value={emirate}>
+                        {emirate}
+                      </option>
+                    ))}
                 </select>
-                {errors.emirate && <span className="error-text">{errors.emirate}</span>}
+                {errors.emirate && (
+                  <span className="error-text">{errors.emirate}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -674,17 +963,24 @@ export default function AddProperty() {
                 </label>
                 <select
                   name="location.area"
-                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  className={`form-control ${
+                    errors.locationArea ? "error" : ""
+                  }`}
                   value={formData.location.area}
                   onChange={handleInputChange}
                   disabled={!formData.location.emirate}
                 >
                   <option value="">Select Area</option>
-                  {Array.isArray(areas) && areas.map(area => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
+                  {Array.isArray(areas) &&
+                    areas.map((area) => (
+                      <option key={area} value={area}>
+                        {area}
+                      </option>
+                    ))}
                 </select>
-                {errors.area && <span className="error-text">{errors.area}</span>}
+                {errors.locationArea && (
+                  <span className="error-text">{errors.locationArea}</span>
+                )}
               </fieldset>
             </div>
 
@@ -716,12 +1012,14 @@ export default function AddProperty() {
                 <input
                   type="number"
                   name="price"
-                  className={`form-control ${errors.price ? 'error' : ''}`}
+                  className={`form-control ${errors.price ? "error" : ""}`}
                   placeholder="Enter price"
                   value={formData.price}
                   onChange={handleInputChange}
                 />
-                {errors.price && <span className="error-text">{errors.price}</span>}
+                {errors.price && (
+                  <span className="error-text">{errors.price}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -732,9 +1030,12 @@ export default function AddProperty() {
                   value={formData.currency}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(currencies) && currencies.map(currency => (
-                    <option key={currency} value={currency}>{currency}</option>
-                  ))}
+                  {Array.isArray(currencies) &&
+                    currencies.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
 
@@ -746,9 +1047,13 @@ export default function AddProperty() {
                   value={formData.priceType}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(priceTypes) && priceTypes.map(type => (
-                    <option key={type} value={type}>{type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}</option>
-                  ))}
+                  {Array.isArray(priceTypes) &&
+                    priceTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.replace("_", " ").charAt(0).toUpperCase() +
+                          type.replace("_", " ").slice(1)}
+                      </option>
+                    ))}
                 </select>
               </fieldset>
             </div>
@@ -760,116 +1065,311 @@ export default function AddProperty() {
           <h5 className="title">Property Details</h5>
           <form className="box-info-property">
             <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="bedrooms">
-                  Bedrooms:<span>*</span>
-                </label>
-                <input 
-                  type="number" 
-                  name="details.bedrooms"
-                  className={`form-control ${errors.bedrooms ? 'error' : ''}`}
-                  placeholder="Number of bedrooms"
-                  value={formData.details.bedrooms}
-                  onChange={handleInputChange}
-                />
-                {errors.bedrooms && <span className="error-text">{errors.bedrooms}</span>}
-              </fieldset>
+              {/* Conditionally render bedrooms field - not applicable for office and studio */}
+              {shouldShowBedrooms() && (
+                <fieldset className="box-fieldset">
+                  <label htmlFor="bedrooms">
+                    Bedrooms:<span>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="details.bedrooms"
+                    className={`form-control ${errors.bedrooms ? "error" : ""}`}
+                    placeholder="Number of bedrooms"
+                    value={formData.details.bedrooms}
+                    onChange={handleInputChange}
+                  />
+                  {errors.bedrooms && (
+                    <span className="error-text">{errors.bedrooms}</span>
+                  )}
+                </fieldset>
+              )}
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
                   Bathrooms:<span>*</span>
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="details.bathrooms"
-                  className={`form-control ${errors.bathrooms ? 'error' : ''}`}
+                  className={`form-control ${errors.bathrooms ? "error" : ""}`}
                   placeholder="Number of bathrooms"
                   value={formData.details.bathrooms}
                   onChange={handleInputChange}
                 />
-                {errors.bathrooms && <span className="error-text">{errors.bathrooms}</span>}
+                {errors.bathrooms && (
+                  <span className="error-text">{errors.bathrooms}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
                   Area Size:<span>*</span>
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="details.area"
-                  className={`form-control ${errors.area ? 'error' : ''}`}
+                  className={`form-control ${errors.area ? "error" : ""}`}
                   placeholder="Area size"
                   value={formData.details.area}
                   onChange={handleInputChange}
                 />
-                {errors.area && <span className="error-text">{errors.area}</span>}
+                {errors.area && (
+                  <span className="error-text">{errors.area}</span>
+                )}
               </fieldset>
+
+              {/* When bedrooms is hidden (office/studio), move Area Unit up to fill the gap */}
+              {isOfficeOrStudio() && (
+                <fieldset className="box-fieldset">
+                  <label htmlFor="areaUnit">Area Unit:</label>
+                  <select
+                    name="details.areaUnit"
+                    className="form-control"
+                    value={formData.details.areaUnit}
+                    onChange={handleInputChange}
+                  >
+                    {Array.isArray(areaUnits) &&
+                      areaUnits.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit.toUpperCase()}
+                        </option>
+                      ))}
+                  </select>
+                </fieldset>
+              )}
             </div>
 
             <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="areaUnit">Area Unit:</label>
-                <select
-                  name="details.areaUnit"
-                  className="form-control"
-                  value={formData.details.areaUnit}
-                  onChange={handleInputChange}
-                >
-                  {Array.isArray(areaUnits) && areaUnits.map(unit => (
-                    <option key={unit} value={unit}>{unit.toUpperCase()}</option>
-                  ))}
-                </select>
-              </fieldset>
+              {/* Show these fields here when bedrooms is visible (not office/studio) */}
+              {shouldShowBedrooms() && (
+                <>
+                  <fieldset className="box-fieldset">
+                    <label htmlFor="areaUnit">Area Unit:</label>
+                    <select
+                      name="details.areaUnit"
+                      className="form-control"
+                      value={formData.details.areaUnit}
+                      onChange={handleInputChange}
+                    >
+                      {Array.isArray(areaUnits) &&
+                        areaUnits.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit.toUpperCase()}
+                          </option>
+                        ))}
+                    </select>
+                  </fieldset>
 
-              <fieldset className="box-fieldset">
-                <label htmlFor="floorLevel">Floor Level:</label>
-                <input
-                  type="text"
-                  name="details.floorLevel"
-                  className="form-control"
-                  placeholder="Floor level (optional)"
-                  value={formData.details.floorLevel}
-                  onChange={handleInputChange}
-                />
-              </fieldset>
+                  {/* Only show Floor Level for property types other than villa, townhouse, penthouse */}
+                  {shouldShowFloorLevel() && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="floorLevel">Floor Level:</label>
+                      <input
+                        type="text"
+                        name="details.floorLevel"
+                        className={`form-control ${
+                          errors.floorLevel ? "error" : ""
+                        }`}
+                        placeholder="Floor level (optional)"
+                        value={formData.details.floorLevel}
+                        onChange={handleInputChange}
+                      />
+                      {errors.floorLevel && (
+                        <span className="error-text">{errors.floorLevel}</span>
+                      )}
+                    </fieldset>
+                  )}
 
-              <fieldset className="box-fieldset">
-                <label htmlFor="totalFloors">Total Floors:</label>
-                <input
-                  type="number"
-                  name="details.totalFloors"
-                  className="form-control"
-                  placeholder="Total floors (optional)"
-                  value={formData.details.totalFloors}
-                  onChange={handleInputChange}
-                />
-              </fieldset>
+                  {/* Show Total Floors here for non-villa/townhouse/penthouse types */}
+                  {!isVillaTownhousePenthouse() && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="totalFloors">Total Floors:</label>
+                      <input
+                        type="number"
+                        name="details.totalFloors"
+                        className={`form-control ${
+                          errors.totalFloors ? "error" : ""
+                        }`}
+                        placeholder="Total floors (optional)"
+                        value={formData.details.totalFloors}
+                        onChange={handleInputChange}
+                      />
+                      {errors.totalFloors && (
+                        <span className="error-text">{errors.totalFloors}</span>
+                      )}
+                    </fieldset>
+                  )}
+                </>
+              )}
+
+              {/* Show Floor Level and Total Floors here when in office/studio mode */}
+              {isOfficeOrStudio() && (
+                <>
+                  {/* Only show Floor Level for property types other than villa, townhouse, penthouse */}
+                  {shouldShowFloorLevel() && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="floorLevel">Floor Level:</label>
+                      <input
+                        type="text"
+                        name="details.floorLevel"
+                        className={`form-control ${
+                          errors.floorLevel ? "error" : ""
+                        }`}
+                        placeholder="Floor level (optional)"
+                        value={formData.details.floorLevel}
+                        onChange={handleInputChange}
+                      />
+                      {errors.floorLevel && (
+                        <span className="error-text">{errors.floorLevel}</span>
+                      )}
+                    </fieldset>
+                  )}
+
+                  {/* Only show Total Floors for property types other than villa, townhouse, penthouse */}
+                  {shouldShowTotalFloors() && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="totalFloors">Total Floors:</label>
+                      <input
+                        type="number"
+                        name="details.totalFloors"
+                        className={`form-control ${
+                          errors.totalFloors ? "error" : ""
+                        }`}
+                        placeholder="Total floors (optional)"
+                        value={formData.details.totalFloors}
+                        onChange={handleInputChange}
+                      />
+                      {errors.totalFloors && (
+                        <span className="error-text">{errors.totalFloors}</span>
+                      )}
+                    </fieldset>
+                  )}
+
+                  {/* Show Land Area for office, villa, townhouse OR Year Built for studio */}
+                  {formData.propertyType === "office" && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="landArea">Land Area:</label>
+                      <input
+                        type="number"
+                        name="details.landArea"
+                        className={`form-control ${
+                          errors.landArea ? "error" : ""
+                        }`}
+                        placeholder="Land area (optional)"
+                        value={formData.details.landArea}
+                        onChange={handleInputChange}
+                      />
+                      {errors.landArea && (
+                        <span className="error-text">{errors.landArea}</span>
+                      )}
+                    </fieldset>
+                  )}
+
+                  {formData.propertyType === "studio" && (
+                    <fieldset className="box-fieldset">
+                      <label htmlFor="yearBuilt">Year Built:</label>
+                      <input
+                        type="number"
+                        name="details.yearBuilt"
+                        className={`form-control ${
+                          errors.yearBuilt ? "error" : ""
+                        }`}
+                        placeholder="Year built (optional)"
+                        value={formData.details.yearBuilt}
+                        onChange={handleInputChange}
+                      />
+                      {errors.yearBuilt && (
+                        <span className="error-text">{errors.yearBuilt}</span>
+                      )}
+                    </fieldset>
+                  )}
+                </>
+              )}
+
+              {/* Show Total Floors for villa/townhouse */}
+              {(formData.propertyType === "villa" ||
+                formData.propertyType === "townhouse") && (
+                <fieldset className="box-fieldset">
+                  <label htmlFor="totalFloors">Total Floors:</label>
+                  <input
+                    type="number"
+                    name="details.totalFloors"
+                    className={`form-control ${
+                      errors.totalFloors ? "error" : ""
+                    }`}
+                    placeholder="Total floors (optional)"
+                    value={formData.details.totalFloors}
+                    onChange={handleInputChange}
+                  />
+                  {errors.totalFloors && (
+                    <span className="error-text">{errors.totalFloors}</span>
+                  )}
+                </fieldset>
+              )}
+
+              {/* Show Land Area for villa/townhouse */}
+              {(formData.propertyType === "villa" ||
+                formData.propertyType === "townhouse") && (
+                <fieldset className="box-fieldset">
+                  <label htmlFor="landArea">Land Area:</label>
+                  <input
+                    type="number"
+                    name="details.landArea"
+                    className={`form-control ${errors.landArea ? "error" : ""}`}
+                    placeholder="Land area (optional)"
+                    value={formData.details.landArea}
+                    onChange={handleInputChange}
+                  />
+                  {errors.landArea && (
+                    <span className="error-text">{errors.landArea}</span>
+                  )}
+                </fieldset>
+              )}
+
+              {/* Show Total Floors here when in penthouse mode only (villa/townhouse have their own section above) */}
+              {formData.propertyType === "penthouse" && (
+                <>
+                  <fieldset className="box-fieldset">
+                    <label htmlFor="totalFloors">Total Floors:</label>
+                    <input
+                      type="number"
+                      name="details.totalFloors"
+                      className={`form-control ${
+                        errors.totalFloors ? "error" : ""
+                      }`}
+                      placeholder="Total floors (optional)"
+                      value={formData.details.totalFloors}
+                      onChange={handleInputChange}
+                    />
+                    {errors.totalFloors && (
+                      <span className="error-text">{errors.totalFloors}</span>
+                    )}
+                  </fieldset>
+                </>
+              )}
             </div>
 
             <div className="box grid-layout-3 gap-30">
-              <fieldset className="box-fieldset">
-                <label htmlFor="landArea">Land Area:</label>
-                <input
-                  type="number"
-                  name="details.landArea"
-                  className="form-control"
-                  placeholder="Land area (optional)"
-                  value={formData.details.landArea}
-                  onChange={handleInputChange}
-                />
-              </fieldset>
-
-              <fieldset className="box-fieldset">
-                <label htmlFor="yearBuilt">Year Built:</label>
-                <input
-                  type="number"
-                  name="details.yearBuilt"
-                  className="form-control"
-                  placeholder="Year built (optional)"
-                  value={formData.details.yearBuilt}
-                  onChange={handleInputChange}
-                />
-              </fieldset>
+              {/* Year Built - exclude studio since it has yearBuilt in row 2 */}
+              {formData.propertyType !== "studio" && (
+                <fieldset className="box-fieldset">
+                  <label htmlFor="yearBuilt">Year Built:</label>
+                  <input
+                    type="number"
+                    name="details.yearBuilt"
+                    className={`form-control ${
+                      errors.yearBuilt ? "error" : ""
+                    }`}
+                    placeholder="Year built (optional)"
+                    value={formData.details.yearBuilt}
+                    onChange={handleInputChange}
+                  />
+                  {errors.yearBuilt && (
+                    <span className="error-text">{errors.yearBuilt}</span>
+                  )}
+                </fieldset>
+              )}
 
               <fieldset className="box-fieldset">
                 <label htmlFor="parkingAvailable">Parking Available:</label>
@@ -885,39 +1385,56 @@ export default function AddProperty() {
                     Available
                   </label>
                 </div>
+                {errors.parkingAvailable && (
+                  <span className="error-text">{errors.parkingAvailable}</span>
+                )}
               </fieldset>
+
+              {/* Show Parking Type in the same row when parking is available */}
+              {formData.details.parking.available && (
+                <>
+                  <fieldset className="box-fieldset">
+                    <label htmlFor="parkingType">Parking Type:</label>
+                    <select
+                      name="details.parking.type"
+                      className={`form-control ${
+                        errors.parkingType ? "error" : ""
+                      }`}
+                      value={formData.details.parking.type}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select parking type</option>
+                      {Array.isArray(parkingTypes) &&
+                        parkingTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </option>
+                        ))}
+                    </select>
+                    {errors.parkingType && (
+                      <span className="error-text">{errors.parkingType}</span>
+                    )}
+                  </fieldset>
+
+                  <fieldset className="box-fieldset">
+                    <label htmlFor="parkingSpaces">Parking Spaces:</label>
+                    <input
+                      type="number"
+                      name="details.parking.spaces"
+                      className={`form-control ${
+                        errors.parkingSpaces ? "error" : ""
+                      }`}
+                      placeholder="Number of parking spaces"
+                      value={formData.details.parking.spaces}
+                      onChange={handleInputChange}
+                    />
+                    {errors.parkingSpaces && (
+                      <span className="error-text">{errors.parkingSpaces}</span>
+                    )}
+                  </fieldset>
+                </>
+              )}
             </div>
-
-            {formData.details.parking.available && (
-              <div className="box grid-layout-2 gap-30">
-                <fieldset className="box-fieldset">
-                  <label htmlFor="parkingType">Parking Type:</label>
-                  <select
-                    name="details.parking.type"
-                    className="form-control"
-                    value={formData.details.parking.type}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select parking type</option>
-                    {Array.isArray(parkingTypes) && parkingTypes.map(type => (
-                      <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                    ))}
-                  </select>
-                </fieldset>
-
-                <fieldset className="box-fieldset">
-                  <label htmlFor="parkingSpaces">Parking Spaces:</label>
-                  <input
-                    type="number"
-                    name="details.parking.spaces"
-                    className="form-control"
-                    placeholder="Number of parking spaces"
-                    value={formData.details.parking.spaces}
-                    onChange={handleInputChange}
-                  />
-                </fieldset>
-              </div>
-            )}
           </form>
         </div>
 
@@ -926,16 +1443,20 @@ export default function AddProperty() {
           <h5 className="title">Amenities</h5>
           <div className="box-amenities-property">
             <div className="amenities-grid">
-              {Array.isArray(amenities) && amenities.map(amenity => (
-                <label key={amenity} className="amenity-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={Array.isArray(formData.amenities) && formData.amenities.includes(amenity)}
-                    onChange={() => handleAmenityChange(amenity)}
-                  />
-                  <span>{amenity}</span>
-                </label>
-              ))}
+              {Array.isArray(amenities) &&
+                amenities.map((amenity) => (
+                  <label key={amenity} className="amenity-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={
+                        Array.isArray(formData.amenities) &&
+                        formData.amenities.includes(amenity)
+                      }
+                      onChange={() => handleAmenityChange(amenity)}
+                    />
+                    <span>{amenity}</span>
+                  </label>
+                ))}
             </div>
           </div>
         </div>
@@ -947,8 +1468,8 @@ export default function AddProperty() {
             <div className="radio-item">
               <label>
                 <span className="text-1">Mark as Featured Property</span>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   name="featured"
                   checked={formData.featured}
                   onChange={handleInputChange}

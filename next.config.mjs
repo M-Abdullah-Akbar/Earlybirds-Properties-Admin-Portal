@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Help prevent hydration mismatches
+  experimental: {
+    optimizePackageImports: ["bootstrap"],
+  },
+  // Suppress hydration warnings for browser extensions
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   redirects: () => {
     return [
       {
@@ -52,4 +60,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-

@@ -1,14 +1,16 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { authAPI } from '@/utlis/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authAPI } from "@/utlis/api";
+import { safeLocalStorage } from "@/utlis/clientUtils";
+import { useClientMount } from "@/utlis/useClientMount";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -18,106 +20,146 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  const hasMounted = useClientMount();
 
   // Check if user is logged in on mount
   useEffect(() => {
+    if (!hasMounted) return; // Wait for client-side mount to prevent hydration mismatch
+
     const checkAuth = async () => {
-      console.log('AuthContext: Starting authentication check...');
-      const token = localStorage.getItem('admin_token');
-      const userData = localStorage.getItem('admin_user');
-      
-      console.log('AuthContext: Token exists:', !!token);
-      console.log('AuthContext: User data exists:', !!userData);
-      
+      const token = safeLocalStorage.getItem("admin_token");
+      const userData = safeLocalStorage.getItem("admin_user");
+
       if (token && userData) {
         try {
           // Instead of calling a non-existent verify endpoint,
           // we'll just check if the token exists and user data is valid
           // The API response interceptor will handle invalid tokens automatically
           const user = JSON.parse(userData);
-          console.log('AuthContext: Setting authenticated user:', user.username);
           setUser(user);
           setIsAuthenticated(true);
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error("Error parsing user data:", error);
           logout();
         }
-      } else {
-        console.log('AuthContext: No token or user data found');
       }
-      console.log('AuthContext: Authentication check complete, setting isLoading to false');
       setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [hasMounted]);
 
   const login = async (credentials) => {
-    console.log('AuthContext: Login attempt with credentials:', { username: credentials.username, hasToken: !!credentials.token });
     try {
       // Handle token-based authentication
       if (credentials.token) {
         // Validate the hex token
-        const validToken = 'f8e7d6c5b4a398765432109876543210';
+        const validToken = "f8e7d6c5b4a398765432109876543210";
         if (credentials.token === validToken) {
           // For now, use mock user data for token auth
           // In production, this should call a backend endpoint
           const mockUser = {
             id: 1,
-            username: 'admin',
-            email: 'admin@earlybirds.com',
-            role: 'admin',
-            name: 'Admin User',
-            loginMethod: 'token'
+            username: "admin",
+            email: "admin@earlybirds.com",
+            role: "admin",
+            name: "Admin User",
+            loginMethod: "token",
           };
-          
-          const mockToken = 'mock-jwt-token-' + Date.now();
-          console.log('AuthContext: Token auth successful, storing mock data');
-          localStorage.setItem('admin_token', mockToken);
-          localStorage.setItem('admin_user', JSON.stringify(mockUser));
-          
+
+          const mockToken = "mock-jwt-token-" + Date.now();
+          safeLocalStorage.setItem("admin_token", mockToken);
+          safeLocalStorage.setItem("admin_user", JSON.stringify(mockUser));
+
           setUser(mockUser);
           setIsAuthenticated(true);
-          
+
           return { success: true };
         } else {
-          console.log('AuthContext: Invalid hex token');
-          return { success: false, error: 'Invalid or expired access token' };
+          return { success: false, error: "Invalid or expired access token" };
         }
       }
 
       // Handle regular username/password authentication with real backend
-      console.log('AuthContext: Attempting backend login...');
-      const response = await authAPI.login(credentials);
-      console.log('AuthContext: Backend login response:', response);
-      
-      if (response.success) {
-        // Store user data and token from backend
-        // Note: Backend returns data.user and data.token, not response.user and response.token
-        const userData = response.data.user;
-        const token = response.data.token;
-        
-        console.log('AuthContext: Backend login successful, storing user data and token');
-        localStorage.setItem('admin_token', token);
-        localStorage.setItem('admin_user', JSON.stringify(userData));
-        
-        setUser(userData);
-        setIsAuthenticated(true);
-        
-        return { success: true };
-      } else {
-        console.log('AuthContext: Backend login failed:', response.error);
-        return { success: false, error: response.error || 'Login failed' };
+      // Clear any existing authentication state before attempting login
+      // This prevents 401 errors from stale tokens
+      safeLocalStorage.removeItem("admin_token");
+      safeLocalStorage.removeItem("admin_user");
+      setUser(null);
+      setIsAuthenticated(false);
+
+      try {
+        const response = await authAPI.login(credentials);
+
+        if (response.success) {
+          // Store user data and token from backend
+          // Note: Backend returns data.user and data.token, not response.user and response.token
+          const userData = response.data.user;
+          const token = response.data.token;
+
+          safeLocalStorage.setItem("admin_token", token);
+          safeLocalStorage.setItem("admin_user", JSON.stringify(userData));
+
+          setUser(userData);
+          setIsAuthenticated(true);
+
+          return { success: true };
+        } else {
+          // Check if backend returned field-specific validation errors
+          if (response.fieldErrors) {
+            return { success: false, fieldErrors: response.fieldErrors };
+          }
+          return { success: false, error: response.error || "Login failed" };
+        }
+      } catch (error) {
+        // Handle 401 and other API errors gracefully
+        if (error.response?.status === 401) {
+          // Invalid credentials - return user-friendly error
+          return {
+            success: false,
+            error:
+              error.response?.data?.error || "Invalid username or password",
+          };
+        } else if (error.response?.data?.error) {
+          // Other backend errors
+          return {
+            success: false,
+            error: error.response.data.error,
+          };
+        } else {
+          // Network or other errors
+          return {
+            success: false,
+            error: "Unable to connect to server. Please try again.",
+          };
+        }
       }
     } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Login failed - network error' };
+      console.error("Login error:", error);
+
+      // Check if the error response contains validation errors
+      if (error.response?.data?.details) {
+        // Convert backend validation format to fieldErrors format
+        const fieldErrors = {};
+        error.response.data.details.forEach((detail) => {
+          fieldErrors[detail.field] = detail.message;
+        });
+        return { success: false, fieldErrors };
+      }
+
+      // Check for specific error messages from backend
+      if (error.response?.data?.error) {
+        return { success: false, error: error.response.data.error };
+      }
+
+      return { success: false, error: "Login failed - network error" };
     }
   };
 
   const register = async (userData) => {
     try {
-      // Simulate registration API call
+      // Sim
+      // ulate registration API call
       const response = await new Promise((resolve) => {
         setTimeout(() => {
           // Mock successful registration
@@ -130,15 +172,15 @@ export const AuthProvider = ({ children }) => {
                 email: userData.email,
                 firstName: userData.firstName,
                 lastName: userData.lastName,
-                role: 'admin',
-                name: `${userData.firstName} ${userData.lastName}`
+                role: "admin",
+                name: `${userData.firstName} ${userData.lastName}`,
               },
-              token: 'mock-jwt-token-' + Date.now()
+              token: "mock-jwt-token-" + Date.now(),
             });
           } else {
             resolve({
               success: false,
-              error: 'Registration failed - missing required fields'
+              error: "Registration failed - missing required fields",
             });
           }
         }, 1500);
@@ -146,37 +188,37 @@ export const AuthProvider = ({ children }) => {
 
       if (response.success) {
         // Store user data and token
-        localStorage.setItem('admin_token', response.token);
-        localStorage.setItem('admin_user', JSON.stringify(response.user));
-        
+        safeLocalStorage.setItem("admin_token", response.token);
+        safeLocalStorage.setItem("admin_user", JSON.stringify(response.user));
+
         setUser(response.user);
         setIsAuthenticated(true);
-        
+
         return { success: true };
       } else {
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, error: 'Registration failed' };
+      console.error("Registration error:", error);
+      return { success: false, error: "Registration failed" };
     }
   };
 
   const logout = () => {
     // Clear stored data
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    
+    safeLocalStorage.removeItem("admin_token");
+    safeLocalStorage.removeItem("admin_user");
+
     // Reset state
     setUser(null);
     setIsAuthenticated(false);
-    
+
     // Redirect to token-prefixed login
-    router.push('/admin/login');
+    router.push("/admin/login");
   };
 
   const checkAuth = () => {
-    const token = localStorage.getItem('admin_token');
+    const token = safeLocalStorage.getItem("admin_token");
     return !!token;
   };
 
@@ -187,12 +229,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    checkAuth
+    checkAuth,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}; 
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

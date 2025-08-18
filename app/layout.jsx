@@ -16,58 +16,70 @@ import Sidebar from "@/components/dashboard/Sidebar";
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  
+
   // Check if current route is a dashboard route
-  {/*const isDashboardRoute = pathname?.startsWith('/dashboard') || 
+  {
+    /*const isDashboardRoute = pathname?.startsWith('/dashboard') || 
                           pathname?.startsWith('/my-profile') || 
                           pathname?.startsWith('/add-property') ||
                           pathname?.startsWith('/user-management') ||
                           pathname?.startsWith('/add-user') ||
                           pathname?.startsWith('/edit-user') ||
                           pathname?.startsWith('/property-management') ||
-                          pathname?.startsWith('/edit-property');*/}
+                          pathname?.startsWith('/edit-property');*/
+  }
 
   // Check if current route is a token-prefixed route
-  const isTokenRoute = pathname?.includes('/admin/');
-  
+  const isTokenRoute = pathname?.includes("/admin/");
+
   // Extract the path after the token for dashboard route checking
-  const pathAfterToken = pathname?.split('/admin/')[1];
-  const isTokenDashboardRoute = pathAfterToken && (
-    pathAfterToken.startsWith('dashboard') || 
-    pathAfterToken.startsWith('my-profile') || 
-    pathAfterToken.startsWith('add-property') ||
-    pathAfterToken.startsWith('user-management') ||
-    pathAfterToken.startsWith('add-user') ||
-    pathAfterToken.startsWith('edit-user') ||
-    pathAfterToken.startsWith('property-management') ||
-    pathAfterToken.startsWith('edit-property')
-  );
+  const pathAfterToken = pathname?.split("/admin/")[1];
+  const isTokenDashboardRoute =
+    pathAfterToken &&
+    (pathAfterToken.startsWith("dashboard") ||
+      pathAfterToken.startsWith("my-profile") ||
+      pathAfterToken.startsWith("add-property") ||
+      pathAfterToken.startsWith("user-management") ||
+      pathAfterToken.startsWith("add-user") ||
+      pathAfterToken.startsWith("edit-user") ||
+      pathAfterToken.startsWith("property-management") ||
+      pathAfterToken.startsWith("edit-property") ||
+      pathAfterToken.startsWith("change-password"));
 
-  if (typeof window !== "undefined") {
-    import("bootstrap/dist/js/bootstrap.esm").then((module) => {
-      // Module is imported, you can access any exported functionality if
-    });
-  }
-  
+  // Remove conditional bootstrap import to prevent hydration mismatch
+  // Bootstrap will be imported via useEffect instead
+
   useEffect(() => {
-    // Close any open modal
-    const bootstrap = require("bootstrap"); // dynamically import bootstrap
-    const modalElements = document.querySelectorAll(".modal.show");
-    modalElements.forEach((modal) => {
-      const modalInstance = bootstrap.Modal.getInstance(modal);
-      if (modalInstance) {
-        modalInstance.hide();
-      }
-    });
+    // Import bootstrap and handle modal/offcanvas cleanup
+    const initializeBootstrap = async () => {
+      try {
+        // Dynamically import bootstrap
+        await import("bootstrap/dist/js/bootstrap.esm");
+        const bootstrap = require("bootstrap");
 
-    // Close any open offcanvas
-    const offcanvasElements = document.querySelectorAll(".offcanvas.show");
-    offcanvasElements.forEach((offcanvas) => {
-      const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvas);
-      if (offcanvasInstance) {
-        offcanvasInstance.hide();
+        // Close any open modal
+        const modalElements = document.querySelectorAll(".modal.show");
+        modalElements.forEach((modal) => {
+          const modalInstance = bootstrap.Modal.getInstance(modal);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+        });
+
+        // Close any open offcanvas
+        const offcanvasElements = document.querySelectorAll(".offcanvas.show");
+        offcanvasElements.forEach((offcanvas) => {
+          const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvas);
+          if (offcanvasInstance) {
+            offcanvasInstance.hide();
+          }
+        });
+      } catch (error) {
+        console.error("Error initializing bootstrap:", error);
       }
-    });
+    };
+
+    initializeBootstrap();
   }, [pathname]); // Runs every time the route changes
 
   useEffect(() => {
@@ -80,7 +92,7 @@ export default function RootLayout({ children }) {
     });
     wow.init();
   }, [pathname]);
-  
+
   useEffect(() => {
     const handleSticky = () => {
       const navbar = document.querySelector(".header");
@@ -101,12 +113,17 @@ export default function RootLayout({ children }) {
     };
 
     window.addEventListener("scroll", handleSticky);
+
+    // Cleanup function to remove event listener
+    return () => {
+      window.removeEventListener("scroll", handleSticky);
+    };
   }, []);
 
   // Dashboard layout for token-prefixed routes
   if (isTokenRoute && isTokenDashboardRoute) {
     return (
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning={true}>
         <body className="popup-loader">
           <AuthProvider>
             <ProtectedRoute>
@@ -131,7 +148,8 @@ export default function RootLayout({ children }) {
   }
 
   // Dashboard layout for regular routes (fallback)
-  {/*if (isDashboardRoute) {
+  {
+    /*if (isDashboardRoute) {
     return (
       <html lang="en">
         <body className="popup-loader">
@@ -155,11 +173,12 @@ export default function RootLayout({ children }) {
         </body>
       </html>
     );
-  }*/}
+  }*/
+  }
 
   // Regular layout for non-dashboard routes
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning={true}>
       <body className="popup-loader">
         <AuthProvider>
           {children}

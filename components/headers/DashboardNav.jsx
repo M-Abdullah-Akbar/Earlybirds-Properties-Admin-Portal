@@ -79,6 +79,38 @@ export default function DashboardNav({ color = "" }) {
           </svg>
           Dashboards
         </Link>
+        <Link className="dropdown-item" href={`/admin/change-password`}>
+          <svg
+            width={20}
+            height={20}
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15.8346 9.16663V6.66663C15.8346 5.34054 15.3079 4.06877 14.3702 3.13109C13.4325 2.19341 12.1607 1.66663 10.8346 1.66663C9.50854 1.66663 8.23677 2.19341 7.29909 3.13109C6.36141 4.06877 5.83464 5.34054 5.83464 6.66663V9.16663"
+              stroke="#A8ABAE"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M4.16797 9.16663H17.5013C18.1913 9.16663 18.7513 9.72663 18.7513 10.4166V16.25C18.7513 16.94 18.1913 17.5 17.5013 17.5H4.16797C3.47797 17.5 2.91797 16.94 2.91797 16.25V10.4166C2.91797 9.72663 3.47797 9.16663 4.16797 9.16663Z"
+              stroke="#A8ABAE"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10.832 12.5V14.1666"
+              stroke="#A8ABAE"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Change Password
+        </Link>
         {/* <Link className="dropdown-item" href={`/my-profile`}>
           <svg
             width={20}
@@ -399,10 +431,7 @@ export default function DashboardNav({ color = "" }) {
             </a>
           </div>
         </div>*/}
-        <button 
-          className="dropdown-item logout-btn" 
-          onClick={handleLogout}
-        >
+        <button className="dropdown-item logout-btn" onClick={handleLogout}>
           <svg
             width={20}
             height={20}

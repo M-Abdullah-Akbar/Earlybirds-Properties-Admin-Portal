@@ -1314,6 +1314,26 @@
   }
 }
 
+.auth-field-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--Color-2);
+  font-size: 13px;
+  margin-top: 6px;
+  
+  svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--Color-2);
+  }
+  
+  span {
+    line-height: 1.4;
+  }
+}
+
 .auth-form-group {
   margin-bottom: 20px;
   
@@ -1379,6 +1399,16 @@
       background-color: var(--Sub-primary-1);
       cursor: not-allowed;
       opacity: 0.7;
+    }
+    
+    &.error {
+      border-color: var(--Color-2);
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+      
+      &:focus {
+        border-color: var(--Color-2);
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+      }
     }
   }
 }
@@ -1499,9 +1529,79 @@
   .auth-form-title h3 {
     font-size: 24px;
   }
+}
+
+// Password Toggle Button Styles
+.auth-input-wrapper {
+  .auth-password-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--Note);
+    transition: all 0.3s ease;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: var(--Primary);
+      background-color: rgba(241, 145, 61, 0.1);
+    }
+    
+    &:focus {
+      outline: none;
+      color: var(--Primary);
+      background-color: rgba(241, 145, 61, 0.1);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        color: var(--Note);
+        background-color: transparent;
+      }
+    }
+    
+    svg {
+      width: 18px;
+      height: 18px;
+      transition: all 0.3s ease;
+    }
+  }
   
-  .auth-form-title p {
-    font-size: 14px;
+  // Adjust input padding when password toggle is present
+  .auth-input[type="password"],
+  .auth-input[type="text"] {
+    padding-right: 48px;
+  }
+}
+
+// Change Password Page Eye Button Styles
+.btn-show-pass {
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    color: var(--Primary) !important;
+    background-color: rgba(241, 145, 61, 0.1) !important;
+  }
+  
+  &:focus {
+    outline: none !important;
+    color: var(--Primary) !important;
+    background-color: rgba(241, 145, 61, 0.1) !important;
+  }
+  
+  svg {
+    transition: all 0.3s ease;
   }
 }
 

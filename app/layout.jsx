@@ -43,7 +43,8 @@ export default function RootLayout({ children }) {
       pathAfterToken.startsWith("add-user") ||
       pathAfterToken.startsWith("edit-user") ||
       pathAfterToken.startsWith("property-management") ||
-      pathAfterToken.startsWith("edit-property"));
+      pathAfterToken.startsWith("edit-property") ||
+      pathAfterToken.startsWith("change-password"));
 
   // Remove conditional bootstrap import to prevent hydration mismatch
   // Bootstrap will be imported via useEffect instead

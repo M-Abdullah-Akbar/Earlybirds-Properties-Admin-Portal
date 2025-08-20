@@ -691,9 +691,6 @@ export default function EditProperty({ propertyId }) {
           ...prev,
           submit: errorMessage,
         }));
-        
-        // Show error notification
-        toast.error(errorMessage || "Failed to update property. Please try again.");
       } else {
         // This is an unexpected error - log it for debugging
         console.error("Unexpected error updating property:", error);
@@ -779,7 +776,6 @@ export default function EditProperty({ propertyId }) {
 
   return (
     <div className="main-content w-100">
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner">
         {/* Header */}
         <div className="widget-box-2 mb-20">

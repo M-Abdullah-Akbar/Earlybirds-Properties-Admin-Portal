@@ -12,6 +12,11 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
+    // Skip adding Authorization header for login requests
+    if (config.url === "/auth/login" || config.url?.includes("/auth/login")) {
+      return config;
+    }
+
     const token = safeLocalStorage.getItem("admin_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -43,10 +48,31 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      console.log("🚨 401 Error - URL:", error.config?.url);
+      console.log("🚨 401 Error - Response:", error.response?.data);
+
+      // Skip auth data clearing for login requests - 401 is expected for invalid credentials
+      if (
+        error.config?.url === "/auth/login" ||
+        error.config?.url?.includes("/auth/login")
+      ) {
+        console.log("✅ 401 from login - not clearing auth");
+        return Promise.reject(error);
+      }
+
+      // Token expired or invalid for authenticated requests
+      console.log("🚨 401 from authenticated request - clearing auth data");
       safeLocalStorage.removeItem("admin_token");
       safeLocalStorage.removeItem("admin_user");
-      safeWindow.redirect("/admin/login");
+
+      // Only redirect if we're not already on the login page
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login")
+      ) {
+        console.log("🚨 Redirecting to login");
+        safeWindow.redirect("/admin/login");
+      }
     } else if (error.response?.status === 0 || error.code === "ERR_NETWORK") {
       // Network error - server may be down
       console.error("Network error - server may be down:", error);
@@ -69,12 +95,6 @@ export const authAPI = {
   // Change password - PUT /api/auth/change-password
   changePassword: async (passwordData) => {
     const response = await api.put("/auth/change-password", passwordData);
-    return response.data;
-  },
-
-  // Logout - POST /api/auth/logout
-  logout: async () => {
-    const response = await api.post("/auth/logout");
     return response.data;
   },
 };

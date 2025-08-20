@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
 import { safeLocalStorage } from "@/utlis/clientUtils";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -589,18 +587,11 @@ export default function AddProperty() {
           });
           console.log("Final field errors:", fieldErrors);
           setErrors(fieldErrors);
-          
-          // Show validation error notification with a summary
-          const errorCount = Object.keys(fieldErrors).length;
-          toast.error(`Please fix ${errorCount} validation ${errorCount === 1 ? 'error' : 'errors'} and try again.`);
         } else {
           setErrors((prev) => ({
             ...prev,
             submit: response.error || "Failed to add property",
           }));
-          
-          // Show general error notification
-          toast.error(response.error || "Failed to add property. Please try again.");
         }
       }
     } catch (error) {
@@ -650,10 +641,6 @@ export default function AddProperty() {
           });
 
           setErrors(fieldErrors);
-          
-          // Show validation error notification with a summary
-          const errorCount = Object.keys(fieldErrors).length;
-          toast.error(`Please fix ${errorCount} validation ${errorCount === 1 ? 'error' : 'errors'} and try again.`);
           return; // Don't process other error types
         }
 

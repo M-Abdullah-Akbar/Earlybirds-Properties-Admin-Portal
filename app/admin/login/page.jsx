@@ -11,18 +11,20 @@ function AdminLoginContent() {
   const searchParams = useSearchParams();
   const params = useParams();
   const token = params.token;
-  
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [tokenAuth, setTokenAuth] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check for token authentication
   useEffect(() => {
-    const urlToken = searchParams.get('token');
+    const urlToken = searchParams.get("token");
     if (urlToken) {
       handleTokenAuthentication(urlToken);
     }
@@ -37,25 +39,25 @@ function AdminLoginContent() {
 
   const handleTokenAuthentication = async (authToken) => {
     setTokenAuth(true);
-    setError('');
-    
+    setError("");
+
     try {
       // Validate the hex token
       const isValidToken = validateHexToken(authToken);
-      
+
       if (isValidToken) {
         // Auto-login with token
         const result = await login({ token: authToken });
         if (result.success) {
           router.push(`/admin/dashboard`);
         } else {
-          setError('Invalid or expired access token');
+          setError("Invalid or expired access token");
         }
       } else {
-        setError('Invalid or expired access token');
+        setError("Invalid or expired access token");
       }
     } catch (error) {
-      setError('Error validating access token');
+      setError("Error validating access token");
     } finally {
       setTokenAuth(false);
     }
@@ -63,7 +65,7 @@ function AdminLoginContent() {
 
   const validateHexToken = (authToken) => {
     // Validate the specific hex token
-    const validToken = 'f8e7d6c5b4a398765432109876543210';
+    const validToken = "f8e7d6c5b4a398765432109876543210";
     return authToken === validToken;
   };
 
@@ -81,7 +83,7 @@ function AdminLoginContent() {
               priority
             />
           </div>
-          
+
           <div className="auth-loading-spinner">
             <div className="spinner-ring">
               <div></div>
@@ -90,12 +92,16 @@ function AdminLoginContent() {
               <div></div>
             </div>
           </div>
-          
+
           <div className="auth-loading-text">
             <h3>Welcome to EarlyBirds Properties</h3>
-            <p>{tokenAuth ? 'Validating access token...' : 'Checking your session...'}</p>
+            <p>
+              {tokenAuth
+                ? "Validating access token..."
+                : "Checking your session..."}
+            </p>
           </div>
-          
+
           <div className="auth-loading-progress">
             <div className="progress-bar">
               <div className="progress-fill"></div>
@@ -113,29 +119,65 @@ function AdminLoginContent() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (error) setError("");
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormLoading(true);
     setError("");
-    
+    setFieldErrors({});
+
+    // Basic client-side validation
+    if (!formData.username.trim()) {
+      setFieldErrors({ username: "Username is required" });
+      setFormLoading(false);
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      setFieldErrors({ password: "Password is required" });
+      setFormLoading(false);
+      return;
+    }
+
+    // Clean the form data before sending
+    const cleanCredentials = {
+      username: formData.username.trim(),
+      password: formData.password.trim(),
+    };
+
     try {
-      const result = await login(formData);
-      
+      const result = await login(cleanCredentials);
+
       if (result.success) {
         // Login successful - redirect will be handled by AuthContext
         console.log("Login successful");
       } else {
-        setError(result.error || "Login failed");
+        // Handle backend validation errors
+        if (result.fieldErrors) {
+          setFieldErrors(result.fieldErrors);
+        } else {
+          setError(result.error || "Login failed");
+        }
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError("An unexpected error occurred");
     } finally {
       setFormLoading(false);
@@ -162,19 +204,43 @@ function AdminLoginContent() {
                 <p>Welcome back! Please login to your account.</p>
               </div>
             </div>
-            
+
             <form className="auth-form" onSubmit={handleSubmit}>
               {error && (
                 <div className="auth-error">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M15 9L9 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M15 9L9 15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 9L15 15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   <span>{error}</span>
                 </div>
               )}
-              
+
               <div className="auth-form-group">
                 <label htmlFor="username">Username</label>
                 <div className="auth-input-wrapper">
@@ -195,18 +261,53 @@ function AdminLoginContent() {
                   </svg>
                   <input
                     type="text"
-                    className="auth-input"
+                    className={`auth-input ${
+                      fieldErrors.username ? "error" : ""
+                    }`}
                     id="username"
                     name="username"
                     placeholder="Enter your username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    required
                     disabled={formLoading}
                   />
                 </div>
+                {fieldErrors.username && (
+                  <div className="auth-field-error">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M15 9L9 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M9 9L15 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span>{fieldErrors.username}</span>
+                  </div>
+                )}
               </div>
-              
+
               <div className="auth-form-group">
                 <label htmlFor="password">Password</label>
                 <div className="auth-input-wrapper">
@@ -226,28 +327,124 @@ function AdminLoginContent() {
                     />
                   </svg>
                   <input
-                    type="password"
-                    className="auth-input"
+                    type={showPassword ? "text" : "password"}
+                    className={`auth-input ${
+                      fieldErrors.password ? "error" : ""
+                    }`}
                     id="password"
                     name="password"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    required
                     disabled={formLoading}
                   />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={togglePasswordVisibility}
+                    disabled={formLoading}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      // Eye slash icon (hide password)
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M1 1l22 22"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      // Eye icon (show password)
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
                 </div>
+                {fieldErrors.password && (
+                  <div className="auth-field-error">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M15 9L9 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M9 9L15 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span>{fieldErrors.password}</span>
+                  </div>
+                )}
                 <div className="auth-forgot-password">
                   <Link href="/forgot-password" className="auth-link">
                     Forgot password?
                   </Link>
                 </div>
               </div>
-              
+
               <div className="auth-form-actions">
                 <button
                   type="submit"
-                  className={`auth-submit-btn ${formLoading ? 'loading' : ''}`}
+                  className={`auth-submit-btn ${formLoading ? "loading" : ""}`}
                   disabled={formLoading}
                 >
                   {formLoading ? (
@@ -263,7 +460,7 @@ function AdminLoginContent() {
                       <span>Logging in...</span>
                     </>
                   ) : (
-                    'Login'
+                    "Login"
                   )}
                 </button>
               </div>
@@ -288,7 +485,7 @@ function LoadingFallback() {
             priority
           />
         </div>
-        
+
         <div className="auth-loading-spinner">
           <div className="spinner-ring">
             <div></div>
@@ -297,12 +494,12 @@ function LoadingFallback() {
             <div></div>
           </div>
         </div>
-        
+
         <div className="auth-loading-text">
           <h3>Welcome to EarlyBirds Properties</h3>
           <p>Loading...</p>
         </div>
-        
+
         <div className="auth-loading-progress">
           <div className="progress-bar">
             <div className="progress-fill"></div>
@@ -319,4 +516,4 @@ export default function AdminLoginPage() {
       <AdminLoginContent />
     </Suspense>
   );
-} 
+}

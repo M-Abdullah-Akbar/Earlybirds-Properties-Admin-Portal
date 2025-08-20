@@ -27,12 +27,8 @@ export const AuthProvider = ({ children }) => {
     if (!hasMounted) return; // Wait for client-side mount to prevent hydration mismatch
 
     const checkAuth = async () => {
-      console.log("AuthContext: Starting authentication check...");
       const token = safeLocalStorage.getItem("admin_token");
       const userData = safeLocalStorage.getItem("admin_user");
-
-      console.log("AuthContext: Token exists:", !!token);
-      console.log("AuthContext: User data exists:", !!userData);
 
       if (token && userData) {
         try {
@@ -40,22 +36,13 @@ export const AuthProvider = ({ children }) => {
           // we'll just check if the token exists and user data is valid
           // The API response interceptor will handle invalid tokens automatically
           const user = JSON.parse(userData);
-          console.log(
-            "AuthContext: Setting authenticated user:",
-            user.username
-          );
           setUser(user);
           setIsAuthenticated(true);
         } catch (error) {
           console.error("Error parsing user data:", error);
           logout();
         }
-      } else {
-        console.log("AuthContext: No token or user data found");
       }
-      console.log(
-        "AuthContext: Authentication check complete, setting isLoading to false"
-      );
       setIsLoading(false);
     };
 
@@ -63,10 +50,6 @@ export const AuthProvider = ({ children }) => {
   }, [hasMounted]);
 
   const login = async (credentials) => {
-    console.log("AuthContext: Login attempt with credentials:", {
-      username: credentials.username,
-      hasToken: !!credentials.token,
-    });
     try {
       // Handle token-based authentication
       if (credentials.token) {
@@ -85,7 +68,6 @@ export const AuthProvider = ({ children }) => {
           };
 
           const mockToken = "mock-jwt-token-" + Date.now();
-          console.log("AuthContext: Token auth successful, storing mock data");
           safeLocalStorage.setItem("admin_token", mockToken);
           safeLocalStorage.setItem("admin_user", JSON.stringify(mockUser));
 
@@ -94,45 +76,90 @@ export const AuthProvider = ({ children }) => {
 
           return { success: true };
         } else {
-          console.log("AuthContext: Invalid hex token");
           return { success: false, error: "Invalid or expired access token" };
         }
       }
 
       // Handle regular username/password authentication with real backend
-      console.log("AuthContext: Attempting backend login...");
-      const response = await authAPI.login(credentials);
-      console.log("AuthContext: Backend login response:", response);
+      // Clear any existing authentication state before attempting login
+      // This prevents 401 errors from stale tokens
+      safeLocalStorage.removeItem("admin_token");
+      safeLocalStorage.removeItem("admin_user");
+      setUser(null);
+      setIsAuthenticated(false);
 
-      if (response.success) {
-        // Store user data and token from backend
-        // Note: Backend returns data.user and data.token, not response.user and response.token
-        const userData = response.data.user;
-        const token = response.data.token;
+      try {
+        const response = await authAPI.login(credentials);
 
-        console.log(
-          "AuthContext: Backend login successful, storing user data and token"
-        );
-        safeLocalStorage.setItem("admin_token", token);
-        safeLocalStorage.setItem("admin_user", JSON.stringify(userData));
+        if (response.success) {
+          // Store user data and token from backend
+          // Note: Backend returns data.user and data.token, not response.user and response.token
+          const userData = response.data.user;
+          const token = response.data.token;
 
-        setUser(userData);
-        setIsAuthenticated(true);
+          safeLocalStorage.setItem("admin_token", token);
+          safeLocalStorage.setItem("admin_user", JSON.stringify(userData));
 
-        return { success: true };
-      } else {
-        console.log("AuthContext: Backend login failed:", response.error);
-        return { success: false, error: response.error || "Login failed" };
+          setUser(userData);
+          setIsAuthenticated(true);
+
+          return { success: true };
+        } else {
+          // Check if backend returned field-specific validation errors
+          if (response.fieldErrors) {
+            return { success: false, fieldErrors: response.fieldErrors };
+          }
+          return { success: false, error: response.error || "Login failed" };
+        }
+      } catch (error) {
+        // Handle 401 and other API errors gracefully
+        if (error.response?.status === 401) {
+          // Invalid credentials - return user-friendly error
+          return {
+            success: false,
+            error:
+              error.response?.data?.error || "Invalid username or password",
+          };
+        } else if (error.response?.data?.error) {
+          // Other backend errors
+          return {
+            success: false,
+            error: error.response.data.error,
+          };
+        } else {
+          // Network or other errors
+          return {
+            success: false,
+            error: "Unable to connect to server. Please try again.",
+          };
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
+
+      // Check if the error response contains validation errors
+      if (error.response?.data?.details) {
+        // Convert backend validation format to fieldErrors format
+        const fieldErrors = {};
+        error.response.data.details.forEach((detail) => {
+          fieldErrors[detail.field] = detail.message;
+        });
+        return { success: false, fieldErrors };
+      }
+
+      // Check for specific error messages from backend
+      if (error.response?.data?.error) {
+        return { success: false, error: error.response.data.error };
+      }
+
       return { success: false, error: "Login failed - network error" };
     }
   };
 
   const register = async (userData) => {
     try {
-      // Simulate registration API call
+      // Sim
+      // ulate registration API call
       const response = await new Promise((resolve) => {
         setTimeout(() => {
           // Mock successful registration

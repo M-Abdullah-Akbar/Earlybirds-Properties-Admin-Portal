@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { userAPI } from "@/utlis/api";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function EditUser({ userId }) {
   const router = useRouter();
@@ -103,6 +105,7 @@ export default function EditUser({ userId }) {
 
     if (validateForm()) {
       setSaving(true);
+      toast.info("Updating user...");
       try {
         const userData = {
           name: formData.name,
@@ -115,15 +118,29 @@ export default function EditUser({ userId }) {
         const response = await userAPI.updateUser(actualUserId, userData);
 
         if (response.success) {
-          router.push("/admin/user-management");
+          toast.success("User updated successfully!");
+          setTimeout(() => {
+            router.push("/admin/user-management");
+          }, 2000);
         } else {
-          alert(response.error || "Failed to update user");
+          toast.error(response.error || "Failed to update user");
         }
       } catch (error) {
         console.error("Error updating user:", error);
-        const errorMessage =
-          error.response?.data?.error || "Failed to update user";
-        alert(errorMessage);
+        
+        // Check if there are validation errors
+        if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+          const fieldErrors = {};
+          error.response.data.details.forEach((detail) => {
+            fieldErrors[detail.field] = detail.message;
+            toast.error(detail.message);
+          });
+          setErrors(fieldErrors);
+        } else {
+          const errorMessage =
+            error.response?.data?.error || "Failed to update user";
+          toast.error(errorMessage);
+        }
       } finally {
         setSaving(false);
       }
@@ -144,6 +161,7 @@ export default function EditUser({ userId }) {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <h3 className="title">Basic Information</h3>

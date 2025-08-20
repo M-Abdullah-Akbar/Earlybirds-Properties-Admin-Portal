@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { userAPI } from "@/utlis/api";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -85,21 +87,26 @@ export default function UserManagement() {
     if (!userToDelete) return;
 
     setDeleteLoading(true);
+    toast.info("Deleting user...");
     try {
       const response = await userAPI.deleteUser(userToDelete._id);
       if (response.success) {
         // Refresh the user list
         fetchUsers();
         fetchStats();
-        // Success - no alert needed, user will see the user disappear from list
+        // Show success toast
+        toast.success(`User ${userToDelete.name} deleted successfully`);
       } else {
         // Show error message without "Error:" prefix
         setError(response.error || "Failed to delete user");
+        toast.error(response.error || "Failed to delete user");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
       // Show error message without "Error:" prefix
-      setError(err.response?.data?.error || "Failed to delete user");
+      const errorMessage = err.response?.data?.error || "Failed to delete user";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);
@@ -186,6 +193,7 @@ export default function UserManagement() {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <div className="d-flex justify-content-between align-items-center mb-20">

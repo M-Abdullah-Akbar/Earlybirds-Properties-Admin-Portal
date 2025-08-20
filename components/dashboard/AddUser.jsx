@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { userAPI } from "@/utlis/api";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddUser() {
   const router = useRouter();
@@ -84,6 +86,7 @@ export default function AddUser() {
 
     if (validateForm()) {
       setLoading(true);
+      toast.info("Creating user...");
       try {
         const userData = {
           name: formData.name,
@@ -96,10 +99,13 @@ export default function AddUser() {
         const response = await userAPI.createUser(userData);
 
         if (response.success) {
-          // Redirect immediately without showing alert
-          router.push("/admin/user-management");
+          // Show success toast and redirect after a delay
+          toast.success("User created successfully!");
+          setTimeout(() => {
+            router.push("/admin/user-management");
+          }, 2000);
         } else {
-          alert(response.error || "Failed to create user");
+          toast.error(response.error || "Failed to create user");
         }
       } catch (error) {
         console.error("Error creating user:", error);
@@ -122,7 +128,11 @@ export default function AddUser() {
                 fieldErrors[detail.field] = detail.message;
               });
               setErrors(fieldErrors);
-              return; // Don't show alert, errors are now displayed on fields
+              // Show validation errors as toasts
+              Object.values(fieldErrors).forEach(message => {
+                toast.error(message);
+              });
+              return; // Don't show general error toast, field-specific toasts are shown
             }
           } else if (error.response.data.message) {
             errorMessage = error.response.data.message;
@@ -131,7 +141,7 @@ export default function AddUser() {
           }
         }
 
-        alert(`Error: ${errorMessage}`);
+        toast.error(`Error: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -140,6 +150,7 @@ export default function AddUser() {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="main-content-inner">
         <div className="widget-box-2 mb-20">
           <h5 className="title">Basic Information</h5>

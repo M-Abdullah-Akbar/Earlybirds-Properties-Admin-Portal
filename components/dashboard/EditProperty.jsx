@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { propertyAPI, uploadAPI } from "@/utlis/api";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function EditProperty({ propertyId }) {
   console.log("EditProperty: Component rendered with propertyId:", propertyId);
@@ -533,6 +535,7 @@ export default function EditProperty({ propertyId }) {
     }
 
     setSaving(true);
+    toast.info("Processing your request...", { autoClose: 2000 });
 
     try {
       // First, handle image uploads if there are new images
@@ -643,7 +646,10 @@ export default function EditProperty({ propertyId }) {
       );
 
       if (response.success) {
-        router.push("/admin/property-management");
+        toast.success("Property updated successfully!");
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         setErrors((prev) => ({
           ...prev,
@@ -669,6 +675,10 @@ export default function EditProperty({ propertyId }) {
               fieldErrors[detail.field] = detail.message;
             });
             setErrors(fieldErrors);
+            
+            // Show validation error notification with a summary
+            const errorCount = Object.keys(fieldErrors).length;
+            toast.error(`Please fix ${errorCount} validation ${errorCount === 1 ? 'error' : 'errors'} and try again.`);
             return; // Don't show alert, errors are now displayed on fields
           }
         } else if (error.response.data.message) {
@@ -681,6 +691,9 @@ export default function EditProperty({ propertyId }) {
           ...prev,
           submit: errorMessage,
         }));
+        
+        // Show error notification
+        toast.error(errorMessage || "Failed to update property. Please try again.");
       } else {
         // This is an unexpected error - log it for debugging
         console.error("Unexpected error updating property:", error);
@@ -719,12 +732,17 @@ export default function EditProperty({ propertyId }) {
     ) {
       return;
     }
+    
+    toast.info("Deleting property...", { autoClose: 2000 });
 
     try {
       const response = await propertyAPI.deleteProperty(actualPropertyId);
 
       if (response.success) {
-        router.push("/admin/property-management");
+        toast.success("Property deleted successfully!");
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         setErrors((prev) => ({
           ...prev,
@@ -737,6 +755,8 @@ export default function EditProperty({ propertyId }) {
         ...prev,
         delete: "Error deleting property. Please try again.",
       }));
+      
+      toast.error("Error deleting property. Please try again.");
     }
   };
 
@@ -759,6 +779,7 @@ export default function EditProperty({ propertyId }) {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner">
         {/* Header */}
         <div className="widget-box-2 mb-20">

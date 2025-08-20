@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
 import { safeLocalStorage } from "@/utlis/clientUtils";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -451,6 +453,7 @@ export default function AddProperty() {
     }
 
     setIsSubmitting(true);
+    toast.info("Processing your request...", { autoClose: 2000 });
 
     try {
       // First, upload images if any
@@ -537,8 +540,12 @@ export default function AddProperty() {
       console.log("API Response:", response);
 
       if (response.success) {
-        // Redirect immediately without showing alert
-        router.push("/admin/property-management");
+        // Show success notification
+        toast.success("Property added successfully!");
+        // Redirect after a short delay to allow the user to see the notification
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -582,11 +589,18 @@ export default function AddProperty() {
           });
           console.log("Final field errors:", fieldErrors);
           setErrors(fieldErrors);
+          
+          // Show validation error notification with a summary
+          const errorCount = Object.keys(fieldErrors).length;
+          toast.error(`Please fix ${errorCount} validation ${errorCount === 1 ? 'error' : 'errors'} and try again.`);
         } else {
           setErrors((prev) => ({
             ...prev,
             submit: response.error || "Failed to add property",
           }));
+          
+          // Show general error notification
+          toast.error(response.error || "Failed to add property. Please try again.");
         }
       }
     } catch (error) {
@@ -636,6 +650,10 @@ export default function AddProperty() {
           });
 
           setErrors(fieldErrors);
+          
+          // Show validation error notification with a summary
+          const errorCount = Object.keys(fieldErrors).length;
+          toast.error(`Please fix ${errorCount} validation ${errorCount === 1 ? 'error' : 'errors'} and try again.`);
           return; // Don't process other error types
         }
 
@@ -700,6 +718,9 @@ export default function AddProperty() {
         ...prev,
         submit: errorMessage,
       }));
+      
+      // Show error notification for exceptions
+      toast.error(errorMessage || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -724,6 +745,7 @@ export default function AddProperty() {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner">
         {/* Header */}
         <div className="widget-box-2 mb-20">

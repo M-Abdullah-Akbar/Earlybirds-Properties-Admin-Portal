@@ -76,7 +76,7 @@ function AdminLoginContent() {
         <div className="auth-loading-content">
           <div className="auth-loading-logo">
             <Image
-              src="/images/logo/logo.png"
+              src="/images/logo/Earlybird_Logo.png"
               alt="EarlyBirds Properties"
               width={140}
               height={50}
@@ -192,7 +192,7 @@ function AdminLoginContent() {
             <div className="auth-form-header">
               <div className="auth-logo">
                 <Image
-                  src="/images/logo/logo.png"
+                  src="/images/logo/Earlybird_Logo.png"
                   alt="EarlyBirds Properties"
                   width={140}
                   height={50}

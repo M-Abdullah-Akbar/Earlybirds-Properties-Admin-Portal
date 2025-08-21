@@ -76,7 +76,7 @@ export default function ProtectedRoute({ children }) {
         <div className="auth-loading-content unauthorized">
           <div className="auth-loading-logo">
             <Image
-              src="/images/logo/logo.png"
+              src="/images/logo/Earlybird_Logo.png"
               alt="EarlyBirds Properties"
               width={140}
               height={50}

@@ -2,7 +2,7 @@
 import { safeLocalStorage, safeWindow } from "./clientUtils";
 
 // Base API configuration
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "http://13.60.13.251/api";
 
 // Create axios instance
 const api = axios.create({

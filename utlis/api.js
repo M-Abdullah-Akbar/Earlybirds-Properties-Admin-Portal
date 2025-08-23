@@ -352,6 +352,12 @@ export const propertyAPI = {
     return response.data;
   },
 
+  // Create property without images - POST /api/properties
+  createPropertyWithoutImages: async (propertyData) => {
+    const response = await api.post("/properties", propertyData);
+    return response.data;
+  },
+
   // Update property - PUT /api/properties/:id
   updateProperty: async (id, propertyData) => {
     const response = await api.put(`/properties/${id}`, propertyData);

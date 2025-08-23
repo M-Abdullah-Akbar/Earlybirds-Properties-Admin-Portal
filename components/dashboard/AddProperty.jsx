@@ -533,8 +533,16 @@ export default function AddProperty() {
       console.log("AddProperty: Property data being sent:", propertyData);
       console.log("AddProperty: Images count:", uploadedImages.length);
 
-      // Create property using the API
-      const response = await propertyAPI.createProperty(propertyData);
+      // Create property using the appropriate API based on whether images are present
+      let response;
+      if (uploadedImages.length > 0) {
+        // Use the original endpoint if images are present
+        response = await propertyAPI.createProperty(propertyData);
+      } else {
+        // Use the new endpoint for properties without images
+        response = await propertyAPI.createPropertyWithoutImages(propertyData);
+      }
+      
 
       console.log("API Response:", response);
 

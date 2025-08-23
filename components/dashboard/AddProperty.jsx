@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
 import { safeLocalStorage } from "@/utlis/clientUtils";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function AddProperty() {
   const router = useRouter();

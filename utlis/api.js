@@ -2,7 +2,7 @@
 import { safeLocalStorage, safeWindow } from "./clientUtils";
 
 // Base API configuration
-const API_BASE_URL = "https://spn.nexteksol.com/api";
+const API_BASE_URL = "http://localhost:8000/api";
 
 // Create axios instance
 const api = axios.create({

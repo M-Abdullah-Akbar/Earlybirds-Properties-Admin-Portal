@@ -50,9 +50,9 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "spn.nexteksol.com",
-        port: "",
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000",
         pathname: "/**",
       },
     ],

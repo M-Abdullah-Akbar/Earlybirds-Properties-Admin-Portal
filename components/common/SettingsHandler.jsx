@@ -6,7 +6,6 @@ import { useClientMount } from "@/utlis/useClientMount";
 
 export default function SettingsHandler() {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(false);
   const [isRtl, setIsRtl] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const hasMounted = useClientMount();
@@ -15,48 +14,11 @@ export default function SettingsHandler() {
   useEffect(() => {
     if (!hasMounted) return; // Wait for client-side mount to prevent hydration mismatch
 
-    const savedTheme = safeLocalStorage.getItem("isDark");
-    if (savedTheme) {
-      setIsDark(JSON.parse(savedTheme));
-    }
     const savedDir = safeLocalStorage.getItem("isRtl");
     if (savedDir) {
       setIsRtl(JSON.parse(savedDir));
     }
   }, [hasMounted]);
-  // Initialize state with false (unchecked)
-
-  // Handle checkbox change event
-  const handleCheckboxChange = () => {
-    const newIsDark = !isDark; // Toggle the state
-    setIsDark(newIsDark); // Toggle the state
-    safeLocalStorage.setItem("isDark", JSON.stringify(newIsDark)); // Save to localStorage
-  };
-  useEffect(() => {
-    if (isDark) {
-      document.body.classList.add("dark-theme");
-    } else {
-      document.body.classList.remove("dark-theme");
-    }
-  }, [isDark]);
-
-  useEffect(() => {
-    // Select all elements with the data-dark attribute
-    const elements = document.querySelectorAll("[data-dark]");
-
-    // Iterate over the NodeList
-    elements.forEach((element) => {
-      // Get the value of the data-dark attribute
-      const srcValueDark = element.getAttribute("data-dark");
-      const srcValueLight = element.getAttribute("data-light");
-
-      if (isDark) {
-        element.src = srcValueDark;
-      } else {
-        element.src = srcValueLight;
-      }
-    });
-  }, [pathname, isDark]);
 
   const handleRtlChange = () => {
     const newIsRtl = !isRtl; // Toggle the state
@@ -92,23 +54,6 @@ export default function SettingsHandler() {
           >
             {isRtl ? "ltr" : "rtl"}
           </a>
-        </div>
-        <div className="toggle-container">
-          <span className="title text-1 fw-5 text-color-heading mb-8">
-            Theme Mode:
-          </span>
-          <div className="toggle-switch">
-            <label className="switch-label">
-              <input
-                type="checkbox"
-                className="checkbox"
-                id="theme-toggle"
-                checked={isDark} // Bind the checked state to the input
-                onChange={handleCheckboxChange} // Handle changes
-              />
-              <span className="slider" />
-            </label>
-          </div>
         </div>
       </div>
     </div>

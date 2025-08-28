@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -36,9 +35,7 @@ export default function Sidebar() {
   return (
     <div className="wrap-sidebar">
       <div className="sidebar-menu-dashboard">
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '15px 0' }}>
-          <ThemeToggle />
-        </div>
+
         <div className="menu-box">
           <ul className="box-menu-dashboard">
             <li

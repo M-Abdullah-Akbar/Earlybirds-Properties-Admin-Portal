@@ -63,10 +63,8 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
-import { useTheme } from "@/hooks/use-theme"
 
 // --- Components ---
-import { ThemeToggle } from "@/components/common/ThemeToggle"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
@@ -126,10 +124,6 @@ const MainToolbarContent = ({
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
       <Spacer />
-      {isMobile && <ToolbarSeparator />}
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   );
 }
@@ -165,7 +159,6 @@ export function SimpleEditor({ content: initialContent, onChange, placeholder, c
   const { height, width } = useWindowSize()
   const [mobileView, setMobileView] = React.useState("main")
   const toolbarRef = React.useRef(null)
-  const { theme } = useTheme()
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -226,7 +219,7 @@ export function SimpleEditor({ content: initialContent, onChange, placeholder, c
   }, [isMobile, mobileView])
 
   return (
-    <div className={`simple-editor-wrapper ${theme}-theme`}>
+    <div className="simple-editor-wrapper">
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
@@ -253,7 +246,7 @@ export function SimpleEditor({ content: initialContent, onChange, placeholder, c
         <EditorContent 
           editor={editor} 
           role="presentation" 
-          className={`simple-editor-content ${className || ''} ${theme}-theme`} 
+          className={`simple-editor-content ${className || ''}`} 
           placeholder={placeholder}
         />
       </EditorContext.Provider>

@@ -12,7 +12,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
 
   const handleChange = (newContent) => {
     setContent(newContent);
-    if (onChange) {
+    if (onChange) { 
       onChange(newContent);
     }
   };

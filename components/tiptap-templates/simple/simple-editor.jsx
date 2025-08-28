@@ -159,7 +159,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor() {
+export function SimpleEditor({ content: initialContent, onChange, placeholder, className }) {
   const isMobile = useIsMobile()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = React.useState("main")
@@ -174,7 +174,8 @@ export function SimpleEditor() {
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
-        class: "simple-editor",
+        class: `simple-editor ${className || ''}`,
+        placeholder,
       },
     },
     extensions: [
@@ -203,7 +204,12 @@ export function SimpleEditor() {
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content,
+    content: initialContent || content,
+    onUpdate: ({ editor }) => {
+      if (onChange) {
+        onChange(editor.getHTML());
+      }
+    },
   })
 
   const rect = useCursorVisibility({
@@ -241,7 +247,12 @@ export function SimpleEditor() {
           )}
         </Toolbar>
 
-        <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+        <EditorContent 
+          editor={editor} 
+          role="presentation" 
+          className={`simple-editor-content ${className || ''}`} 
+          placeholder={placeholder}
+        />
       </EditorContext.Provider>
     </div>
   );

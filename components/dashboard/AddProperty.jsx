@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
 import { safeLocalStorage } from "@/utlis/clientUtils";
 import { ToastContainer, toast } from "react-toastify";
+import RichTextEditor from "../common/RichTextEditor";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -844,12 +845,11 @@ export default function AddProperty() {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
-                <textarea
-                  name="description"
-                  className={`textarea ${errors.description ? "error" : ""}`}
-                  placeholder="Your Description"
+                <RichTextEditor
                   value={formData.description}
-                  onChange={handleInputChange}
+                  onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
+                  placeholder="Your Description"
+                  error={errors.description}
                 />
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>

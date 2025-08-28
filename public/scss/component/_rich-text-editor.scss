@@ -1,0 +1,140 @@
+// Rich Text Editor Styles
+.rich-text-editor {
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background-color: #fff;
+  
+  &.error {
+    border-color: #ff3b30;
+  }
+  
+  .editor-menu {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 8px;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: #f9f9f9;
+    
+    button {
+      width: 32px;
+      height: 32px;
+      margin: 2px;
+      padding: 4px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:hover {
+        background-color: #eaeaea;
+      }
+      
+      &.is-active {
+        background-color: #e0e0e0;
+        color: #1c1c1c;
+      }
+      
+      svg {
+        width: 18px;
+        height: 18px;
+        fill: #666;
+      }
+      
+      &.is-active svg {
+        fill: #1c1c1c;
+      }
+    }
+  }
+  
+  .ProseMirror {
+    padding: 15px;
+    min-height: 150px;
+    outline: none;
+    
+    p {
+      margin-bottom: 1em;
+    }
+    
+    h2 {
+      font-size: 1.5em;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      font-weight: 600;
+    }
+    
+    h3 {
+      font-size: 1.3em;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      font-weight: 600;
+    }
+    
+    ul, ol {
+      padding-left: 1.5em;
+      margin-bottom: 1em;
+    }
+    
+    li {
+      margin-bottom: 0.5em;
+    }
+    
+    a {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+    
+    img {
+      max-width: 100%;
+      height: auto;
+      margin: 1em 0;
+    }
+    
+    blockquote {
+      border-left: 3px solid #e5e5e5;
+      padding-left: 1em;
+      color: #666;
+      margin: 1em 0;
+    }
+    
+    code {
+      background-color: #f1f1f1;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    
+    pre {
+      background-color: #f1f1f1;
+      padding: 1em;
+      border-radius: 5px;
+      overflow-x: auto;
+      margin: 1em 0;
+      
+      code {
+        background-color: transparent;
+        padding: 0;
+      }
+    }
+    
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+      
+      td, th {
+        border: 1px solid #e5e5e5;
+        padding: 0.5em;
+      }
+      
+      th {
+        background-color: #f9f9f9;
+        font-weight: 600;
+      }
+    }
+  }
+}

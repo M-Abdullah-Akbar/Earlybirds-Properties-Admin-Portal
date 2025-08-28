@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -7,11 +7,15 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import TextAlign from '@tiptap/extension-text-align';
+import Typography from '@tiptap/extension-typography';
 
 const MenuBar = ({ editor }) => {
   if (!editor) {
     return null;
   }
+
+  const [isHeadingDropdownOpen, setIsHeadingDropdownOpen] = useState(false);
 
   const addImage = () => {
     const url = window.prompt('URL');
@@ -39,8 +43,21 @@ const MenuBar = ({ editor }) => {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  const toggleHeadingDropdown = () => {
+    setIsHeadingDropdownOpen(!isHeadingDropdownOpen);
+  };
+
+  const getCurrentHeadingLabel = () => {
+    if (editor.isActive('heading', { level: 1 })) return 'H1';
+    if (editor.isActive('heading', { level: 2 })) return 'H2';
+    if (editor.isActive('heading', { level: 3 })) return 'H3';
+    if (editor.isActive('paragraph')) return 'Paragraph';
+    return 'Paragraph';
+  };
+
   return (
     <div className="editor-menu">
+      {/* Text formatting */}
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={editor.isActive('bold') ? 'is-active' : ''}
@@ -74,39 +91,103 @@ const MenuBar = ({ editor }) => {
           <path d="M8 3v9a4 4 0 1 0 8 0V3h2v9a6 6 0 1 1-12 0V3h2zM4 20h16v2H4v-2z"/>
         </svg>
       </button>
+
+      {/* Heading dropdown */}
+      <div className="heading-dropdown">
+        <button 
+          onClick={toggleHeadingDropdown}
+          className="dropdown-toggle"
+          type="button"
+          title="Text style"
+        >
+          {getCurrentHeadingLabel()}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <path fill="none" d="M0 0h24v24H0z"/>
+            <path d="M12 13.172l4.95-4.95 1.414 1.414L12 16 5.636 9.636 7.05 8.222z"/>
+          </svg>
+        </button>
+        {isHeadingDropdownOpen && (
+          <div className="dropdown-menu">
+            <button
+              onClick={() => {
+                editor.chain().focus().setParagraph().run();
+                setIsHeadingDropdownOpen(false);
+              }}
+              className={editor.isActive('paragraph') ? 'is-active' : ''}
+              type="button"
+            >
+              Paragraph
+            </button>
+            <button
+              onClick={() => {
+                editor.chain().focus().toggleHeading({ level: 1 }).run();
+                setIsHeadingDropdownOpen(false);
+              }}
+              className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+              type="button"
+            >
+              Heading 1
+            </button>
+            <button
+              onClick={() => {
+                editor.chain().focus().toggleHeading({ level: 2 }).run();
+                setIsHeadingDropdownOpen(false);
+              }}
+              className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+              type="button"
+            >
+              Heading 2
+            </button>
+            <button
+              onClick={() => {
+                editor.chain().focus().toggleHeading({ level: 3 }).run();
+                setIsHeadingDropdownOpen(false);
+              }}
+              className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+              type="button"
+            >
+              Heading 3
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Text alignment */}
       <button
-        onClick={() => editor.chain().focus().setParagraph().run()}
-        className={editor.isActive('paragraph') ? 'is-active' : ''}
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
         type="button"
-        title="Paragraph"
+        title="Align left"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
           <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M12 6v15h-2v-5a6 6 0 1 1 0-12h10v2h-3v15h-2V6h-3zm-2 0a4 4 0 1 0 0 8V6z"/>
+          <path d="M3 4h18v2H3V4zm0 15h14v2H3v-2zm0-5h18v2H3v-2zm0-5h14v2H3V9z"/>
         </svg>
       </button>
       <button
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
         type="button"
-        title="Heading 2"
+        title="Align center"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
           <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M4 4v7h7V4h2v16h-2v-7H4v7H2V4h2zm14.5 4a3.5 3.5 0 0 1 3.5 3.5l-.001 4a3.5 3.5 0 0 1-3.499 3.5H16v-2h2.5a1.5 1.5 0 0 0 1.5-1.5v-4a1.5 1.5 0 0 0-1.5-1.5H16v-2h2.5z"/>
+          <path d="M3 4h18v2H3V4zm2 15h14v2H5v-2zm-2-5h18v2H3v-2zm2-5h14v2H5V9z"/>
         </svg>
       </button>
       <button
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
         type="button"
-        title="Heading 3"
+        title="Align right"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
           <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M22 8l-.002 2-2.505 2.883c1.59.435 2.757 1.89 2.757 3.617 0 2.071-1.679 3.75-3.75 3.75-1.826 0-3.347-1.305-3.682-3.033l1.964-.382c.156.806.866 1.415 1.718 1.415.966 0 1.75-.784 1.75-1.75s-.784-1.75-1.75-1.75c-.286 0-.556.069-.794.19l-1.307-1.547L19.35 10H15V8h7zM4 4v7h7V4h2v16h-2v-7H4v7H2V4h2z"/>
+          <path d="M3 4h18v2H3V4zm4 15h14v2H7v-2zm-4-5h18v2H3v-2zm4-5h14v2H7V9z"/>
         </svg>
       </button>
+
+      {/* Lists */}
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={editor.isActive('bulletList') ? 'is-active' : ''}
@@ -129,6 +210,8 @@ const MenuBar = ({ editor }) => {
           <path d="M8 4h13v2H8V4zM5 3v3h1v1H3V6h1V4H3V3h2zM3 14v-2.5h2V11H3v-1h3v2.5H4v.5h2v1H3zm2 5.5H3v-1h2V18H3v-1h3v4H3v-1h2v-.5zM8 11h13v2H8v-2zm0 7h13v2H8v-2z"/>
         </svg>
       </button>
+
+      {/* Links and media */}
       <button onClick={setLink} className={editor.isActive('link') ? 'is-active' : ''} type="button" title="Link">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
           <path fill="none" d="M0 0h24v24H0z"/>
@@ -154,6 +237,10 @@ const RichTextEditor = ({ value, onChange, placeholder, className, error }) => {
       Image,
       TextStyle,
       Color,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Typography,
     ],
     content: value || '',
     onUpdate: ({ editor }) => {

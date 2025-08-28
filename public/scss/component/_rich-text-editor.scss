@@ -16,6 +16,7 @@
     padding: 8px;
     border-bottom: 1px solid #e5e5e5;
     background-color: #f9f9f9;
+    align-items: center;
     
     button {
       width: 32px;
@@ -49,6 +50,61 @@
         fill: #1c1c1c;
       }
     }
+    
+    // Heading dropdown styles
+    .heading-dropdown {
+      position: relative;
+      margin: 2px;
+      
+      .dropdown-toggle {
+        width: auto;
+        min-width: 100px;
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        
+        svg {
+          margin-left: 4px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+      
+      .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+        min-width: 120px;
+        padding: 4px 0;
+        margin-top: 2px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        
+        button {
+          width: 100%;
+          height: auto;
+          padding: 6px 12px;
+          text-align: left;
+          justify-content: flex-start;
+          border-radius: 0;
+          font-size: 14px;
+          
+          &:hover {
+            background-color: #f5f5f5;
+          }
+          
+          &.is-active {
+            background-color: #f0f0f0;
+            font-weight: 500;
+          }
+        }
+      }
+    }
   }
   
   .ProseMirror {
@@ -58,6 +114,13 @@
     
     p {
       margin-bottom: 1em;
+    }
+    
+    h1 {
+      font-size: 1.8em;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      font-weight: 700;
     }
     
     h2 {
@@ -84,7 +147,7 @@
     }
     
     a {
-      color: #2563eb;
+      color: var(--Primary, #2563eb);
       text-decoration: underline;
     }
     
@@ -99,6 +162,19 @@
       padding-left: 1em;
       color: #666;
       margin: 1em 0;
+    }
+    
+    /* Text alignment styles */
+    .is-text-aligned-left {
+      text-align: left;
+    }
+    
+    .is-text-aligned-center {
+      text-align: center;
+    }
+    
+    .is-text-aligned-right {
+      text-align: right;
     }
     
     code {

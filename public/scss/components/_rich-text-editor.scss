@@ -1,0 +1,76 @@
+.rich-text-editor-container {
+  width: 100%;
+  margin-bottom: 1rem;
+  
+  .simple-editor-wrapper {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    max-height: 500px;
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out;
+    
+    &:focus-within {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 1px rgba(49, 130, 206, 0.2);
+    }
+  }
+  
+  .simple-editor-content {
+    max-width: 100%;
+    margin: 0;
+    height: 100%;
+  }
+  
+  .simple-editor-content .tiptap.ProseMirror.simple-editor {
+    padding: 1rem;
+    min-height: 250px;
+    
+    &.has-error {
+      border-color: #e53e3e;
+    }
+  }
+  
+  /* Toolbar responsiveness */
+  .tiptap-toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px;
+    
+    .tiptap-toolbar-group {
+      flex-wrap: wrap;
+    }
+  }
+  
+  /* Media queries for different screen sizes */
+  @media screen and (max-width: 768px) {
+    .simple-editor-wrapper {
+      min-height: 250px;
+    }
+    
+    .tiptap-toolbar {
+      padding: 2px;
+    }
+    
+    .tiptap-toolbar-button {
+      padding: 4px;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .simple-editor-wrapper {
+      min-height: 200px;
+    }
+    
+    .simple-editor-content .tiptap.ProseMirror.simple-editor {
+      padding: 0.75rem;
+    }
+    
+    .tiptap-toolbar-group {
+      margin: 0 2px;
+    }
+  }
+}

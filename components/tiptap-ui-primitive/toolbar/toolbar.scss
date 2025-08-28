@@ -19,6 +19,7 @@
     display: flex;
     align-items: center;
     gap: 0.125rem;
+    flex-wrap: wrap;
 
     &:empty {
       display: none;
@@ -27,6 +28,10 @@
     &:empty + .tiptap-separator,
     .tiptap-separator + &:empty {
       display: none;
+    }
+
+    @media screen and (max-width: 768px) {
+      gap: 0.1rem;
     }
   }
 
@@ -44,9 +49,20 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    flex-wrap: wrap;
 
     &::-webkit-scrollbar {
       display: none;
+    }
+    
+    @media screen and (max-width: 768px) {
+      padding: 0 0.25rem;
+      gap: 0.1rem;
+    }
+    
+    @media screen and (max-width: 480px) {
+      padding: 0 0.125rem;
+      gap: 0.05rem;
     }
 
     @media (max-width: 480px) {

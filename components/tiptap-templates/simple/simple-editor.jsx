@@ -161,7 +161,7 @@ const MobileToolbarContent = ({
 
 export function SimpleEditor({ content: initialContent, onChange, placeholder, className }) {
   const isMobile = useIsMobile()
-  const { height } = useWindowSize()
+  const { height, width } = useWindowSize()
   const [mobileView, setMobileView] = React.useState("main")
   const toolbarRef = React.useRef(null)
 
@@ -228,6 +228,7 @@ export function SimpleEditor({ content: initialContent, onChange, placeholder, c
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
+          className="responsive-toolbar"
           style={{
             ...(isMobile
               ? {

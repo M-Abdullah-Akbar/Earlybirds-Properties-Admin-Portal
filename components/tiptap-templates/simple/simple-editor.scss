@@ -55,15 +55,16 @@ body,
 }
 
 .simple-editor-wrapper {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: auto;
+  min-height: 300px;
   overflow: auto;
 }
 
 .simple-editor-content {
-  max-width: 648px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -72,11 +73,51 @@ body,
 
 .simple-editor-content .tiptap.ProseMirror.simple-editor {
   flex: 1;
-  padding: 3rem 3rem 30vh;
+  padding: 1.5rem;
+  min-height: 250px;
+  
+  &.has-error {
+    border-color: #e53e3e;
+  }
+}
+
+/* Responsive toolbar styles */
+.responsive-toolbar {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 4px;
+  
+  .tiptap-toolbar-group {
+    flex-wrap: wrap;
+  }
+}
+
+/* Media queries for different screen sizes */
+@media screen and (max-width: 768px) {
+  .simple-editor-wrapper {
+    min-height: 250px;
+  }
+  
+  .responsive-toolbar {
+    padding: 2px;
+  }
+  
+  .tiptap-toolbar-button {
+    padding: 4px;
+  }
 }
 
 @media screen and (max-width: 480px) {
+  .simple-editor-wrapper {
+    min-height: 200px;
+  }
+  
   .simple-editor-content .tiptap.ProseMirror.simple-editor {
-    padding: 1rem 1.5rem 30vh;
+    padding: 0.75rem;
+  }
+  
+  .tiptap-toolbar-group {
+    margin: 0 2px;
   }
 }

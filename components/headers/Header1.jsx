@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 //import Image from "next/image";
 import DashboardNav from "./DashboardNav";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 export default function Header1({ parentClass = "header" }) {
   return (
     <header id="header-main" className={parentClass}>
@@ -49,6 +50,7 @@ export default function Header1({ parentClass = "header" }) {
                     <p>(603) 555-0123</p>
                   </div>*/}
                   <DashboardNav />
+                  <ThemeToggle />
                   <div className="btn-add">
                     <Link
                       className="tf-btn style-border pd-23"

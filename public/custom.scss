@@ -837,6 +837,38 @@
   }
 }
 
+// TipTap Editor List Fixes
+.tiptap.ProseMirror {
+  ol li {
+    list-style: decimal !important;
+    display: list-item !important;
+    margin-left: 0 !important;
+  }
+  
+  ul:not([data-type="taskList"]) li {
+    list-style: disc !important;
+    display: list-item !important;
+    margin-left: 0 !important;
+  }
+  
+  // Nested list styles
+  ol ol li {
+    list-style: lower-alpha !important;
+  }
+  
+  ol ol ol li {
+    list-style: lower-roman !important;
+  }
+  
+  ul ul li {
+    list-style: circle !important;
+  }
+  
+  ul ul ul li {
+    list-style: square !important;
+  }
+}
+
 // Enhanced Action Buttons
 .list-action {
   display: flex;
@@ -1314,6 +1346,26 @@
   }
 }
 
+.auth-field-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--Color-2);
+  font-size: 13px;
+  margin-top: 6px;
+  
+  svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--Color-2);
+  }
+  
+  span {
+    line-height: 1.4;
+  }
+}
+
 .auth-form-group {
   margin-bottom: 20px;
   
@@ -1379,6 +1431,16 @@
       background-color: var(--Sub-primary-1);
       cursor: not-allowed;
       opacity: 0.7;
+    }
+    
+    &.error {
+      border-color: var(--Color-2);
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+      
+      &:focus {
+        border-color: var(--Color-2);
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+      }
     }
   }
 }
@@ -1499,9 +1561,79 @@
   .auth-form-title h3 {
     font-size: 24px;
   }
+}
+
+// Password Toggle Button Styles
+.auth-input-wrapper {
+  .auth-password-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--Note);
+    transition: all 0.3s ease;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: var(--Primary);
+      background-color: rgba(241, 145, 61, 0.1);
+    }
+    
+    &:focus {
+      outline: none;
+      color: var(--Primary);
+      background-color: rgba(241, 145, 61, 0.1);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        color: var(--Note);
+        background-color: transparent;
+      }
+    }
+    
+    svg {
+      width: 18px;
+      height: 18px;
+      transition: all 0.3s ease;
+    }
+  }
   
-  .auth-form-title p {
-    font-size: 14px;
+  // Adjust input padding when password toggle is present
+  .auth-input[type="password"],
+  .auth-input[type="text"] {
+    padding-right: 48px;
+  }
+}
+
+// Change Password Page Eye Button Styles
+.btn-show-pass {
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    color: var(--Primary) !important;
+    background-color: rgba(241, 145, 61, 0.1) !important;
+  }
+  
+  &:focus {
+    outline: none !important;
+    color: var(--Primary) !important;
+    background-color: rgba(241, 145, 61, 0.1) !important;
+  }
+  
+  svg {
+    transition: all 0.3s ease;
   }
 }
 
@@ -2041,5 +2173,140 @@
     color: #666;
     font-size: 16px;
     font-weight: 500;
+  }
+}
+
+// Image controls for property management
+.item-upload {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    
+    .image-controls {
+      opacity: 1;
+    }
+  }
+  
+  .image-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0) 30%,
+      rgba(0, 0, 0, 0) 70%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  
+  .bottom-controls {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  
+  .btn-set-main {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, #45a049, #4CAF50);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  .main-image-badge {
+    background: linear-gradient(135deg, var(--Primary, #ff6b35), #ff5722);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    &::before {
+      content: "★";
+      font-size: 14px;
+    }
+  }
+  
+  .remove-file {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, #d32f2f, #f44336);
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+  
+  // Show controls on mobile devices
+  @media (max-width: 768px) {
+    .image-controls {
+      opacity: 1;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0) 40%,
+        rgba(0, 0, 0, 0) 60%,
+        rgba(0, 0, 0, 0.8) 100%
+      );
+    }
   }
 }

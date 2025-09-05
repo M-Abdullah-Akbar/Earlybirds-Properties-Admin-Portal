@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Help prevent hydration mismatches
+  experimental: {
+    optimizePackageImports: ["bootstrap"],
+  },
+  // Suppress hydration warnings for browser extensions
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   redirects: () => {
     return [
       {
@@ -42,9 +50,9 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "556778af93ac.ngrok-free.app",
-        port: "",
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000",
         pathname: "/**",
       },
     ],
@@ -52,4 +60,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-

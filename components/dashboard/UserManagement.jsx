@@ -2,21 +2,21 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { userAPI } from "@/utlis/api";
+import { userAPI } from "@/utils/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UserManagement() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
-    superAdmins: 0,
-    admins: 0,
     activeUsers: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [roleFilter, setRoleFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10);
@@ -34,13 +34,13 @@ export default function UserManagement() {
         page: currentPage,
         limit: limit,
         ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter !== "All" && { status: statusFilter.toLowerCase() }),
-        ...(roleFilter !== "All" && { role: roleFilter }),
+        ...(statusFilter !== "All" && { isActive: statusFilter }),
       };
 
       const response = await userAPI.getUsers(params);
 
       if (response.success) {
+        // Show all users including SuperAdmin accounts
         setUsers(response.data.users);
         setTotalPages(response.data.pagination.pages);
       } else {
@@ -53,6 +53,7 @@ export default function UserManagement() {
       );
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
@@ -61,10 +62,9 @@ export default function UserManagement() {
     try {
       const response = await userAPI.getUserStats();
       if (response.success) {
+        // Include all users including SuperAdmin accounts
         setStats({
           totalUsers: response.data.total,
-          superAdmins: response.data.byRole.SuperAdmin,
-          admins: response.data.byRole.admin,
           activeUsers: response.data.byStatus.active,
         });
       }
@@ -76,6 +76,18 @@ export default function UserManagement() {
 
   // Handle user deletion - show modal
   const handleDeleteUser = (user) => {
+    // Prevent deletion of SuperAdmin accounts
+    if (user.role === "SuperAdmin") {
+      alert("SuperAdmin accounts cannot be deleted.");
+      return;
+    }
+
+    // Prevent users from deleting themselves
+    if (currentUser && user._id === currentUser._id) {
+      alert("You cannot delete your own account.");
+      return;
+    }
+
     setUserToDelete(user);
     setShowDeleteModal(true);
   };
@@ -117,7 +129,7 @@ export default function UserManagement() {
   // Effect to fetch data on component mount and when filters change
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, searchTerm, statusFilter, roleFilter]);
+  }, [currentPage, searchTerm, statusFilter]);
 
   // Effect to fetch stats on component mount
   useEffect(() => {
@@ -134,6 +146,27 @@ export default function UserManagement() {
 
   const getStatusClass = (isActive) => {
     return isActive ? "btn-status active" : "btn-status inactive";
+  };
+
+  const getStatusStyle = (isActive) => {
+    return {
+      padding: "6px 16px",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      backgroundColor: isActive ? "#28a745" : "#dc3545",
+      color: "white",
+      border: "none",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      textAlign: "center",
+      lineHeight: "1",
+      minHeight: "24px",
+      whiteSpace: "nowrap",
+    };
   };
 
   const getStatusText = (isActive) => {
@@ -167,7 +200,7 @@ export default function UserManagement() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  if (loading && users.length === 0) {
+  if (initialLoad && loading) {
     return (
       <div className="main-content w-100">
         <div className="main-content-inner wrap-dashboard-content">
@@ -238,7 +271,7 @@ export default function UserManagement() {
 
           {/* Filters */}
           <div className="row mb-20">
-            <div className="col-md-4">
+            <div className="col-md-6">
               <fieldset className="box-fieldset">
                 <label style={{ color: "var(--text-color, #333)" }}>
                   Search Users:
@@ -257,7 +290,7 @@ export default function UserManagement() {
                 />
               </fieldset>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-6">
               <fieldset className="box-fieldset">
                 <label style={{ color: "var(--text-color, #333)" }}>
                   Filter by Status:
@@ -293,304 +326,162 @@ export default function UserManagement() {
                 </select>
               </fieldset>
             </div>
-            <div className="col-md-4">
-              <fieldset className="box-fieldset">
-                <label style={{ color: "var(--text-color, #333)" }}>
-                  Filter by Role:
-                </label>
-                <select
-                  className="form-control"
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  style={{
-                    color: "var(--text-color, #333)",
-                    backgroundColor: "var(--input-bg, #fff)",
-                    border: "1px solid var(--border-color, #ddd)",
-                  }}
-                >
-                  <option
-                    value="All"
-                    style={{ color: "#333", backgroundColor: "#fff" }}
-                  >
-                    All Roles
-                  </option>
-                  <option
-                    value="SuperAdmin"
-                    style={{ color: "#333", backgroundColor: "#fff" }}
-                  >
-                    Super Admin
-                  </option>
-                  <option
-                    value="admin"
-                    style={{ color: "#333", backgroundColor: "#fff" }}
-                  >
-                    Admin
-                  </option>
-                </select>
-              </fieldset>
-            </div>
           </div>
 
           {/* Stats */}
-          <div className="flat-counter-v2 tf-counter mb-20">
-            <div className="counter-box">
-              <div
-                className="box-icon"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="icon"
-                  style={{
-                    fontSize: "28px",
-                    width: "28px",
-                    height: "28px",
-                    display: "block",
-                  }}
-                >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: "28px", height: "28px", display: "block" }}
-                  >
-                    <path
-                      d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H6C4.93913 15 3.92172 15.4214 3.17157 16.1716C2.42143 16.9217 2 17.9391 2 19V21"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M22 21V19C22 18.1137 21.7311 17.2528 21.2312 16.5159C20.7313 15.7789 20.0218 15.1999 19.1899 14.8501C18.358 14.5003 17.4375 14.3944 16.5228 14.5466C15.6081 14.6988 14.7337 15.1039 14 15.72"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45768C17.623 10.1593 16.8604 10.6597 16 10.88"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div className="content-box">
-                <div
-                  className="title-count text-variant-1"
-                  style={{ fontSize: "16px" }}
-                >
-                  Total Users
-                </div>
-                <div className="box-count d-flex align-items-end">
+          <div className="row mb-20">
+            <div className="col-md-6 d-flex justify-content-center">
+              <div className="flat-counter-v2 tf-counter">
+                <div className="counter-box">
                   <div
-                    className="number"
-                    style={{ fontSize: "32px", fontWeight: "bold" }}
+                    className="box-icon"
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    {stats.totalUsers}
+                    <span
+                      className="icon"
+                      style={{
+                        fontSize: "28px",
+                        width: "28px",
+                        height: "28px",
+                        display: "block",
+                      }}
+                    >
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          display: "block",
+                        }}
+                      >
+                        <path
+                          d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H6C4.93913 15 3.92172 15.4214 3.17157 16.1716C2.42143 16.9217 2 17.9391 2 19V21"
+                          stroke="#F1913D"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z"
+                          stroke="#F1913D"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M22 21V19C22 18.1137 21.7311 17.2528 21.2312 16.5159C20.7313 15.7789 20.0218 15.1999 19.1899 14.8501C18.358 14.5003 17.4375 14.3944 16.5228 14.5466C15.6081 14.6988 14.7337 15.1039 14 15.72"
+                          stroke="#F1913D"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45768C17.623 10.1593 16.8604 10.6597 16 10.88"
+                          stroke="#F1913D"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                  <div className="content-box">
+                    <div
+                      className="title-count text-variant-1"
+                      style={{ fontSize: "16px" }}
+                    >
+                      Total Users
+                    </div>
+                    <div className="box-count d-flex align-items-end">
+                      <div
+                        className="number"
+                        style={{
+                          fontSize: "32px",
+                          fontWeight: "bold",
+                          color: "#F1913D",
+                        }}
+                      >
+                        {stats.totalUsers}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="counter-box">
-              <div
-                className="box-icon"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="icon"
-                  style={{
-                    fontSize: "28px",
-                    width: "28px",
-                    height: "28px",
-                    display: "block",
-                  }}
-                >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: "28px", height: "28px", display: "block" }}
-                  >
-                    <path
-                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div className="content-box">
-                <div
-                  className="title-count text-variant-1"
-                  style={{ fontSize: "16px" }}
-                >
-                  Super Admins
-                </div>
-                <div className="box-count d-flex align-items-end">
+
+            <div className="col-md-6 d-flex justify-content-center">
+              <div className="flat-counter-v2 tf-counter">
+                <div className="counter-box">
                   <div
-                    className="number"
-                    style={{ fontSize: "32px", fontWeight: "bold" }}
+                    className="box-icon"
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    {stats.superAdmins}
+                    <span
+                      className="icon"
+                      style={{
+                        fontSize: "28px",
+                        width: "28px",
+                        height: "28px",
+                        display: "block",
+                      }}
+                    >
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          display: "block",
+                        }}
+                      >
+                        <path
+                          d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                          stroke="#22C55E"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
                   </div>
-                </div>
-              </div>
-            </div>
-            <div className="counter-box">
-              <div
-                className="box-icon"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="icon"
-                  style={{
-                    fontSize: "28px",
-                    width: "28px",
-                    height: "28px",
-                    display: "block",
-                  }}
-                >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: "28px", height: "28px", display: "block" }}
-                  >
-                    <path
-                      d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 3.42172 15.4214 2.67157 16.1716C1.92143 16.9217 1.5 17.9391 1.5 19V21"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M23 21V19C23 18.1137 22.7311 17.2528 22.2312 16.5159C21.7313 15.7789 21.0218 15.1999 20.1899 14.8501C19.358 14.5003 18.4375 14.3944 17.5228 14.5466C16.6081 14.6988 15.7337 15.1039 15 15.72"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M17 3.13C17.8604 3.35031 18.623 3.85071 19.1676 4.55232C19.7122 5.25392 20.0078 6.11683 20.0078 7.005C20.0078 7.89317 19.7122 8.75608 19.1676 9.45768C18.623 10.1593 17.8604 10.6597 17 10.88"
-                      stroke="#F1913D"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div className="content-box">
-                <div
-                  className="title-count text-variant-1"
-                  style={{ fontSize: "16px" }}
-                >
-                  Admins
-                </div>
-                <div className="box-count d-flex align-items-end">
-                  <div
-                    className="number"
-                    style={{ fontSize: "32px", fontWeight: "bold" }}
-                  >
-                    {stats.admins}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="counter-box">
-              <div
-                className="box-icon"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="icon"
-                  style={{
-                    fontSize: "28px",
-                    width: "28px",
-                    height: "28px",
-                    display: "block",
-                  }}
-                >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: "28px", height: "28px", display: "block" }}
-                  >
-                    <path
-                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                      stroke="#22C55E"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div className="content-box">
-                <div
-                  className="title-count text-variant-1"
-                  style={{ fontSize: "16px" }}
-                >
-                  Active Users
-                </div>
-                <div className="box-count d-flex align-items-end">
-                  <div
-                    className="number"
-                    style={{ fontSize: "32px", fontWeight: "bold" }}
-                  >
-                    {stats.activeUsers}
+                  <div className="content-box">
+                    <div
+                      className="title-count text-variant-1"
+                      style={{ fontSize: "16px" }}
+                    >
+                      Active Users
+                    </div>
+                    <div className="box-count d-flex align-items-end">
+                      <div
+                        className="number"
+                        style={{
+                          fontSize: "32px",
+                          fontWeight: "bold",
+                          color: "#22C55E",
+                        }}
+                      >
+                        {stats.activeUsers}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -645,7 +536,7 @@ export default function UserManagement() {
                             <div className="content">
                               <div className="title">
                                 <Link
-                                  href={`/admin/edit-user/${user._id}`}
+                                  href={`/admin/user-profile/${user._id}`}
                                   className="link"
                                 >
                                   {user.name}
@@ -664,7 +555,10 @@ export default function UserManagement() {
                         </td>
                         <td>
                           <div className="status-wrap">
-                            <span className={getStatusClass(user.isActive)}>
+                            <span
+                              className={getStatusClass(user.isActive)}
+                              style={getStatusStyle(user.isActive)}
+                            >
                               {getStatusText(user.isActive)}
                             </span>
                           </div>
@@ -677,33 +571,50 @@ export default function UserManagement() {
                         </td>
                         <td>
                           <ul className="list-action">
-                            <li>
-                              <button
-                                className="remove-file item"
-                                onClick={() => handleDeleteUser(user)}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                <svg
-                                  width={16}
-                                  height={16}
-                                  viewBox="0 0 16 16"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
+                            {/* Only show delete button for non-SuperAdmin accounts and not for current user */}
+                            {user.role !== "SuperAdmin" &&
+                              user._id !== currentUser?._id && (
+                                <li>
+                                  <button
+                                    className="remove-file item"
+                                    onClick={() => handleDeleteUser(user)}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    <svg
+                                      width={16}
+                                      height={16}
+                                      viewBox="0 0 16 16"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        d="M9.82667 6.00035L9.596 12.0003M6.404 12.0003L6.17333 6.00035M12.8187 3.86035C13.0467 3.89501 13.2733 3.93168 13.5 3.97101M12.8187 3.86035L12.1067 13.1157C12.0776 13.4925 11.9074 13.8445 11.63 14.1012C11.3527 14.3579 10.9886 14.5005 10.6107 14.5003H5.38933C5.0114 14.5005 4.64735 14.3579 4.36999 14.1012C4.09262 13.8445 3.92239 13.4925 3.89333 13.1157L3.18133 3.86035M12.8187 3.86035C12.0492 3.74403 11.2758 3.65574 10.5 3.59568M3.18133 3.86035C2.95333 3.89435 2.72667 3.93101 2.5 3.97035M3.18133 3.86035C3.95076 3.74403 4.72416 3.65575 5.5 3.59568M10.5 3.59568V2.98501C10.5 2.19835 9.89333 1.54235 9.10667 1.51768C8.36908 1.49411 7.63092 1.49411 6.89333 1.51768C6.10667 1.54235 5.5 2.19901 5.5 2.98501V3.59568M10.5 3.59568C8.83581 3.46707 7.16419 3.46707 5.5 3.59568"
+                                        stroke="#A3ABB0"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </li>
+                              )}
+                            {/* Show a message if no actions are available */}
+                            {(user.role === "SuperAdmin" ||
+                              user._id === currentUser?._id) && (
+                              <li>
+                                <span
+                                  style={{ color: "#999", fontSize: "12px" }}
                                 >
-                                  <path
-                                    d="M9.82667 6.00035L9.596 12.0003M6.404 12.0003L6.17333 6.00035M12.8187 3.86035C13.0467 3.89501 13.2733 3.93168 13.5 3.97101M12.8187 3.86035L12.1067 13.1157C12.0776 13.4925 11.9074 13.8445 11.63 14.1012C11.3527 14.3579 10.9886 14.5005 10.6107 14.5003H5.38933C5.0114 14.5005 4.64735 14.3579 4.36999 14.1012C4.09262 13.8445 3.92239 13.4925 3.89333 13.1157L3.18133 3.86035M12.8187 3.86035C12.0492 3.74403 11.2758 3.65574 10.5 3.59568M3.18133 3.86035C2.95333 3.89435 2.72667 3.93101 2.5 3.97035M3.18133 3.86035C3.95076 3.74403 4.72416 3.65575 5.5 3.59568M10.5 3.59568V2.98501C10.5 2.19835 9.89333 1.54235 9.10667 1.51768C8.36908 1.49411 7.63092 1.49411 6.89333 1.51768C6.10667 1.54235 5.5 2.19901 5.5 2.98501V3.59568M10.5 3.59568C8.83581 3.46707 7.16419 3.46707 5.5 3.59568"
-                                    stroke="#A3ABB0"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                                Delete
-                              </button>
-                            </li>
+                                  {user.role === "SuperAdmin"
+                                    ? "Protected"
+                                    : "Current User"}
+                                </span>
+                              </li>
+                            )}
                           </ul>
                         </td>
                       </tr>
@@ -837,7 +748,20 @@ export default function UserManagement() {
               <p style={{ margin: 0, color: "#666", lineHeight: "1.5" }}>
                 Are you sure you want to delete the user{" "}
                 <strong>{userToDelete?.name}</strong>?
-                <br />
+              </p>
+              <p
+                style={{
+                  margin: "15px 0 0 0",
+                  color: "#666",
+                  fontSize: "14px",
+                  lineHeight: "1.5",
+                }}
+              >
+                <strong>Note:</strong> Properties created by this user that have
+                approval status "approved" or "rejected" will be transferred to
+                you.
+              </p>
+              <p style={{ margin: "10px 0 0 0" }}>
                 <small style={{ color: "#999" }}>
                   This action cannot be undone.
                 </small>

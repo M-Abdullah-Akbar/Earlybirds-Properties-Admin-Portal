@@ -1,31 +1,36 @@
 "use client";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { safeLocalStorage } from "@/utils/clientUtils";
+import { useClientMount } from "@/utils/useClientMount";
 
 export default function SettingsHandler() {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
   const [isRtl, setIsRtl] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const hasMounted = useClientMount();
 
   // Optional: Sync state with localStorage on component mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("isDark");
+    if (!hasMounted) return; // Wait for client-side mount to prevent hydration mismatch
+
+    const savedTheme = safeLocalStorage.getItem("isDark");
     if (savedTheme) {
       setIsDark(JSON.parse(savedTheme));
     }
-    const savedDir = localStorage.getItem("isRtl");
+    const savedDir = safeLocalStorage.getItem("isRtl");
     if (savedDir) {
       setIsRtl(JSON.parse(savedDir));
     }
-  }, []);
+  }, [hasMounted]);
   // Initialize state with false (unchecked)
 
   // Handle checkbox change event
   const handleCheckboxChange = () => {
     const newIsDark = !isDark; // Toggle the state
     setIsDark(newIsDark); // Toggle the state
-    localStorage.setItem("isDark", JSON.stringify(newIsDark)); // Save to localStorage
+    safeLocalStorage.setItem("isDark", JSON.stringify(newIsDark)); // Save to localStorage
   };
   useEffect(() => {
     if (isDark) {
@@ -56,7 +61,7 @@ export default function SettingsHandler() {
   const handleRtlChange = () => {
     const newIsRtl = !isRtl; // Toggle the state
     setIsRtl(newIsRtl); // Update state
-    localStorage.setItem("isRtl", JSON.stringify(newIsRtl)); // Save to localStorage
+    safeLocalStorage.setItem("isRtl", JSON.stringify(newIsRtl)); // Save to localStorage
   };
 
   useEffect(() => {

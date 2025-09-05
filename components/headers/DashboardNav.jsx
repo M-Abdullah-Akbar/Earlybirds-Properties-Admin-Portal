@@ -6,7 +6,7 @@ import { useState } from "react";
 
 export default function DashboardNav({ color = "" }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ export default function DashboardNav({ color = "" }) {
         </svg>
       </div>
       <div className={`name ${color} `}>
-        Admin
+        {user?.username || "Admin"}
         <i className="icon-CaretDown" />
       </div>
       <div className=" menu-user">
@@ -79,7 +79,7 @@ export default function DashboardNav({ color = "" }) {
           </svg>
           Dashboards
         </Link>
-        {/* <Link className="dropdown-item" href={`/my-profile`}>
+        <Link className="dropdown-item" href={`/admin/my-profile`}>
           <svg
             width={20}
             height={20}
@@ -88,85 +88,47 @@ export default function DashboardNav({ color = "" }) {
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M15 15C16.3807 15 17.5 13.8807 17.5 12.5C17.5 11.1193 16.3807 10 15 10C13.6193 10 12.5 11.1193 12.5 12.5C12.5 13.8807 13.6193 15 15 15Z"
+              d="M15.749 6C15.749 6.99456 15.3539 7.94839 14.6507 8.65165C13.9474 9.35491 12.9936 9.75 11.999 9.75C11.0044 9.75 10.0506 9.35491 9.34735 8.65165C8.64409 7.94839 8.249 6.99456 8.249 6C8.249 5.00544 8.64409 4.05161 9.34735 3.34835C10.0506 2.64509 11.0044 2.25 11.999 2.25C12.9936 2.25 13.9474 2.64509 14.6507 3.34835C15.3539 4.05161 15.749 5.00544 15.749 6ZM4.5 20.118C4.53213 18.1504 5.33634 16.2742 6.73918 14.894C8.14202 13.5139 10.0311 12.7405 11.999 12.7405C13.9669 12.7405 15.856 13.5139 17.2588 14.894C18.6617 16.2742 19.4659 18.1504 19.498 20.118C17.1454 21.1968 14.5871 21.7535 11.999 21.75C9.323 21.75 6.783 21.166 4.5 20.118Z"
+              stroke="#A8ABAE"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          My Profile
+        </Link>
+        <Link className="dropdown-item" href={`/admin/change-password`}>
+          <svg
+            width={20}
+            height={20}
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15.8346 9.16663V6.66663C15.8346 5.34054 15.3079 4.06877 14.3702 3.13109C13.4325 2.19341 12.1607 1.66663 10.8346 1.66663C9.50854 1.66663 8.23677 2.19341 7.29909 3.13109C6.36141 4.06877 5.83464 5.34054 5.83464 6.66663V9.16663"
               stroke="#A8ABAE"
               strokeWidth="1.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
-              d="M7.5013 9.16667C9.34225 9.16667 10.8346 7.67428 10.8346 5.83333C10.8346 3.99238 9.34225 2.5 7.5013 2.5C5.66035 2.5 4.16797 3.99238 4.16797 5.83333C4.16797 7.67428 5.66035 9.16667 7.5013 9.16667Z"
+              d="M4.16797 9.16663H17.5013C18.1913 9.16663 18.7513 9.72663 18.7513 10.4166V16.25C18.7513 16.94 18.1913 17.5 17.5013 17.5H4.16797C3.47797 17.5 2.91797 16.94 2.91797 16.25V10.4166C2.91797 9.72663 3.47797 9.16663 4.16797 9.16663Z"
               stroke="#A8ABAE"
               strokeWidth="1.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
-              d="M8.33464 12.5H5.0013C4.11725 12.5 3.2694 12.8512 2.64428 13.4763C2.01916 14.1014 1.66797 14.9493 1.66797 15.8333V17.5"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M18.082 13.6666L17.332 13.4166"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12.668 11.5834L11.918 11.3334"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M13.832 15.5834L14.082 14.8334"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M15.918 10.1666L16.168 9.41663"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M16.3333 15.5833L16 14.75"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M14.0013 10.25L13.668 9.41663"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M11.918 13.8333L12.7513 13.5"
-              stroke="#A8ABAE"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M17.25 11.5L18.0833 11.1666"
+              d="M10.832 12.5V14.1666"
               stroke="#A8ABAE"
               strokeWidth="1.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-          My profile
-        </Link> */}
+          Change Password
+        </Link>
         {/*<Link className="dropdown-item" href={`/my-package`}>
           <svg
             width={20}
@@ -399,10 +361,7 @@ export default function DashboardNav({ color = "" }) {
             </a>
           </div>
         </div>*/}
-        <button 
-          className="dropdown-item logout-btn" 
-          onClick={handleLogout}
-        >
+        <button className="dropdown-item logout-btn" onClick={handleLogout}>
           <svg
             width={20}
             height={20}

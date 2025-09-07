@@ -463,6 +463,7 @@ export default function AddProperty() {
       try {
         setLoading(true);
 
+
         // Check if user is authenticated
         const adminToken = safeLocalStorage.getItem("admin_token");
         if (!adminToken) {
@@ -471,7 +472,9 @@ export default function AddProperty() {
           return;
         }
 
+
         console.log("Admin token found, fetching initial data...");
+
 
         // Fetch property types from API
         const typesResponse = await propertyAPI.getPropertyTypes();
@@ -497,10 +500,12 @@ export default function AddProperty() {
           setPropertyTypes(adminUtils.getPropertyTypes());
         }
 
+
         // Set emirates from adminUtils
         setEmirates(adminUtils.getEmirates());
       } catch (error) {
         console.error("Error fetching initial data:", error);
+
 
         // Check if it's an authentication error
         if (error.response?.status === 401) {
@@ -509,6 +514,7 @@ export default function AddProperty() {
           router.push("/admin/login");
           return;
         }
+
 
         // Set fallback values if API fails
         setPropertyTypes(adminUtils.getPropertyTypes());
@@ -536,6 +542,7 @@ export default function AddProperty() {
             return;
           }
 
+
           console.log("Fetching areas for emirate:", formData.location.emirate);
           const areasResponse = await propertyAPI.getAreasForEmirate(
             formData.location.emirate
@@ -560,6 +567,7 @@ export default function AddProperty() {
         } catch (error) {
           console.error("Error fetching areas:", error);
 
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             safeLocalStorage.removeItem("admin_token");
@@ -567,6 +575,7 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
+
 
           // Use fallback areas from adminUtils
           setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
@@ -604,6 +613,7 @@ export default function AddProperty() {
             );
           console.log("Amenities API response:", amenitiesResponse);
 
+
           if (
             amenitiesResponse.success &&
             amenitiesResponse.data &&
@@ -627,6 +637,7 @@ export default function AddProperty() {
         } catch (error) {
           console.error("Error fetching amenities:", error);
 
+
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             safeLocalStorage.removeItem("admin_token");
@@ -634,6 +645,7 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
+
 
           // Use fallback amenities from adminUtils
           setAmenities(
@@ -1236,8 +1248,12 @@ export default function AddProperty() {
       console.log("API Response:", response);
 
       if (response.success) {
-        // Redirect immediately without showing alert
-        router.push("/admin/property-management");
+        // Show success notification
+        toast.success("Property added successfully!");
+        // Redirect after a short delay to allow the user to see the notification
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -1408,6 +1424,9 @@ export default function AddProperty() {
         ...prev,
         submit: errorMessage,
       }));
+      
+      // Show error notification for exceptions
+      toast.error(errorMessage || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1432,6 +1451,7 @@ export default function AddProperty() {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner">
         {/* Header */}
         <div className="widget-box-2 mb-20">
@@ -1554,8 +1574,12 @@ export default function AddProperty() {
                 {errors.title && (
                   <span className="error-text">{errors.title}</span>
                 )}
+                {errors.title && (
+                  <span className="error-text">{errors.title}</span>
+                )}
               </fieldset>
             </div>
+
 
             <div className="box">
               <fieldset className="box-fieldset">
@@ -1603,6 +1627,9 @@ export default function AddProperty() {
                 {errors.propertyType && (
                   <span className="error-text">{errors.propertyType}</span>
                 )}
+                {errors.propertyType && (
+                  <span className="error-text">{errors.propertyType}</span>
+                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -1625,7 +1652,16 @@ export default function AddProperty() {
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </option>
                     ))}
+                  {Array.isArray(listingTypes) &&
+                    listingTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
                 </select>
+                {errors.listingType && (
+                  <span className="error-text">{errors.listingType}</span>
+                )}
                 {errors.listingType && (
                   <span className="error-text">{errors.listingType}</span>
                 )}
@@ -1639,6 +1675,12 @@ export default function AddProperty() {
                   value={formData.status}
                   onChange={handleInputChange}
                 >
+                  {Array.isArray(propertyStatuses) &&
+                    propertyStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
                   {Array.isArray(propertyStatuses) &&
                     propertyStatuses.map((status) => (
                       <option key={status} value={status}>
@@ -1669,6 +1711,9 @@ export default function AddProperty() {
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
                 />
+                {errors.address && (
+                  <span className="error-text">{errors.address}</span>
+                )}
                 {errors.address && (
                   <span className="error-text">{errors.address}</span>
                 )}
@@ -2144,6 +2189,9 @@ export default function AddProperty() {
                 {errors.parkingAvailable && (
                   <span className="error-text">{errors.parkingAvailable}</span>
                 )}
+                {errors.parkingAvailable && (
+                  <span className="error-text">{errors.parkingAvailable}</span>
+                )}
               </fieldset>
 
               {/* Show Parking Type in the same row when parking is available */}
@@ -2201,6 +2249,20 @@ export default function AddProperty() {
           <h5 className="title">Amenities</h5>
           <div className="box-amenities-property">
             <div className="amenities-grid">
+              {Array.isArray(amenities) &&
+                amenities.map((amenity) => (
+                  <label key={amenity} className="amenity-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={
+                        Array.isArray(formData.amenities) &&
+                        formData.amenities.includes(amenity)
+                      }
+                      onChange={() => handleAmenityChange(amenity)}
+                    />
+                    <span>{amenity}</span>
+                  </label>
+                ))}
               {Array.isArray(amenities) &&
                 amenities.map((amenity) => (
                   <label key={amenity} className="amenity-checkbox">

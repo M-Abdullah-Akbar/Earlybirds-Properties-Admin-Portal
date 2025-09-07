@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { safeLocalStorage, safeWindow } from "./clientUtils";
 import { canAccessRoute } from "../utils/permissions";
 
@@ -17,7 +17,6 @@ api.interceptors.request.use(
     if (config.url === "/auth/login" || config.url?.includes("/auth/login")) {
       return config;
     }
-
     const token = safeLocalStorage.getItem("admin_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

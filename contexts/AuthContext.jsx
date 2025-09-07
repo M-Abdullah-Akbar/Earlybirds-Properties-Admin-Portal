@@ -74,6 +74,7 @@ export const AuthProvider = ({ children }) => {
           setUser(mockUser);
           setIsAuthenticated(true);
 
+
           return { success: true };
         } else {
           return { success: false, error: "Invalid or expired access token" };
@@ -242,6 +243,7 @@ export const AuthProvider = ({ children }) => {
         setUser(response.user);
         setIsAuthenticated(true);
 
+
         return { success: true };
       } else {
         return { success: false, error: response.error };
@@ -260,6 +262,7 @@ export const AuthProvider = ({ children }) => {
     // Reset state
     setUser(null);
     setIsAuthenticated(false);
+
 
     // Redirect to token-prefixed login
     router.push("/admin/login");

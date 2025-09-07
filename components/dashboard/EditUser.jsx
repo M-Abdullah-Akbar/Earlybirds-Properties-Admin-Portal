@@ -149,6 +149,7 @@ export default function EditUser({ userId }) {
 
   return (
     <div className="main-content w-100">
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <h3 className="title">

@@ -19,6 +19,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
+
   // Check if current route is a dashboard route
   {
     /*const isDashboardRoute = pathname?.startsWith('/dashboard') || 
@@ -68,7 +69,6 @@ export default function RootLayout({ children }) {
             modalInstance.hide();
           }
         });
-
         // Close any open offcanvas
         const offcanvasElements = document.querySelectorAll(".offcanvas.show");
         offcanvasElements.forEach((offcanvas) => {
@@ -81,7 +81,6 @@ export default function RootLayout({ children }) {
         console.error("Error initializing bootstrap:", error);
       }
     };
-
     initializeBootstrap();
   }, [pathname]); // Runs every time the route changes
 
@@ -95,6 +94,7 @@ export default function RootLayout({ children }) {
     });
     wow.init();
   }, [pathname]);
+
 
   useEffect(() => {
     const handleSticky = () => {

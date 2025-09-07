@@ -596,7 +596,7 @@ export default function EditProperty({ propertyId }) {
             "studio",
             "duplex",
             "commercial",
-            "land",
+            "land"
           ]);
         }
       } catch (error) {
@@ -654,7 +654,6 @@ export default function EditProperty({ propertyId }) {
         setAreas(cachedAreas);
         return;
       }
-
       // Set a new timeout to debounce the API call
       fetchAreasTimeoutRef.current = setTimeout(async () => {
         // Prevent multiple simultaneous calls

@@ -3,7 +3,7 @@ import { safeLocalStorage, safeWindow } from "./clientUtils";
 import { canAccessRoute } from "../utils/permissions";
 
 // Base API configuration
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "https://earlybirds-properties-backend.vercel.app/api";
 
 // Create axios instance
 const api = axios.create({
@@ -353,6 +353,73 @@ export const dashboardAPI = {
   },
 };
 
+// Helper function to convert FormData to nested object structure
+const convertFormDataToNestedObject = (formData) => {
+  const result = {};
+  
+  for (const [key, value] of formData.entries()) {
+    // Handle amenities array notation specifically
+    if (key.startsWith('amenities[')) {
+      // Handle array notation like 'amenities[0]', 'amenities[1]', etc.
+      if (!result.amenities) {
+        result.amenities = [];
+      }
+      // Extract the index from the key (e.g., 'amenities[0]' -> 0)
+      const indexMatch = key.match(/amenities\[(\d+)\]/);
+      if (indexMatch) {
+        const index = parseInt(indexMatch[1]);
+        result.amenities[index] = value;
+      } else {
+        result.amenities.push(value);
+      }
+    }
+    // Handle nested object notation like 'location[address]' or 'details[bedrooms]'
+    else if (key.includes('[') && key.includes(']')) {
+      const parts = key.split(/[\[\]]+/).filter(Boolean);
+      let current = result;
+      
+      // Navigate/create nested structure
+      for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        if (!current[part]) {
+          current[part] = {};
+        }
+        current = current[part];
+      }
+      
+      // Set the final value
+      const finalKey = parts[parts.length - 1];
+      current[finalKey] = value;
+    } else {
+      // Handle regular keys
+      result[key] = value;
+    }
+  }
+  
+  // Clean up amenities array - remove undefined/empty slots and ensure it's a proper array
+  if (result.amenities && Array.isArray(result.amenities)) {
+    result.amenities = result.amenities.filter(item => item !== undefined && item !== null && item !== '');
+  }
+  
+  // Convert string boolean values to actual booleans
+  if (result.featured === 'true') result.featured = true;
+  if (result.featured === 'false') result.featured = false;
+  if (result.details?.parking?.available === 'true') result.details.parking.available = true;
+  if (result.details?.parking?.available === 'false') result.details.parking.available = false;
+  
+  // Convert numeric strings to numbers where appropriate
+  if (result.price && !isNaN(result.price)) result.price = parseFloat(result.price);
+  if (result.details?.bedrooms && !isNaN(result.details.bedrooms)) result.details.bedrooms = parseInt(result.details.bedrooms);
+  if (result.details?.bathrooms && !isNaN(result.details.bathrooms)) result.details.bathrooms = parseInt(result.details.bathrooms);
+  if (result.details?.area && !isNaN(result.details.area)) result.details.area = parseFloat(result.details.area);
+  if (result.details?.totalFloors && !isNaN(result.details.totalFloors)) result.details.totalFloors = parseInt(result.details.totalFloors);
+  if (result.details?.landArea && !isNaN(result.details.landArea)) result.details.landArea = parseFloat(result.details.landArea);
+  if (result.details?.yearBuilt && !isNaN(result.details.yearBuilt)) result.details.yearBuilt = parseInt(result.details.yearBuilt);
+  if (result.details?.parking?.spaces && !isNaN(result.details.parking.spaces)) result.details.parking.spaces = parseInt(result.details.parking.spaces);
+  
+  return result;
+};
+
 // Property API functions - matches backend /api/properties routes exactly
 export const propertyAPI = {
   // Get all properties with filtering and pagination - GET /api/properties
@@ -371,15 +438,11 @@ export const propertyAPI = {
 
   // Get single property - GET /api/properties/:id
   getProperty: async (id) => {
-    console.log("ðŸ” getProperty called with ID:", id);
-    console.log("ðŸ”— Making request to:", `/properties/${id}`);
 
     const response = await api.get(`/properties/${id}`);
-    console.log("ðŸ“¡ Raw API response:", response);
 
     // Transform the response data to ensure React compatibility
     if (response.data && response.data.data && response.data.data.property) {
-      console.log("âœ… Found property in response.data.data.property");
       response.data.data.property = transformPropertyData(
         response.data.data.property
       );
@@ -388,13 +451,7 @@ export const propertyAPI = {
       response.data.data &&
       response.data.data.properties
     ) {
-      console.log("âš ï¸ Found properties array instead of property object");
-      console.log(
-        "ðŸ“Š Properties array length:",
-        response.data.data.properties.length
-      );
       if (response.data.data.properties.length > 0) {
-        console.log("ðŸ”„ Using first property from array");
         response.data.data.property = transformPropertyData(
           response.data.data.properties[0]
         );
@@ -409,25 +466,43 @@ export const propertyAPI = {
     return response.data;
   },
 
-  // Create property with images - POST /api/properties (handles file uploads)
+  // Create property - automatically determines endpoint based on image presence
   createProperty: async (propertyData) => {
     try {
-      // Check if propertyData is FormData (file upload) or regular object (pre-processed images)
+      // Check if propertyData is FormData (file upload) or regular object
       if (propertyData instanceof FormData) {
-        // File upload - use the new endpoint that handles validation first
-        const response = await api.post("/properties", propertyData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        return response.data;
-      } else {
-        // Pre-processed image data - use the existing endpoint
-        const response = await api.post(
-          "/properties/with-images",
-          propertyData
+        // Check if FormData contains any image files
+        const hasImages = Array.from(propertyData.entries()).some(([key, value]) => 
+          key === 'images' && value instanceof File
         );
-        return response.data;
+        
+        if (hasImages) {
+          // File upload with images - use the main endpoint
+          const response = await api.post("/properties", propertyData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+          return response.data;
+        } else {
+          // FormData without images - convert to regular object and use without-images endpoint
+          const regularData = convertFormDataToNestedObject(propertyData);
+          const response = await api.post("/properties/without-images", regularData);
+          return response.data;
+        }
+      } else {
+        // Regular object - check if it has images
+        const hasImages = propertyData.images && propertyData.images.length > 0;
+        
+        if (hasImages) {
+          // Has pre-processed images - use the main endpoint
+          const response = await api.post("/properties", propertyData);
+          return response.data;
+        } else {
+          // No images - use the without-images endpoint
+          const response = await api.post("/properties/without-images", propertyData);
+          return response.data;
+        }
       }
     } catch (error) {
       // Handle validation errors (400) as expected responses, not errors
@@ -440,23 +515,79 @@ export const propertyAPI = {
     }
   },
 
-  // Update property - PUT /api/properties/:id (handles file uploads same as create)
+  // Create property without images - POST /api/properties/without-images
+  createPropertyWithoutImages: async (propertyData) => {
+    try {
+      const response = await api.post("/properties/without-images", propertyData);
+      return response.data;
+    } catch (error) {
+      // Handle validation errors (400) as expected responses, not errors
+      if (error.response && error.response.status === 400) {
+        // Return the validation error response data instead of throwing
+        return error.response.data;
+      }
+      // For other errors (401, 403, 500, etc.), re-throw the error
+      throw error;
+    }
+  },
+
+  // Update property - automatically determines endpoint based on image presence
   updateProperty: async (id, propertyData) => {
     try {
       // Check if propertyData is FormData (file upload) or regular object
       if (propertyData instanceof FormData) {
-        // File upload - use multipart/form-data
-        const response = await api.put(`/properties/${id}`, propertyData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        return response.data;
+        // Check if FormData contains any image files
+        const hasImages = Array.from(propertyData.entries()).some(([key, value]) => 
+          key === 'images' && value instanceof File
+        );
+        
+        if (hasImages) {
+          // File upload with images - use the main endpoint
+          const response = await api.put(`/properties/${id}`, propertyData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+          return response.data;
+        } else {
+          // FormData without images - convert to regular object and use without-images endpoint
+          const regularData = convertFormDataToNestedObject(propertyData);
+          const response = await api.put(`/properties/${id}/without-images`, regularData);
+          return response.data;
+        }
       } else {
-        // Regular JSON data
-        const response = await api.put(`/properties/${id}`, propertyData);
-        return response.data;
+        // Regular object - check if it has new images or image modifications
+        const hasNewImages = propertyData.images && propertyData.images.some(img => 
+          img instanceof File || (typeof img === 'object' && img.file instanceof File)
+        );
+        const hasImageModifications = propertyData.imagesToDelete && propertyData.imagesToDelete.length > 0;
+        
+        if (hasNewImages || hasImageModifications) {
+          // Has image changes - use the main endpoint
+          const response = await api.put(`/properties/${id}`, propertyData);
+          return response.data;
+        } else {
+          // No image changes - use the without-images endpoint
+          const response = await api.put(`/properties/${id}/without-images`, propertyData);
+          return response.data;
+        }
       }
+    } catch (error) {
+      // Handle validation errors (400) as expected responses, not errors
+      if (error.response && error.response.status === 400) {
+        // Return the validation error response data instead of throwing
+        return error.response.data;
+      }
+      // For other errors (401, 403, 500, etc.), re-throw the error
+      throw error;
+    }
+  },
+
+  // Update property without modifying images - PUT /api/properties/:id/without-images
+  updatePropertyWithoutImages: async (id, propertyData) => {
+    try {
+      const response = await api.put(`/properties/${id}/without-images`, propertyData);
+      return response.data;
     } catch (error) {
       // Handle validation errors (400) as expected responses, not errors
       if (error.response && error.response.status === 400) {

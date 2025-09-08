@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -224,7 +226,7 @@ export default function UserManagement() {
 
   return (
     <div className="main-content w-100">
-      <ToastContainer position="top-right" autoClose={5000} />
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <div className="d-flex justify-content-between align-items-center mb-20">

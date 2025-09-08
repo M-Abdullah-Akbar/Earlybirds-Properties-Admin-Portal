@@ -5,6 +5,8 @@ import Image from "next/image";
 import { dashboardAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessRoute } from "@/utils/permissions";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -40,6 +42,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
+      toast.error("Failed to load dashboard data. Please try refreshing the page.");
     } finally {
       setLoading(false);
     }
@@ -447,6 +450,17 @@ export default function Dashboard() {
         {/* .footer-dashboard */}
       </div>
       <div className="overlay-dashboard" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/utils/api";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ChangePassword() {
   const router = useRouter();
@@ -166,12 +168,17 @@ export default function ChangePassword() {
       });
 
       if (response.success) {
-        // Redirect to dashboard without alert
-        router.replace("/admin/dashboard");
+        toast.success("Password changed successfully!");
+        // Redirect to dashboard after showing success message
+        setTimeout(() => {
+          router.replace("/admin/dashboard");
+        }, 1000);
       } else {
+        const errorMessage = response.error || "Failed to change password";
         setErrors({
-          submit: response.error || "Failed to change password",
+          submit: errorMessage,
         });
+        toast.error(errorMessage);
       }
     } catch (error) {
       // Handle specific error cases
@@ -183,6 +190,7 @@ export default function ChangePassword() {
         setErrors({
           currentPassword: "Current password is incorrect",
         });
+        toast.error("Current password is incorrect");
       } else if (error.response?.status === 400 && error.response?.data) {
         // Handle validation errors (400) - these are expected validation errors
         const responseData = error.response.data;
@@ -199,6 +207,7 @@ export default function ChangePassword() {
 
           // Set field-specific errors
           setErrors(fieldErrors);
+          toast.error("Please fix the validation errors");
         } else {
           // Fallback to generic error message
           let errorMessage = "Please fix the validation errors below";
@@ -214,6 +223,7 @@ export default function ChangePassword() {
           setErrors({
             submit: errorMessage,
           });
+          toast.error(errorMessage);
         }
       } else {
         // This is an unexpected error - log it for debugging
@@ -273,6 +283,17 @@ export default function ChangePassword() {
         }
       `}</style>
       <div className="main-content w-100">
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <div className="main-content-inner wrap-dashboard-content">
           {/* Header */}
           <div className="widget-box-2 wd-listing mb-20">

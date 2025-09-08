@@ -5,6 +5,8 @@ import Image from "next/image";
 import { propertyAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function PropertyApproval() {
   const { user } = useAuth();
@@ -185,14 +187,17 @@ export default function PropertyApproval() {
         fetchPendingCount();
         setShowApprovalModal(false);
         setSelectedProperty(null);
+        toast.success("Property approved successfully!");
         // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        setTimeout(() => {
+          router.push("/admin/property-approval");
+        }, 1000);
       } else {
-        alert(response.error || "Failed to approve property");
+        toast.error(response.error || "Failed to approve property");
       }
     } catch (error) {
       console.error("Error approving property:", error);
-      alert("Failed to approve property. Please try again.");
+      toast.error("Failed to approve property. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -234,8 +239,11 @@ export default function PropertyApproval() {
         setRejectionError("");
         setFieldErrors({});
         setTouchedFields({});
+        toast.success("Property rejected successfully!");
         // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        setTimeout(() => {
+          router.push("/admin/property-approval");
+        }, 1000);
       } else {
         // Handle server-side validation errors
         if (response.fieldErrors && typeof response.fieldErrors === "object") {
@@ -243,7 +251,9 @@ export default function PropertyApproval() {
         } else if (response.errors && typeof response.errors === "object") {
           setFieldErrors(response.errors);
         } else {
-          setRejectionError(response.error || "Failed to reject property");
+          const errorMessage = response.error || "Failed to reject property";
+          setRejectionError(errorMessage);
+          toast.error(errorMessage);
         }
       }
     } catch (error) {
@@ -270,11 +280,11 @@ export default function PropertyApproval() {
           if (Object.keys(fieldErrors).length > 0) {
             setFieldErrors(fieldErrors);
           } else {
-            setRejectionError(
-              errorData.error ||
+            const errorMessage = errorData.error ||
                 errorData.message ||
-                "Please fix the validation errors"
-            );
+                "Please fix the validation errors";
+            setRejectionError(errorMessage);
+            toast.error(errorMessage);
           }
         } else {
           setRejectionError(
@@ -284,9 +294,11 @@ export default function PropertyApproval() {
           );
         }
       } else {
-        console.error("Error rejecting property:", error);
-        setRejectionError("Failed to reject property. Please try again.");
-      }
+          console.error("Error rejecting property:", error);
+          const errorMessage = "Failed to reject property. Please try again.";
+          setRejectionError(errorMessage);
+          toast.error(errorMessage);
+        }
     } finally {
       setActionLoading(false);
     }
@@ -812,6 +824,17 @@ export default function PropertyApproval() {
           </div>
         </div>
       )}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

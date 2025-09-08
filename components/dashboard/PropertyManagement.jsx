@@ -5,6 +5,8 @@ import Image from "next/image";
 import { propertyAPI, userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function PropertyManagement() {
   const { user } = useAuth();
@@ -189,15 +191,19 @@ export default function PropertyManagement() {
         // Refresh the property list
         fetchProperties();
         fetchStats();
-        // Success - no alert needed, user will see the property disappear from list
+        toast.success("Property deleted successfully!");
       } else {
         // Show error message without "Error:" prefix
-        setError(response.error || "Failed to delete property");
+        const errorMessage = response.error || "Failed to delete property";
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error("Error deleting property:", err);
       // Show error message without "Error:" prefix
-      setError(err.response?.data?.error || "Failed to delete property");
+      const errorMessage = err.response?.data?.error || "Failed to delete property";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);
@@ -1518,6 +1524,17 @@ export default function PropertyManagement() {
           </div>
         </div>
       )}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utils/api";
 import { safeLocalStorage } from "@/utils/clientUtils";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -392,10 +394,11 @@ export default function AddProperty() {
         return "";
 
       case "images":
-        if (!value || !Array.isArray(value) || value.length === 0) {
-          return "At least one image is required";
+        // Images are now optional - allow empty arrays
+        if (!value || !Array.isArray(value)) {
+          return "";
         } else if (value.length > 10) {
-          return "Must have between 1 and 10 images";
+          return "Cannot have more than 10 images";
         }
 
         // Check for main image validation
@@ -996,7 +999,6 @@ export default function AddProperty() {
       "location.area",
       "details.bathrooms",
       "details.area",
-      "images",
       "amenities",
     ];
 
@@ -1574,9 +1576,6 @@ export default function AddProperty() {
                 {errors.title && (
                   <span className="error-text">{errors.title}</span>
                 )}
-                {errors.title && (
-                  <span className="error-text">{errors.title}</span>
-                )}
               </fieldset>
             </div>
 
@@ -1627,9 +1626,6 @@ export default function AddProperty() {
                 {errors.propertyType && (
                   <span className="error-text">{errors.propertyType}</span>
                 )}
-                {errors.propertyType && (
-                  <span className="error-text">{errors.propertyType}</span>
-                )}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -1652,16 +1648,7 @@ export default function AddProperty() {
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </option>
                     ))}
-                  {Array.isArray(listingTypes) &&
-                    listingTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </option>
-                    ))}
                 </select>
-                {errors.listingType && (
-                  <span className="error-text">{errors.listingType}</span>
-                )}
                 {errors.listingType && (
                   <span className="error-text">{errors.listingType}</span>
                 )}
@@ -1675,12 +1662,6 @@ export default function AddProperty() {
                   value={formData.status}
                   onChange={handleInputChange}
                 >
-                  {Array.isArray(propertyStatuses) &&
-                    propertyStatuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </option>
-                    ))}
                   {Array.isArray(propertyStatuses) &&
                     propertyStatuses.map((status) => (
                       <option key={status} value={status}>
@@ -1711,9 +1692,6 @@ export default function AddProperty() {
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
                 />
-                {errors.address && (
-                  <span className="error-text">{errors.address}</span>
-                )}
                 {errors.address && (
                   <span className="error-text">{errors.address}</span>
                 )}

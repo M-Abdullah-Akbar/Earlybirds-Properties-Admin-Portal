@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { userAPI } from "@/utils/api";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Profile() {
   const router = useRouter();
@@ -325,6 +327,7 @@ export default function Profile() {
 
         setInfoMessage(""); // Clear any info messages
         setSuccessMessage("Profile updated successfully!");
+        toast.success("Profile updated successfully!");
         // Scroll to top to show the success message
         window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -359,11 +362,11 @@ export default function Profile() {
         error.response?.data &&
         !handleValidationErrors(error.response.data)
       ) {
-        // Not a validation error, show alert
-        alert("Failed to update profile. Please try again.");
+        // Not a validation error, show toast
+        toast.error("Failed to update profile. Please try again.");
       } else if (!error.response?.data) {
-        // No response data, show alert
-        alert("Failed to update profile. Please try again.");
+        // No response data, show toast
+        toast.error("Failed to update profile. Please try again.");
       }
     } finally {
       setSaving(false);
@@ -628,6 +631,17 @@ export default function Profile() {
           {/* /.footer-dashboard */}
         </div>
         <div className="overlay-dashboard" />
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     </>
   );

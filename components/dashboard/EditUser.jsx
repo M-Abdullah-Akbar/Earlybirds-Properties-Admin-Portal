@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { userAPI } from "@/utils/api";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function EditUser({ userId }) {
   const router = useRouter();
@@ -149,7 +151,7 @@ export default function EditUser({ userId }) {
 
   return (
     <div className="main-content w-100">
-      <ToastContainer position="top-right" autoClose={5000} />
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <h3 className="title">

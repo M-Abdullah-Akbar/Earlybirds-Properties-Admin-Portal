@@ -178,12 +178,12 @@ export default function AddProperty() {
         if (currentFormData.listingType === "off plan") {
           return "";
         }
-        if (!value || value.toString().trim() === "") {
-          return "Price is required";
-        }
-        const numPrice = parseFloat(value);
-        if (isNaN(numPrice) || numPrice <= 0) {
-          return "Price must be a positive number";
+        // Price is optional - only validate if provided
+        if (value && value.toString().trim() !== "") {
+          const numPrice = parseFloat(value);
+          if (isNaN(numPrice) || numPrice <= 0) {
+            return "Price must be a positive number";
+          }
         }
         return "";
 
@@ -229,39 +229,41 @@ export default function AddProperty() {
           return "";
         }
 
-        // For all other property types, bedrooms are required
-        if (value === null || value === undefined || value === "") {
-          return "Number of bedrooms is required";
-        } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
-          return "Bedrooms must be a non-negative integer";
+        // For all other property types, bedrooms are optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+            return "Bedrooms must be a non-negative integer";
+          }
         }
 
         return "";
 
       case "details.bathrooms":
-        if (value === null || value === undefined || value === "") {
-          return "Number of bathrooms is required";
-        }
-
-        const numBathrooms = parseInt(value);
-        if (
-          isNaN(numBathrooms) ||
-          numBathrooms < 0 ||
-          !Number.isInteger(Number(value))
-        ) {
-          return "Bathrooms must be a non-negative integer";
+        // Bathrooms are optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          const numBathrooms = parseInt(value);
+          if (
+            isNaN(numBathrooms) ||
+            numBathrooms < 0 ||
+            !Number.isInteger(Number(value))
+          ) {
+            return "Bathrooms must be a non-negative integer";
+          }
         }
 
         return "";
 
       case "details.area":
-        if (value === null || value === undefined || value === "") {
-          return "Property area is required";
-        }
-
-        const numArea = parseFloat(value);
-        if (isNaN(numArea) || numArea <= 0) {
-          return "Property area must be a positive number";
+        // Area is optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          const numArea = parseFloat(value);
+          if (isNaN(numArea) || numArea <= 0) {
+            return "Property area must be a positive number";
+          }
+          // Check maximum area limit (50,000 sq ft)
+          if (numArea > 50000) {
+            return "Property area cannot exceed 50,000 square feet";
+          }
         }
 
         return "";
@@ -1775,13 +1777,13 @@ export default function AddProperty() {
               <div className="box grid-layout-3 gap-30">
                 <fieldset className="box-fieldset">
                   <label htmlFor="price">
-                    Price:<span>*</span>
+                    Price:
                   </label>
                   <input
                     type="number"
                     name="price"
                     className={`form-control ${errors.price ? "error" : ""}`}
-                    placeholder="Enter price"
+                    placeholder="Enter price (optional)"
                     value={formData.price}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -1839,13 +1841,13 @@ export default function AddProperty() {
               {shouldShowBedrooms() && (
                 <fieldset className="box-fieldset">
                   <label htmlFor="bedrooms">
-                    Bedrooms:<span>*</span>
+                    Bedrooms:
                   </label>
                   <input
                     type="number"
                     name="details.bedrooms"
                     className={`form-control ${errors.bedrooms ? "error" : ""}`}
-                    placeholder="Number of bedrooms"
+                    placeholder="Number of bedrooms (optional)"
                     value={formData.details.bedrooms}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -1858,13 +1860,13 @@ export default function AddProperty() {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
-                  Bathrooms:<span>*</span>
+                  Bathrooms:
                 </label>
                 <input
                   type="number"
                   name="details.bathrooms"
                   className={`form-control ${errors.bathrooms ? "error" : ""}`}
-                  placeholder="Number of bathrooms"
+                  placeholder="Number of bathrooms (optional)"
                   value={formData.details.bathrooms}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
@@ -1876,13 +1878,13 @@ export default function AddProperty() {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area Size:<span>*</span>
+                  Area Size:
                 </label>
                 <input
                   type="number"
                   name="details.area"
                   className={`form-control ${errors.area ? "error" : ""}`}
-                  placeholder="Area size"
+                  placeholder="Area size (optional)"
                   value={formData.details.area}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}

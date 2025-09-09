@@ -179,10 +179,11 @@ export default function EditProperty({ propertyId }) {
         if (currentFormData.listingType === "off plan") {
           return "";
         }
-        if (!value || value === "") {
-          return "Price is required";
-        } else if (isNaN(value) || parseFloat(value) <= 0) {
-          return "Price must be a positive number";
+        // Price is optional - only validate if provided
+        if (value && value !== "") {
+          if (isNaN(value) || parseFloat(value) <= 0) {
+            return "Price must be a positive number";
+          }
         }
         return "";
 
@@ -232,41 +233,43 @@ export default function EditProperty({ propertyId }) {
           return "";
         }
 
-        // For all other property types, bedrooms are required
-        if (value === null || value === undefined || value === "") {
-          return "Number of bedrooms is required";
-        } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
-          return "Bedrooms must be a non-negative integer";
+        // For all other property types, bedrooms are optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+            return "Bedrooms must be a non-negative integer";
+          }
         }
 
         return "";
 
       case "details.bathrooms":
       case "bathrooms":
-        if (value === null || value === undefined || value === "") {
-          return "Number of bathrooms is required";
-        }
-
-        const numBathrooms = parseInt(value);
-        if (
-          isNaN(numBathrooms) ||
-          numBathrooms < 0 ||
-          !Number.isInteger(Number(value))
-        ) {
-          return "Bathrooms must be a non-negative integer";
+        // Bathrooms are optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          const numBathrooms = parseInt(value);
+          if (
+            isNaN(numBathrooms) ||
+            numBathrooms < 0 ||
+            !Number.isInteger(Number(value))
+          ) {
+            return "Bathrooms must be a non-negative integer";
+          }
         }
 
         return "";
 
       case "details.area":
       case "area":
-        if (value === null || value === undefined || value === "") {
-          return "Property area is required";
-        }
-
-        const numArea = parseFloat(value);
-        if (isNaN(numArea) || numArea <= 0) {
-          return "Property area must be a positive number";
+        // Area is optional - only validate if provided
+        if (value !== null && value !== undefined && value !== "") {
+          const numArea = parseFloat(value);
+          if (isNaN(numArea) || numArea <= 0) {
+            return "Property area must be a positive number";
+          }
+          // Check maximum area limit (50,000 sq ft)
+          if (numArea > 50000) {
+            return "Property area cannot exceed 50,000 square feet";
+          }
         }
 
         return "";

@@ -1993,7 +1993,7 @@ export default function EditProperty({ propertyId }) {
               <div className="box grid-layout-3 gap-30">
                 <fieldset className="box-fieldset">
                   <label htmlFor="price">
-                    Price:<span>*</span>
+                    Price:
                   </label>
                   <input
                     type="number"
@@ -2057,7 +2057,7 @@ export default function EditProperty({ propertyId }) {
               {shouldShowBedrooms() && (
                 <fieldset className="box-fieldset">
                   <label htmlFor="bedrooms">
-                    Bedrooms:<span>*</span>
+                    Bedrooms:
                   </label>
                   <input
                     type="number"
@@ -2076,7 +2076,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
-                  Bathrooms:<span>*</span>
+                  Bathrooms:
                 </label>
                 <input
                   type="number"
@@ -2094,7 +2094,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area Size:<span>*</span>
+                  Area Size:
                 </label>
                 <input
                   type="number"

@@ -180,8 +180,9 @@ export default function EditProperty({ propertyId }) {
           return "";
         }
         // Price is optional - only validate if provided
-        if (value && value !== "") {
-          if (isNaN(value) || parseFloat(value) <= 0) {
+        if (value && value.toString().trim() !== "") {
+          const numPrice = parseFloat(value);
+          if (isNaN(numPrice) || numPrice <= 0) {
             return "Price must be a positive number";
           }
         }
@@ -1256,7 +1257,12 @@ export default function EditProperty({ propertyId }) {
 
       // Add price fields only for non-off plan listing types
       if (formData.listingType !== "off plan") {
-        formDataToSend.append("price", parseFloat(formData.price));
+        // Always send price field - send empty string when cleared to allow backend to clear existing values
+        if (formData.price !== null && formData.price !== undefined && formData.price !== "") {
+          formDataToSend.append("price", parseFloat(formData.price));
+        } else {
+          formDataToSend.append("price", ""); // Send empty string to clear existing price
+        }
         formDataToSend.append("currency", formData.currency);
         formDataToSend.append("priceType", formData.priceType);
       }

@@ -13,7 +13,7 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    // Skip adding Authorization header for login requests
+    // Skip adding Authorization header for login request
     if (config.url === "/auth/login" || config.url?.includes("/auth/login")) {
       return config;
     }

@@ -1,9 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { userAPI } from "@/utils/api";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { userAPI } from "@/utlis/api";
 
 export default function AddUser() {
   const router = useRouter();
@@ -214,16 +212,12 @@ export default function AddUser() {
       const response = await userAPI.createUser(userData);
 
       if (response.success) {
-        toast.success("User created successfully!");
-        // Small delay to show toast before redirect
-        setTimeout(() => {
-          router.push("/admin/user-management");
-        }, 1000);
+        // Redirect immediately without showing alert
+        router.push("/admin/user-management");
       } else {
         // Handle server-side validation errors - merge with existing errors
         if (response.errors && typeof response.errors === "object") {
           setErrors((prevErrors) => ({ ...prevErrors, ...response.errors }));
-          toast.error("Please fix the validation errors and try again.");
         } else if (response.details && Array.isArray(response.details)) {
           // Handle detailed validation errors
           const fieldErrors = {};
@@ -231,9 +225,8 @@ export default function AddUser() {
             fieldErrors[detail.field] = detail.message;
           });
           setErrors((prevErrors) => ({ ...prevErrors, ...fieldErrors }));
-          toast.error("Please fix the validation errors and try again.");
         } else {
-          toast.error(response.error || "Failed to create user");
+          alert(response.error || "Failed to create user");
         }
       }
     } catch (error) {
@@ -268,7 +261,7 @@ export default function AddUser() {
         } else if (typeof error.response?.data === "string") {
           errorMessage = error.response.data;
         }
-        toast.error(errorMessage);
+        alert(`Error: ${errorMessage}`);
       }
     } finally {
       setLoading(false);
@@ -317,7 +310,6 @@ export default function AddUser() {
         }
       `}</style>
       <div className="main-content w-100">
-        <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
         <div className="main-content-inner">
           <div className="widget-box-2 mb-20">
             <h5 className="title">Basic Information</h5>

@@ -2,11 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { propertyAPI, userAPI } from "@/utils/api";
+import { propertyAPI, userAPI } from "@/utlis/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function PropertyManagement() {
   const { user } = useAuth();
@@ -86,8 +84,40 @@ export default function PropertyManagement() {
       console.log(response);
 
       if (response.success) {
-        setProperties(response.data?.properties || []);
+        const fetchedProperties = response.data?.properties || [];
+        setProperties(fetchedProperties);
         setTotalPages(response.data?.pagination?.pages || 1);
+
+        // Calculate statistics from FILTERED properties
+        const totalProperties = fetchedProperties.length;
+        const availableProperties = fetchedProperties.filter(
+          (prop) => prop.status?.toLowerCase() === "available"
+        ).length;
+        const pendingProperties = fetchedProperties.filter(
+          (prop) => prop.approvalStatus?.toLowerCase() === "pending"
+        ).length;
+        const soldProperties = fetchedProperties.filter(
+          (prop) => prop.status?.toLowerCase() === "sold"
+        ).length;
+        const rentedProperties = fetchedProperties.filter(
+          (prop) => prop.status?.toLowerCase() === "rented"
+        ).length;
+        const draftProperties = fetchedProperties.filter(
+          (prop) => prop.status?.toLowerCase() === "draft"
+        ).length;
+        const archivedProperties = fetchedProperties.filter(
+          (prop) => prop.status?.toLowerCase() === "archived"
+        ).length;
+
+        setStats({
+          totalProperties,
+          availableProperties,
+          pendingProperties,
+          soldProperties,
+          rentedProperties,
+          draftProperties,
+          archivedProperties,
+        });
       } else {
         setError(response.error || "Failed to fetch properties");
       }
@@ -99,27 +129,6 @@ export default function PropertyManagement() {
     } finally {
       setLoading(false);
       setInitialLoad(false);
-    }
-  };
-
-  // Fetch property statistics
-  const fetchStats = async () => {
-    try {
-      const response = await propertyAPI.getPropertyStats();
-      if (response.success) {
-        setStats({
-          totalProperties: response.data.total || 0,
-          availableProperties: response.data.available || 0,
-          pendingProperties: response.data.pending || 0,
-          soldProperties: response.data.sold || 0,
-          rentedProperties: response.data.rented || 0,
-          draftProperties: response.data.draft || 0,
-          archivedProperties: response.data.archived || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-      // Don't set error for stats, just log it
     }
   };
 
@@ -188,22 +197,17 @@ export default function PropertyManagement() {
     try {
       const response = await propertyAPI.deleteProperty(propertyToDelete._id);
       if (response.success) {
-        // Refresh the property list
+        // Refresh the property list and stats
         fetchProperties();
-        fetchStats();
-        toast.success("Property deleted successfully!");
+        // Success - no alert needed, user will see the property disappear from list
       } else {
         // Show error message without "Error:" prefix
-        const errorMessage = response.error || "Failed to delete property";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        setError(response.error || "Failed to delete property");
       }
     } catch (err) {
       console.error("Error deleting property:", err);
       // Show error message without "Error:" prefix
-      const errorMessage = err.response?.data?.error || "Failed to delete property";
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(err.response?.data?.error || "Failed to delete property");
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);
@@ -234,11 +238,6 @@ export default function PropertyManagement() {
   useEffect(() => {
     fetchProperties();
   }, [currentPage, searchTerm, statusFilter, typeFilter, approvalFilter]);
-
-  // Effect to fetch stats on component mount
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   // Effect to fetch user lookup for SuperAdmins
   useEffect(() => {
@@ -1172,8 +1171,12 @@ export default function PropertyManagement() {
                         <td>
                           <span>
                             {property.location?.address ||
-                              property.location ||
-                              "Location not specified"}
+                              (property.location?.emirate &&
+                              property.location?.area
+                                ? `${property.location.area}, ${property.location.emirate}`
+                                : property.location?.emirate ||
+                                  property.location?.area ||
+                                  "Location not specified")}
                           </span>
                         </td>
                         <td>
@@ -1524,17 +1527,6 @@ export default function PropertyManagement() {
           </div>
         </div>
       )}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 }

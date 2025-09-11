@@ -2,11 +2,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { propertyAPI, uploadAPI, adminUtils } from "@/utils/api";
-import { safeLocalStorage } from "@/utils/clientUtils";
-import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { propertyAPI, uploadAPI, adminUtils } from "@/utlis/api";
+import { safeLocalStorage } from "@/utlis/clientUtils";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -138,8 +135,9 @@ export default function AddProperty() {
   const validateField = (fieldName, value, currentFormData = formData) => {
     switch (fieldName) {
       case "title":
+        // Title is now optional
         if (!value || value.trim() === "") {
-          return "Property title is required";
+          return "";
         } else if (value.trim().length < 5) {
           return "Title must be at least 5 characters long";
         } else if (value.trim().length > 200) {
@@ -150,8 +148,9 @@ export default function AddProperty() {
         return "";
 
       case "description":
+        // Description is now optional
         if (!value || value.trim() === "") {
-          return "Property description is required";
+          return "";
         } else if (value.trim().length < 200) {
           return "Description must be at least 200 characters long";
         } else if (value.trim().length > 10000) {
@@ -160,8 +159,9 @@ export default function AddProperty() {
         return "";
 
       case "propertyType":
+        // Property type is now optional
         if (!value || value.trim() === "") {
-          return "Property type is required";
+          return "";
         } else if (typeof value !== "string") {
           return "Property type must be a string";
         } else if (
@@ -178,24 +178,27 @@ export default function AddProperty() {
         if (currentFormData.listingType === "off plan") {
           return "";
         }
-        // Price is optional - only validate if provided
-        if (value && value.toString().trim() !== "") {
-          const numPrice = parseFloat(value);
-          if (isNaN(numPrice) || numPrice <= 0) {
-            return "Price must be a positive number";
-          }
+        // Price is now optional
+        if (!value || value.toString().trim() === "") {
+          return "";
+        }
+        const numPrice = parseFloat(value);
+        if (isNaN(numPrice) || numPrice <= 0) {
+          return "Price must be a positive number";
         }
         return "";
 
       case "listingType":
+        // Listing type is now optional
         if (!value || value.trim() === "") {
-          return "Listing type is required";
+          return "";
         }
         return "";
 
       case "location.address":
+        // Address is now optional
         if (!value || value.trim() === "") {
-          return "Address is required";
+          return "";
         } else if (value.trim().length < 5) {
           return "Address must be at least 5 characters long";
         } else if (value.trim().length > 200) {
@@ -204,14 +207,16 @@ export default function AddProperty() {
         return "";
 
       case "location.emirate":
+        // Emirate is now optional
         if (!value || value.trim() === "") {
-          return "Emirate is required";
+          return "";
         }
         return "";
 
       case "location.area":
+        // Location area is now optional
         if (value === "") {
-          return "Location area is required";
+          return "";
         } else if (!currentFormData.location?.emirate) {
           return "Emirate must be selected before area";
         }
@@ -229,41 +234,41 @@ export default function AddProperty() {
           return "";
         }
 
-        // For all other property types, bedrooms are optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          if (!Number.isInteger(Number(value)) || Number(value) < 0) {
-            return "Bedrooms must be a non-negative integer";
-          }
+        // For all other property types, bedrooms are now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+          return "Bedrooms must be a non-negative integer";
         }
 
         return "";
 
       case "details.bathrooms":
-        // Bathrooms are optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          const numBathrooms = parseInt(value);
-          if (
-            isNaN(numBathrooms) ||
-            numBathrooms < 0 ||
-            !Number.isInteger(Number(value))
-          ) {
-            return "Bathrooms must be a non-negative integer";
-          }
+        // Bathrooms are now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numBathrooms = parseInt(value);
+        if (
+          isNaN(numBathrooms) ||
+          numBathrooms < 0 ||
+          !Number.isInteger(Number(value))
+        ) {
+          return "Bathrooms must be a non-negative integer";
         }
 
         return "";
 
       case "details.area":
-        // Area is optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          const numArea = parseFloat(value);
-          if (isNaN(numArea) || numArea <= 0) {
-            return "Property area must be a positive number";
-          }
-          // Check maximum area limit (50,000 sq ft)
-          if (numArea > 50000) {
-            return "Property area cannot exceed 50,000 square feet";
-          }
+        // Property area is now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numArea = parseFloat(value);
+        if (isNaN(numArea) || numArea <= 0) {
+          return "Property area must be a positive number";
         }
 
         return "";
@@ -396,8 +401,8 @@ export default function AddProperty() {
         return "";
 
       case "images":
-        // Images are now optional - allow empty arrays
-        if (!value || !Array.isArray(value)) {
+        // Images are now optional
+        if (!value || !Array.isArray(value) || value.length === 0) {
           return "";
         } else if (value.length > 10) {
           return "Cannot have more than 10 images";
@@ -468,7 +473,6 @@ export default function AddProperty() {
       try {
         setLoading(true);
 
-
         // Check if user is authenticated
         const adminToken = safeLocalStorage.getItem("admin_token");
         if (!adminToken) {
@@ -477,9 +481,7 @@ export default function AddProperty() {
           return;
         }
 
-
         console.log("Admin token found, fetching initial data...");
-
 
         // Fetch property types from API
         const typesResponse = await propertyAPI.getPropertyTypes();
@@ -505,12 +507,10 @@ export default function AddProperty() {
           setPropertyTypes(adminUtils.getPropertyTypes());
         }
 
-
         // Set emirates from adminUtils
         setEmirates(adminUtils.getEmirates());
       } catch (error) {
         console.error("Error fetching initial data:", error);
-
 
         // Check if it's an authentication error
         if (error.response?.status === 401) {
@@ -519,7 +519,6 @@ export default function AddProperty() {
           router.push("/admin/login");
           return;
         }
-
 
         // Set fallback values if API fails
         setPropertyTypes(adminUtils.getPropertyTypes());
@@ -547,7 +546,6 @@ export default function AddProperty() {
             return;
           }
 
-
           console.log("Fetching areas for emirate:", formData.location.emirate);
           const areasResponse = await propertyAPI.getAreasForEmirate(
             formData.location.emirate
@@ -572,7 +570,6 @@ export default function AddProperty() {
         } catch (error) {
           console.error("Error fetching areas:", error);
 
-
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             safeLocalStorage.removeItem("admin_token");
@@ -580,7 +577,6 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
-
 
           // Use fallback areas from adminUtils
           setAreas(adminUtils.getAreasForEmirate(formData.location.emirate));
@@ -618,7 +614,6 @@ export default function AddProperty() {
             );
           console.log("Amenities API response:", amenitiesResponse);
 
-
           if (
             amenitiesResponse.success &&
             amenitiesResponse.data &&
@@ -642,7 +637,6 @@ export default function AddProperty() {
         } catch (error) {
           console.error("Error fetching amenities:", error);
 
-
           // Check if it's an authentication error
           if (error.response?.status === 401) {
             safeLocalStorage.removeItem("admin_token");
@@ -650,7 +644,6 @@ export default function AddProperty() {
             router.push("/admin/login");
             return;
           }
-
 
           // Use fallback amenities from adminUtils
           setAmenities(
@@ -1001,6 +994,7 @@ export default function AddProperty() {
       "location.area",
       "details.bathrooms",
       "details.area",
+      "images",
       "amenities",
     ];
 
@@ -1252,12 +1246,8 @@ export default function AddProperty() {
       console.log("API Response:", response);
 
       if (response.success) {
-        // Show success notification
-        toast.success("Property added successfully!");
-        // Redirect after a short delay to allow the user to see the notification
-        setTimeout(() => {
-          router.push("/admin/property-management");
-        }, 1500);
+        // Redirect immediately without showing alert
+        router.push("/admin/property-management");
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -1428,9 +1418,6 @@ export default function AddProperty() {
         ...prev,
         submit: errorMessage,
       }));
-      
-      // Show error notification for exceptions
-      toast.error(errorMessage || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1455,7 +1442,6 @@ export default function AddProperty() {
 
   return (
     <div className="main-content w-100">
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner">
         {/* Header */}
         <div className="widget-box-2 mb-20">
@@ -1581,22 +1567,22 @@ export default function AddProperty() {
               </fieldset>
             </div>
 
-
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
-                <div className={`description-editor-container ${errors.description ? "error" : ""}`}>
-                  <PropertyDescriptionEditor
-                    value={formData.description}
-                    onChange={(json) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        description: JSON.stringify(json)
-                      }));
-                    }}
-                    onBlur={() => handleFieldBlur({ target: { name: "description", value: formData.description } })}
-                  />
-                </div>
+                <textarea
+                  name="description"
+                  className={`textarea ${errors.description ? "error" : ""}`}
+                  placeholder="Your Description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  style={{
+                    resize: "none",
+                    overflowY: "auto",
+                    scrollbarGutter: "stable",
+                  }}
+                />
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>
                 )}
@@ -1777,13 +1763,13 @@ export default function AddProperty() {
               <div className="box grid-layout-3 gap-30">
                 <fieldset className="box-fieldset">
                   <label htmlFor="price">
-                    Price:
+                    Price:<span>*</span>
                   </label>
                   <input
                     type="number"
                     name="price"
                     className={`form-control ${errors.price ? "error" : ""}`}
-                    placeholder="Enter price (optional)"
+                    placeholder="Enter price"
                     value={formData.price}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -1841,13 +1827,13 @@ export default function AddProperty() {
               {shouldShowBedrooms() && (
                 <fieldset className="box-fieldset">
                   <label htmlFor="bedrooms">
-                    Bedrooms:
+                    Bedrooms:<span>*</span>
                   </label>
                   <input
                     type="number"
                     name="details.bedrooms"
                     className={`form-control ${errors.bedrooms ? "error" : ""}`}
-                    placeholder="Number of bedrooms (optional)"
+                    placeholder="Number of bedrooms"
                     value={formData.details.bedrooms}
                     onChange={handleInputChange}
                     onBlur={handleFieldBlur}
@@ -1860,13 +1846,13 @@ export default function AddProperty() {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
-                  Bathrooms:
+                  Bathrooms:<span>*</span>
                 </label>
                 <input
                   type="number"
                   name="details.bathrooms"
                   className={`form-control ${errors.bathrooms ? "error" : ""}`}
-                  placeholder="Number of bathrooms (optional)"
+                  placeholder="Number of bathrooms"
                   value={formData.details.bathrooms}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
@@ -1878,13 +1864,13 @@ export default function AddProperty() {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area Size:
+                  Area Size:<span>*</span>
                 </label>
                 <input
                   type="number"
                   name="details.area"
                   className={`form-control ${errors.area ? "error" : ""}`}
-                  placeholder="Area size (optional)"
+                  placeholder="Area size"
                   value={formData.details.area}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
@@ -2169,9 +2155,6 @@ export default function AddProperty() {
                 {errors.parkingAvailable && (
                   <span className="error-text">{errors.parkingAvailable}</span>
                 )}
-                {errors.parkingAvailable && (
-                  <span className="error-text">{errors.parkingAvailable}</span>
-                )}
               </fieldset>
 
               {/* Show Parking Type in the same row when parking is available */}
@@ -2229,20 +2212,6 @@ export default function AddProperty() {
           <h5 className="title">Amenities</h5>
           <div className="box-amenities-property">
             <div className="amenities-grid">
-              {Array.isArray(amenities) &&
-                amenities.map((amenity) => (
-                  <label key={amenity} className="amenity-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={
-                        Array.isArray(formData.amenities) &&
-                        formData.amenities.includes(amenity)
-                      }
-                      onChange={() => handleAmenityChange(amenity)}
-                    />
-                    <span>{amenity}</span>
-                  </label>
-                ))}
               {Array.isArray(amenities) &&
                 amenities.map((amenity) => (
                   <label key={amenity} className="amenity-checkbox">

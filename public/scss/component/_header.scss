@@ -99,10 +99,10 @@
         color: var(--Primary);
     }
     .header-logo {
-        padding: 10px 0px 10px;
+        padding: 21px 0px 15px;
         img {
-            width: 90px;
-            height: 70px;
+            width: 136px;
+            height: 42px;
         }
     }
     .tf-btn {
@@ -121,7 +121,7 @@
             margin-bottom: -78px;
         }
         .header-logo {
-            padding: 15px 0px 15px;
+            padding: 17px 0px 15px;
         }
         .main-menu {
             .navigation {
@@ -191,7 +191,7 @@
     &.style-4 {
         box-shadow: unset;
         .header-logo {
-            padding: 15px 0px 15px;
+            padding: 16px 0px 15px;
         }
     }
     &.style-5 {
@@ -759,8 +759,8 @@
     }
     .offcanvas-title {
         img {
-            max-width: 90px;
-            height: 70px;
+            max-width: 136px;
+            height: 42px;
         }
     }
 }

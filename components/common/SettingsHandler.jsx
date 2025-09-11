@@ -1,11 +1,12 @@
 "use client";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { safeLocalStorage } from "@/utils/clientUtils";
-import { useClientMount } from "@/utils/useClientMount";
+import { safeLocalStorage } from "@/utlis/clientUtils";
+import { useClientMount } from "@/utlis/useClientMount";
 
 export default function SettingsHandler() {
   const pathname = usePathname();
+  const [isDark, setIsDark] = useState(false);
   const [isRtl, setIsRtl] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const hasMounted = useClientMount();
@@ -61,7 +62,6 @@ export default function SettingsHandler() {
     const newIsRtl = !isRtl; // Toggle the state
     setIsRtl(newIsRtl); // Update state
     safeLocalStorage.setItem("isRtl", JSON.stringify(newIsRtl)); // Save to localStorage
-    safeLocalStorage.setItem("isRtl", JSON.stringify(newIsRtl)); // Save to localStorage
   };
 
   useEffect(() => {
@@ -92,6 +92,23 @@ export default function SettingsHandler() {
           >
             {isRtl ? "ltr" : "rtl"}
           </a>
+        </div>
+        <div className="toggle-container">
+          <span className="title text-1 fw-5 text-color-heading mb-8">
+            Theme Mode:
+          </span>
+          <div className="toggle-switch">
+            <label className="switch-label">
+              <input
+                type="checkbox"
+                className="checkbox"
+                id="theme-toggle"
+                checked={isDark} // Bind the checked state to the input
+                onChange={handleCheckboxChange} // Handle changes
+              />
+              <span className="slider" />
+            </label>
+          </div>
         </div>
       </div>
     </div>

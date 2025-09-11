@@ -1,9 +1,9 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authAPI } from "@/utils/api";
-import { safeLocalStorage } from "@/utils/clientUtils";
-import { useClientMount } from "@/utils/useClientMount";
+import { authAPI } from "@/utlis/api";
+import { safeLocalStorage } from "@/utlis/clientUtils";
+import { useClientMount } from "@/utlis/useClientMount";
 
 const AuthContext = createContext();
 
@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }) => {
 
           setUser(mockUser);
           setIsAuthenticated(true);
-
 
           return { success: true };
         } else {
@@ -243,7 +242,6 @@ export const AuthProvider = ({ children }) => {
         setUser(response.user);
         setIsAuthenticated(true);
 
-
         return { success: true };
       } else {
         return { success: false, error: response.error };
@@ -262,7 +260,6 @@ export const AuthProvider = ({ children }) => {
     // Reset state
     setUser(null);
     setIsAuthenticated(false);
-
 
     // Redirect to token-prefixed login
     router.push("/admin/login");

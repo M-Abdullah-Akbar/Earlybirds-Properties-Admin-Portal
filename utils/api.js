@@ -3,7 +3,7 @@ import { safeLocalStorage, safeWindow } from "./clientUtils";
 import { canAccessRoute } from "../utils/permissions";
 
 // Base API configuration
-const API_BASE_URL = "https://earlybirds-properties-backend.vercel.app/api";
+const API_BASE_URL = "http://168.231.121.2/api";
 
 // Create axios instance
 const api = axios.create({

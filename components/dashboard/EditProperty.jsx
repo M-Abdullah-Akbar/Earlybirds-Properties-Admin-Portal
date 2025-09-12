@@ -1,13 +1,10 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { propertyAPI, adminUtils } from "@/utils/api";
+import { useRouter, useParams } from "next/navigation";
+import { propertyAPI, adminUtils } from "@/utlis/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
 import { canManageProperty } from "@/utils/permissions";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function EditProperty({ propertyId }) {
   const { user } = useAuth();
@@ -139,8 +136,9 @@ export default function EditProperty({ propertyId }) {
   const validateField = (name, value, currentFormData = formData) => {
     switch (name) {
       case "title":
+        // Title is now optional
         if (!value || value.trim() === "") {
-          return "Property title is required";
+          return "";
         } else if (value.trim().length < 5) {
           return "Title must be at least 5 characters long";
         } else if (value.trim().length > 200) {
@@ -151,8 +149,9 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "description":
+        // Description is now optional
         if (!value || value.trim() === "") {
-          return "Property description is required";
+          return "";
         } else if (value.trim().length < 200) {
           return "Description must be at least 200 characters long";
         } else if (value.trim().length > 10000) {
@@ -161,8 +160,9 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "propertyType":
-        if (!value || !value.trim()) {
-          return "Property type is required";
+        // Property type is now optional
+        if (!value || value.trim() === "") {
+          return "";
         } else if (typeof value !== "string") {
           return "Property type must be a string";
         } else if (
@@ -179,43 +179,45 @@ export default function EditProperty({ propertyId }) {
         if (currentFormData.listingType === "off plan") {
           return "";
         }
-        // Price is optional - only validate if provided
-        if (value && value.toString().trim() !== "") {
-          const numPrice = parseFloat(value);
-          if (isNaN(numPrice) || numPrice <= 0) {
-            return "Price must be a positive number";
-          }
+        // Price is now optional
+        if (!value || value.toString().trim() === "") {
+          return "";
+        }
+        const numPrice = parseFloat(value);
+        if (isNaN(numPrice) || numPrice <= 0) {
+          return "Price must be a positive number";
         }
         return "";
 
       case "listingType":
-        if (!value || !value.trim()) {
-          return "Listing type is required";
+        // Listing type is now optional
+        if (!value || value.trim() === "") {
+          return "";
         }
         return "";
 
       case "location.address":
-      case "address":
-        if (!value || !value.trim()) {
-          return "Address is required";
+        // Address is now optional
+        if (!value || value.trim() === "") {
+          return "";
         } else if (value.trim().length < 5) {
-          return "Address must be at least 5 characters";
+          return "Address must be at least 5 characters long";
         } else if (value.trim().length > 200) {
           return "Address cannot exceed 200 characters";
         }
         return "";
 
       case "location.emirate":
-      case "emirate":
-        if (!value || !value.trim()) {
-          return "Emirate is required";
+        // Emirate is now optional
+        if (!value || value.trim() === "") {
+          return "";
         }
         return "";
 
       case "location.area":
-      case "locationArea":
+        // Location area is now optional
         if (value === "") {
-          return "Location area is required";
+          return "";
         } else if (!currentFormData.location?.emirate) {
           return "Emirate must be selected before area";
         }
@@ -234,43 +236,43 @@ export default function EditProperty({ propertyId }) {
           return "";
         }
 
-        // For all other property types, bedrooms are optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          if (!Number.isInteger(Number(value)) || Number(value) < 0) {
-            return "Bedrooms must be a non-negative integer";
-          }
+        // For all other property types, bedrooms are now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+          return "Bedrooms must be a non-negative integer";
         }
 
         return "";
 
       case "details.bathrooms":
       case "bathrooms":
-        // Bathrooms are optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          const numBathrooms = parseInt(value);
-          if (
-            isNaN(numBathrooms) ||
-            numBathrooms < 0 ||
-            !Number.isInteger(Number(value))
-          ) {
-            return "Bathrooms must be a non-negative integer";
-          }
+        // Bathrooms are now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numBathrooms = parseInt(value);
+        if (
+          isNaN(numBathrooms) ||
+          numBathrooms < 0 ||
+          !Number.isInteger(Number(value))
+        ) {
+          return "Bathrooms must be a non-negative integer";
         }
 
         return "";
 
       case "details.area":
       case "area":
-        // Area is optional - only validate if provided
-        if (value !== null && value !== undefined && value !== "") {
-          const numArea = parseFloat(value);
-          if (isNaN(numArea) || numArea <= 0) {
-            return "Property area must be a positive number";
-          }
-          // Check maximum area limit (50,000 sq ft)
-          if (numArea > 50000) {
-            return "Property area cannot exceed 50,000 square feet";
-          }
+        // Property area is now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numArea = parseFloat(value);
+        if (isNaN(numArea) || numArea <= 0) {
+          return "Property area must be a positive number";
         }
 
         return "";
@@ -409,7 +411,8 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "images":
-        if (!value || !Array.isArray(value)) {
+        // Images are now optional
+        if (!value || !Array.isArray(value) || value.length === 0) {
           return "";
         } else if (value.length > 10) {
           return "Cannot have more than 10 images";
@@ -478,10 +481,8 @@ export default function EditProperty({ propertyId }) {
   useEffect(() => {
     const fetchProperty = async () => {
       if (!actualPropertyId) {
-        toast.error("Property ID not provided!");
-        setTimeout(() => {
-          router.push("/admin/property-management");
-        }, 1000);
+        alert("Property ID not provided!");
+        router.push("/admin/property-management");
         return;
       }
 
@@ -507,12 +508,10 @@ export default function EditProperty({ propertyId }) {
         const hasPermission = canManageProperty(user, "Update", property);
 
         if (!hasPermission) {
-          toast.error(
+          alert(
             "You don't have permission to edit this property. You can only edit your own properties."
           );
-          setTimeout(() => {
-            router.push("/admin/property-management");
-          }, 1000);
+          router.push("/admin/property-management");
           return;
         }
 
@@ -606,7 +605,7 @@ export default function EditProperty({ propertyId }) {
             "studio",
             "duplex",
             "commercial",
-            "land"
+            "land",
           ]);
         }
       } catch (error) {
@@ -664,6 +663,7 @@ export default function EditProperty({ propertyId }) {
         setAreas(cachedAreas);
         return;
       }
+
       // Set a new timeout to debounce the API call
       fetchAreasTimeoutRef.current = setTimeout(async () => {
         // Prevent multiple simultaneous calls
@@ -685,11 +685,13 @@ export default function EditProperty({ propertyId }) {
 
         try {
           setLoadingAreas(true);
+          console.log(`Fetching areas for ${emirate} from API...`);
           const areasResponse = await propertyAPI.getAreasForEmirate(emirate);
           if (areasResponse.success) {
             const fetchedAreas = areasResponse.data?.areas || [];
             // Cache the result
             areasCache.current.set(emirate, fetchedAreas);
+            console.log(`Cached ${fetchedAreas.length} areas for ${emirate}`);
             setAreas(fetchedAreas);
           }
         } catch (error) {
@@ -735,11 +737,17 @@ export default function EditProperty({ propertyId }) {
       // Check cache first
       const cachedAmenities = amenitiesCache.current.get(propertyType);
       if (cachedAmenities) {
+        console.log(
+          `Using cached amenities for ${propertyType}:`,
+          cachedAmenities.length,
+          "amenities"
+        );
         setAmenities(cachedAmenities);
         return;
       }
 
       try {
+        console.log(`Fetching amenities for ${propertyType} from API...`);
         const amenitiesResponse = await propertyAPI.getAmenitiesForPropertyType(
           propertyType
         );
@@ -747,6 +755,9 @@ export default function EditProperty({ propertyId }) {
           const fetchedAmenities = amenitiesResponse.data?.all || [];
           // Cache the result
           amenitiesCache.current.set(propertyType, fetchedAmenities);
+          console.log(
+            `Cached ${fetchedAmenities.length} amenities for ${propertyType}`
+          );
           setAmenities(fetchedAmenities);
         }
       } catch (error) {
@@ -781,6 +792,9 @@ export default function EditProperty({ propertyId }) {
 
         // If emirate is changing, clear the area field
         if (name === "location.emirate" && value !== prev.location?.emirate) {
+          console.log(
+            `Emirate changed from "${prev.location?.emirate}" to "${value}", clearing area field`
+          );
           newFormData.location.area = "";
         }
 
@@ -798,6 +812,9 @@ export default function EditProperty({ propertyId }) {
           name === "propertyType" &&
           (value === "office" || value === "studio")
         ) {
+          console.log(
+            `Property type changed to "${value}", clearing bedrooms field`
+          );
           newFormData.details = {
             ...newFormData.details,
             bedrooms: "",
@@ -810,12 +827,18 @@ export default function EditProperty({ propertyId }) {
 
           // Clear price fields when changing TO off plan
           if (value === "off plan") {
+            console.log(
+              `Listing type changed to "${value}", clearing price fields`
+            );
             newFormData.price = "";
             newFormData.currency = "AED";
             newFormData.priceType = "total";
           }
           // Clear price fields when changing FROM off plan to other types
           else if (previousListingType === "off plan") {
+            console.log(
+              `Listing type changed from "off plan" to "${value}", clearing price fields`
+            );
             newFormData.price = "";
             newFormData.currency = "AED";
             newFormData.priceType = "total";
@@ -1106,6 +1129,7 @@ export default function EditProperty({ propertyId }) {
       "location.area",
       "details.bathrooms",
       "details.area",
+      "images",
       "amenities",
     ];
 
@@ -1257,12 +1281,7 @@ export default function EditProperty({ propertyId }) {
 
       // Add price fields only for non-off plan listing types
       if (formData.listingType !== "off plan") {
-        // Always send price field - send empty string when cleared to allow backend to clear existing values
-        if (formData.price !== null && formData.price !== undefined && formData.price !== "") {
-          formDataToSend.append("price", parseFloat(formData.price));
-        } else {
-          formDataToSend.append("price", ""); // Send empty string to clear existing price
-        }
+        formDataToSend.append("price", parseFloat(formData.price));
         formDataToSend.append("currency", formData.currency);
         formDataToSend.append("priceType", formData.priceType);
       }
@@ -1277,6 +1296,11 @@ export default function EditProperty({ propertyId }) {
         formData.location.address.trim()
       );
       formDataToSend.append("location[emirate]", formData.location.emirate);
+      console.log(
+        `Sending area value: "${
+          formData.location.area
+        }" (type: ${typeof formData.location.area})`
+      );
       formDataToSend.append("location[area]", formData.location.area);
       formDataToSend.append("location[country]", formData.location.country);
       formDataToSend.append(
@@ -1290,21 +1314,16 @@ export default function EditProperty({ propertyId }) {
         formData.propertyType !== "office" &&
         formData.propertyType !== "studio"
       ) {
-        const bedrooms = formData.details.bedrooms;
-        if (bedrooms !== null && bedrooms !== undefined && bedrooms !== "") {
-          formDataToSend.append("details[bedrooms]", String(bedrooms));
-        }
+        formDataToSend.append(
+          "details[bedrooms]",
+          formData.details.bedrooms || ""
+        );
       }
-      
-      const bathrooms = formData.details.bathrooms;
-      if (bathrooms !== null && bathrooms !== undefined && bathrooms !== "") {
-        formDataToSend.append("details[bathrooms]", String(bathrooms));
-      }
-      
-      const area = formData.details.area;
-      if (area !== null && area !== undefined && area !== "") {
-        formDataToSend.append("details[area]", String(area));
-      }
+      formDataToSend.append(
+        "details[bathrooms]",
+        formData.details.bathrooms || ""
+      );
+      formDataToSend.append("details[area]", formData.details.area || "");
       formDataToSend.append(
         "details[areaUnit]",
         formData.details.areaUnit || "sqft"
@@ -1343,73 +1362,62 @@ export default function EditProperty({ propertyId }) {
       }
       // When parking is not available, don't send type or spaces (backend will clean them up)
 
-      // Add amenities - ensure proper array handling
-    if (Array.isArray(formData.amenities) && formData.amenities.length > 0) {
-      // Filter out empty/null amenities and ensure they're strings
-      const validAmenities = formData.amenities
-        .filter(amenity => amenity && typeof amenity === 'string' && amenity.trim())
-        .map(amenity => amenity.trim());
-      
-      validAmenities.forEach((amenity, index) => {
-        formDataToSend.append(`amenities[${index}]`, amenity);
+      // Add amenities
+      if (Array.isArray(formData.amenities) && formData.amenities.length > 0) {
+        formData.amenities.forEach((amenity, index) => {
+          formDataToSend.append(`amenities[${index}]`, amenity);
         });
       }
 
       // Handle images - separate existing images from new uploads
       const existingImages = formData.images.filter((img) => !img.file);
       const newImages = formData.images.filter((img) => img.file);
-      
-      // Check if we have any image changes (new images or existing image modifications)
-      const hasNewImages = newImages.length > 0;
-      const hasImageChanges = hasNewImages || existingImages.length !== originalFormData?.images?.length;
-      
-      if (hasImageChanges) {
-        // Always send existingImages field to indicate image update is requested
-        formDataToSend.append("existingImages", JSON.stringify(existingImages));
 
-        // Add new image files and their metadata
-        if (newImages.length > 0) {
-          // Ensure only one image is marked as main across all images
-          let processedImages = [...existingImages, ...newImages];
-          const mainImageCount = processedImages.filter(
-            (img) => img.isMain
-          ).length;
+      // Always send existingImages field to indicate image update is requested
+      formDataToSend.append("existingImages", JSON.stringify(existingImages));
 
-          if (mainImageCount > 1) {
-            // If multiple images are marked as main, keep only the first one
-            let foundMain = false;
-            processedImages = processedImages.map((img) => {
-              if (img.isMain && !foundMain) {
-                foundMain = true;
-                return img;
-              } else if (img.isMain && foundMain) {
-                return { ...img, isMain: false };
-              }
+      // Add new image files and their metadata
+      if (newImages.length > 0) {
+        // Ensure only one image is marked as main across all images
+        let processedImages = [...existingImages, ...newImages];
+        const mainImageCount = processedImages.filter(
+          (img) => img.isMain
+        ).length;
+
+        if (mainImageCount > 1) {
+          // If multiple images are marked as main, keep only the first one
+          let foundMain = false;
+          processedImages = processedImages.map((img) => {
+            if (img.isMain && !foundMain) {
+              foundMain = true;
               return img;
-            });
-          } else if (mainImageCount === 0) {
-            // If no image is marked as main, mark the first one as main
-            processedImages[0] = { ...processedImages[0], isMain: true };
-          }
-
-          // Get the processed new images
-          const processedNewImages = processedImages.filter((img) => img.file);
-
-          // Add new image files
-          processedNewImages.forEach((image, index) => {
-            formDataToSend.append("images", image.file);
-            // Add image metadata
-            formDataToSend.append(
-              `imageMetadata[${index}][isMain]`,
-              image.isMain || false
-            );
-            formDataToSend.append(
-              `imageMetadata[${index}][altText]`,
-              image.altText || `Property image ${index + 1}`
-            );
-            formDataToSend.append(`imageMetadata[${index}][order]`, index);
+            } else if (img.isMain && foundMain) {
+              return { ...img, isMain: false };
+            }
+            return img;
           });
+        } else if (mainImageCount === 0) {
+          // If no image is marked as main, mark the first one as main
+          processedImages[0] = { ...processedImages[0], isMain: true };
         }
+
+        // Get the processed new images
+        const processedNewImages = processedImages.filter((img) => img.file);
+
+        // Add new image files
+        processedNewImages.forEach((image, index) => {
+          formDataToSend.append("images", image.file);
+          // Add image metadata
+          formDataToSend.append(
+            `imageMetadata[${index}][isMain]`,
+            image.isMain || false
+          );
+          formDataToSend.append(
+            `imageMetadata[${index}][altText]`,
+            image.altText || `Property image ${index + 1}`
+          );
+          formDataToSend.append(`imageMetadata[${index}][order]`, index);
+        });
       }
 
       // Log the data being sent for debugging
@@ -1421,7 +1429,6 @@ export default function EditProperty({ propertyId }) {
         "EditProperty: Existing images count:",
         existingImages.length
       );
-      console.log("EditProperty: Has image changes:", hasImageChanges);
 
       // Debug FormData contents
       console.log("FormData contents:");
@@ -1435,24 +1442,15 @@ export default function EditProperty({ propertyId }) {
         }
       }
 
-      // Always send existingImages if we have them to preserve them
-      if (existingImages.length > 0) {
-        formDataToSend.append("existingImages", JSON.stringify(existingImages));
-      }
-
-      // Let propertyAPI.updateProperty automatically determine the correct route
-      // It will use the image route if there are new images or the without-images route if not
+      // Update property using the API (will use PUT /api/properties/:id)
       const response = await propertyAPI.updateProperty(
         actualPropertyId,
         formDataToSend
       );
 
       if (response.success) {
-        toast.success("Property updated successfully!");
-        // Redirect after showing success message
-        setTimeout(() => {
-          router.push("/admin/property-management");
-        }, 1000);
+        // Redirect automatically without alert - user will see the updated status in the property list
+        router.push("/admin/property-management");
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -1506,14 +1504,11 @@ export default function EditProperty({ propertyId }) {
           });
           console.log("Final field errors:", fieldErrors);
           setErrors(fieldErrors);
-          toast.error("Please fix the validation errors");
         } else {
-          const errorMessage = response.error || "Failed to update property";
           setErrors((prev) => ({
             ...prev,
-            submit: errorMessage,
+            submit: response.error || "Failed to update property",
           }));
-          toast.error(errorMessage);
         }
       }
     } catch (error) {
@@ -1576,7 +1571,6 @@ export default function EditProperty({ propertyId }) {
 
           console.log("🟡 EditProperty: Final field errors:", fieldErrors);
           setErrors(fieldErrors);
-          toast.error("Please fix the validation errors");
           return; // Don't process other error types
         }
 
@@ -1595,7 +1589,6 @@ export default function EditProperty({ propertyId }) {
           ...prev,
           submit: errorMessage,
         }));
-        toast.error(errorMessage);
         return;
       }
 
@@ -1641,7 +1634,6 @@ export default function EditProperty({ propertyId }) {
         ...prev,
         submit: errorMessage,
       }));
-      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1675,22 +1667,161 @@ export default function EditProperty({ propertyId }) {
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="alert alert-danger mb-20">{errors.submit}</div>
+          <div className="alert alert-danger mb-20" role="alert">
+            <div className="d-flex align-items-center">
+              <svg
+                className="me-2"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <line
+                  x1="15"
+                  y1="9"
+                  x2="9"
+                  y2="15"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="9"
+                  y1="9"
+                  x2="15"
+                  y2="15"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {errors.submit}
+            </div>
+          </div>
         )}
 
         {/* Load Error */}
         {errors.load && (
-          <div className="alert alert-danger mb-20">{errors.load}</div>
+          <div className="alert alert-danger mb-20" role="alert">
+            <div className="d-flex align-items-center">
+              <svg
+                className="me-2"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <line
+                  x1="15"
+                  y1="9"
+                  x2="9"
+                  y2="15"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="9"
+                  y1="9"
+                  x2="15"
+                  y2="15"
+                  stroke="#dc3545"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {errors.load}
+            </div>
+          </div>
         )}
 
         {/* Info Message */}
         {infoMessage && (
-          <div className="alert alert-info mb-20">{infoMessage}</div>
+          <div className="alert alert-info mb-20" role="alert">
+            <div className="d-flex align-items-center">
+              <svg
+                className="me-2"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#0dcaf0"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <path
+                  d="M12 16v-4"
+                  stroke="#0dcaf0"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 8h.01"
+                  stroke="#0dcaf0"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {infoMessage}
+            </div>
+          </div>
         )}
 
         {/* Success Message */}
         {successMessage && (
-          <div className="alert alert-success mb-20">{successMessage}</div>
+          <div className="alert alert-success mb-20" role="alert">
+            <div className="d-flex align-items-center">
+              <svg
+                className="me-2"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#198754"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <path
+                  d="M9 12l2 2 4-4"
+                  stroke="#198754"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {successMessage}
+            </div>
+          </div>
         )}
 
         {/* Upload Media Section */}
@@ -1807,18 +1938,19 @@ export default function EditProperty({ propertyId }) {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
-                <div className={`description-editor-container ${errors.description ? "error" : ""}`}>
-                  <PropertyDescriptionEditor
-                    value={formData.description}
-                    onChange={(content) => {
-                      setFormData({
-                        ...formData,
-                        description: JSON.stringify(content)
-                      });
-                    }}
-                    onBlur={() => handleFieldBlur({ target: { name: "description", value: formData.description } })}
-                  />
-                </div>
+                <textarea
+                  name="description"
+                  className={`textarea ${errors.description ? "error" : ""}`}
+                  placeholder="Your Description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  style={{
+                    resize: "none",
+                    overflowY: "auto",
+                    scrollbarGutter: "stable",
+                  }}
+                />
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>
                 )}
@@ -1999,7 +2131,7 @@ export default function EditProperty({ propertyId }) {
               <div className="box grid-layout-3 gap-30">
                 <fieldset className="box-fieldset">
                   <label htmlFor="price">
-                    Price:
+                    Price:<span>*</span>
                   </label>
                   <input
                     type="number"
@@ -2063,7 +2195,7 @@ export default function EditProperty({ propertyId }) {
               {shouldShowBedrooms() && (
                 <fieldset className="box-fieldset">
                   <label htmlFor="bedrooms">
-                    Bedrooms:
+                    Bedrooms:<span>*</span>
                   </label>
                   <input
                     type="number"
@@ -2082,7 +2214,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
-                  Bathrooms:
+                  Bathrooms:<span>*</span>
                 </label>
                 <input
                   type="number"
@@ -2100,7 +2232,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area Size:
+                  Area Size:<span>*</span>
                 </label>
                 <input
                   type="number"
@@ -2525,17 +2657,6 @@ export default function EditProperty({ propertyId }) {
         {/* /.footer-dashboard */}
       </div>
       <div className="overlay-dashboard" />
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 }

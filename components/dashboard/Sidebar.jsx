@@ -12,7 +12,10 @@ export default function Sidebar() {
   const isActiveRoute = (route) => {
     // Check for token-prefixed routes
     if (pathname.includes("/admin/")) {
-      return pathname.includes(`/admin/${route}`);
+      const pathAfterAdmin = pathname.split("/admin/")[1];
+      return (
+        pathAfterAdmin === route || pathAfterAdmin?.startsWith(`${route}/`)
+      );
     }
     // Fallback for non-token routes
     return pathname === `/${route}`;
@@ -35,9 +38,22 @@ export default function Sidebar() {
 
   return (
     <div className="wrap-sidebar">
-      <div className="sidebar-menu-dashboard">
-
-        <div className="menu-box">
+      <div
+        className="sidebar-menu-dashboard"
+        style={{
+          height: "calc(100vh - 78px)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          className="menu-box"
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            paddingBottom: "20px",
+          }}
+        >
           <ul className="box-menu-dashboard">
             <li
               className={`nav-menu-item ${
@@ -84,7 +100,7 @@ export default function Sidebar() {
                 Dashboard
               </Link>
             </li>
-            {/*<li
+            <li
               className={`nav-menu-item ${
                 isActiveRoute("my-profile") ? "active" : ""
               } `}
@@ -107,7 +123,7 @@ export default function Sidebar() {
                 </svg>
                 My Profile
               </Link>
-            </li>*/}
+            </li>
             {canAccessRoute(user, "user-management") && (
               <li
                 className={`nav-menu-item ${
@@ -228,7 +244,147 @@ export default function Sidebar() {
                 </Link>
               </li>
             )}
-            {/*<li
+            <li
+              className={`nav-menu-item ${
+                isActiveRoute("blog-management") ||
+                isActiveRoute("add-blog") ||
+                isActiveRoute("edit-blog")
+                  ? "active"
+                  : ""
+              } `}
+            >
+              <Link
+                className="nav-menu-link"
+                href={getRouteHref("blog-management")}
+              >
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V16C4 16.5304 4.21071 17.0391 4.58579 17.4142C4.96086 17.7893 5.46957 18 6 18H14C14.5304 18 15.0391 17.7893 15.4142 17.4142C15.7893 17.0391 16 16.5304 16 16V4C16 3.46957 15.7893 2.96086 15.4142 2.58579C15.0391 2.21071 14.5304 2 14 2Z"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 7H13"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 10H13"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 13H10"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Blog Management
+              </Link>
+            </li>
+            <li
+              className={`nav-menu-item ${
+                isActiveRoute("blog-categories") ||
+                isActiveRoute("add-blog-category") ||
+                isActiveRoute("edit-blog-category")
+                  ? "active"
+                  : ""
+              } `}
+            >
+              <Link
+                className="nav-menu-link"
+                href={getRouteHref("blog-categories")}
+              >
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 9H15"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 15H15"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Blog Categories
+              </Link>
+            </li>
+            {canAccessRoute(user, "categories-approval") && (
+              <li
+                className={`nav-menu-item ${
+                  isActiveRoute("categories-approval") ? "active" : ""
+                } `}
+              >
+                <Link
+                  className="nav-menu-link"
+                  href={getRouteHref("categories-approval")}
+                >
+                  <svg
+                    width={20}
+                    height={20}
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M9 12L11 14L15 10"
+                      stroke="#A8ABAE"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                      stroke="#A8ABAE"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 9H15"
+                      stroke="#A8ABAE"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Category Approval
+                </Link>
+              </li>
+            )}
+            <li
               className={`nav-menu-item ${
                 isActiveRoute("change-password") ? "active" : ""
               } `}
@@ -268,9 +424,9 @@ export default function Sidebar() {
                 </svg>
                 Change Password
               </Link>
-            </li>*/}
+            </li>
 
-            {/*<li className={`nav-menu-item`}>
+            <li className={`nav-menu-item`}>
               <a
                 className="nav-menu-link"
                 href="#"
@@ -308,7 +464,7 @@ export default function Sidebar() {
                 </svg>
                 Logout
               </a>
-            </li>*/}
+            </li>
           </ul>
         </div>
       </div>

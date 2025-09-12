@@ -12,7 +12,6 @@ function AdminLoginContent() {
   const params = useParams();
   const token = params.token;
 
-
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -46,7 +45,6 @@ function AdminLoginContent() {
       // Validate the hex token
       const isValidToken = validateHexToken(authToken);
 
-
       if (isValidToken) {
         // Auto-login with token
         const result = await login({ token: authToken });
@@ -78,14 +76,13 @@ function AdminLoginContent() {
         <div className="auth-loading-content">
           <div className="auth-loading-logo">
             <Image
-              src="/images/logo/Earlybird_Logo.png"
+              src="/images/logo/logo.png"
               alt="EarlyBirds Properties"
               width={140}
               height={50}
               priority
             />
           </div>
-
 
           <div className="auth-loading-spinner">
             <div className="spinner-ring">
@@ -96,7 +93,6 @@ function AdminLoginContent() {
             </div>
           </div>
 
-
           <div className="auth-loading-text">
             <h3>Welcome to EarlyBirds Properties</h3>
             <p>
@@ -105,7 +101,6 @@ function AdminLoginContent() {
                 : "Checking your session..."}
             </p>
           </div>
-
 
           <div className="auth-loading-progress">
             <div className="progress-bar">
@@ -250,7 +245,7 @@ function AdminLoginContent() {
             <div className="auth-form-header">
               <div className="auth-logo">
                 <Image
-                  src="/images/logo/Earlybird_Logo.png"
+                  src="/images/logo/logo.png"
                   alt="EarlyBirds Properties"
                   width={140}
                   height={50}
@@ -262,7 +257,6 @@ function AdminLoginContent() {
                 <p>Welcome back! Please login to your account.</p>
               </div>
             </div>
-
 
             <form className="auth-form" onSubmit={handleSubmit}>
               {error && (
@@ -299,6 +293,7 @@ function AdminLoginContent() {
                   <span>{error}</span>
                 </div>
               )}
+
               <div className="auth-form-group">
                 <label htmlFor="username">Username</label>
                 <div className="auth-input-wrapper">
@@ -366,7 +361,6 @@ function AdminLoginContent() {
                 )}
               </div>
 
-
               <div className="auth-form-group">
                 <label htmlFor="password">Password</label>
                 <div className="auth-input-wrapper">
@@ -397,67 +391,6 @@ function AdminLoginContent() {
                     onChange={handleInputChange}
                     disabled={formLoading}
                   />
-                  <button
-                    type="button"
-                    className="auth-password-toggle"
-                    onClick={togglePasswordVisibility}
-                    disabled={formLoading}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      // Eye slash icon (hide password)
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M1 1l22 22"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    ) : (
-                      // Eye icon (show password)
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="3"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </button>
                   <button
                     type="button"
                     className="auth-password-toggle"
@@ -561,7 +494,6 @@ function AdminLoginContent() {
                 </div>
               </div>
 
-
               <div className="auth-form-actions">
                 <button
                   type="submit"
@@ -599,14 +531,13 @@ function LoadingFallback() {
       <div className="auth-loading-content">
         <div className="auth-loading-logo">
           <Image
-            src="/images/logo/Earlybird_Logo.png"
+            src="/images/logo/logo.png"
             alt="EarlyBirds Properties"
             width={140}
             height={50}
             priority
           />
         </div>
-
 
         <div className="auth-loading-spinner">
           <div className="spinner-ring">
@@ -617,12 +548,10 @@ function LoadingFallback() {
           </div>
         </div>
 
-
         <div className="auth-loading-text">
           <h3>Welcome to EarlyBirds Properties</h3>
           <p>Loading...</p>
         </div>
-
 
         <div className="auth-loading-progress">
           <div className="progress-bar">

@@ -2,10 +2,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { userAPI } from "@/utils/api";
+import { userAPI } from "@/utlis/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -43,8 +41,20 @@ export default function UserManagement() {
 
       if (response.success) {
         // Show all users including SuperAdmin accounts
-        setUsers(response.data.users);
+        const fetchedUsers = response.data.users || [];
+        setUsers(fetchedUsers);
         setTotalPages(response.data.pagination.pages);
+
+        // Calculate statistics from FILTERED users
+        const totalUsers = fetchedUsers.length;
+        const activeUsers = fetchedUsers.filter(
+          (user) => user.isActive === true
+        ).length;
+
+        setStats({
+          totalUsers,
+          activeUsers,
+        });
       } else {
         setError(response.error || "Failed to fetch users");
       }
@@ -56,23 +66,6 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
       setInitialLoad(false);
-    }
-  };
-
-  // Fetch user statistics
-  const fetchStats = async () => {
-    try {
-      const response = await userAPI.getUserStats();
-      if (response.success) {
-        // Include all users including SuperAdmin accounts
-        setStats({
-          totalUsers: response.data.total,
-          activeUsers: response.data.byStatus.active,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-      // Don't set error for stats, just log it
     }
   };
 
@@ -99,26 +92,20 @@ export default function UserManagement() {
     if (!userToDelete) return;
 
     setDeleteLoading(true);
-    toast.info("Deleting user...");
     try {
       const response = await userAPI.deleteUser(userToDelete._id);
       if (response.success) {
-        // Refresh the user list
+        // Refresh the user list and stats
         fetchUsers();
-        fetchStats();
-        // Show success toast
-        toast.success(`User ${userToDelete.name} deleted successfully`);
+        // Success - no alert needed, user will see the user disappear from list
       } else {
         // Show error message without "Error:" prefix
         setError(response.error || "Failed to delete user");
-        toast.error(response.error || "Failed to delete user");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
       // Show error message without "Error:" prefix
-      const errorMessage = err.response?.data?.error || "Failed to delete user";
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(err.response?.data?.error || "Failed to delete user");
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);
@@ -137,11 +124,6 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
   }, [currentPage, searchTerm, statusFilter]);
-
-  // Effect to fetch stats on component mount
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   // Handle search with debounce
   useEffect(() => {
@@ -226,7 +208,6 @@ export default function UserManagement() {
 
   return (
     <div className="main-content w-100">
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <div className="d-flex justify-content-between align-items-center mb-20">

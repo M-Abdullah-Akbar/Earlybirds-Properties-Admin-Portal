@@ -1,15 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { propertyAPI } from "@/utlis/api";
+import { blogCategoryAPI } from "@/utlis/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
-export default function PropertyApproval() {
+export default function CategoryApproval() {
   const { user } = useAuth();
   const router = useRouter();
-  const [pendingProperties, setPendingProperties] = useState([]);
+  const [pendingCategories, setPendingCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,7 +16,7 @@ export default function PropertyApproval() {
   const [limit] = useState(10);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectionError, setRejectionError] = useState("");
@@ -48,39 +47,67 @@ export default function PropertyApproval() {
     );
   }
 
-  // Fetch pending properties
-  const fetchPendingProperties = async () => {
+  // Fetch pending categories
+  const fetchPendingCategories = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await propertyAPI.getPendingProperties({
+      // Try both the dedicated pending endpoint and the general endpoint with filter
+      let response = await blogCategoryAPI.getPendingCategories({
         page: currentPage,
         limit: limit,
       });
 
+      // If the dedicated endpoint fails, try the general endpoint with pending filter
+      if (!response.success) {
+        response = await blogCategoryAPI.getCategories({
+          approvalStatus: "pending",
+          page: currentPage,
+          limit: limit,
+        });
+      }
+
       if (response.success) {
-        setPendingProperties(response.data?.properties || []);
+        const categories = response.data?.categories || [];
+        setPendingCategories(categories);
         setTotalPages(response.data?.pagination?.totalPages || 1);
       } else {
-        setError(response.error || "Failed to fetch pending properties");
+        // Don't show "Blog category not found" as an error - it's a normal case
+        if (response.error !== "Blog category not found") {
+          setError(response.error || "Failed to fetch pending categories");
+        } else {
+          // Clear any existing errors and set empty categories
+          setError(null);
+          setPendingCategories([]);
+          setTotalPages(1);
+        }
       }
     } catch (err) {
-      console.error("Error fetching pending properties:", err);
-      setError(
+      console.error("Error fetching pending categories:", err);
+      const errorMessage =
         err.response?.data?.error ||
-          err.message ||
-          "Failed to fetch pending properties"
-      );
+        err.message ||
+        "Failed to fetch pending categories";
+
+      // Don't show "Blog category not found" as an error - it's a normal case
+      if (errorMessage !== "Blog category not found") {
+        setError(errorMessage);
+      } else {
+        // Clear any existing errors and set empty categories
+        setError(null);
+        setPendingCategories([]);
+        setTotalPages(1);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch pending count from existing stats API
+  // Fetch pending count from stats API
   const fetchPendingCount = async () => {
     try {
-      const response = await propertyAPI.getApprovalStats();
+      const response = await blogCategoryAPI.getApprovalStats();
       if (response.success) {
         setStats({
           pending: response.data.stats?.pending || 0,
@@ -92,7 +119,7 @@ export default function PropertyApproval() {
   };
 
   useEffect(() => {
-    fetchPendingProperties();
+    fetchPendingCategories();
     fetchPendingCount();
   }, [currentPage]);
 
@@ -156,15 +183,15 @@ export default function PropertyApproval() {
     }));
   };
 
-  // Handle property approval
-  const handleApproveProperty = (property) => {
-    setSelectedProperty(property);
+  // Handle category approval
+  const handleApproveCategory = (category) => {
+    setSelectedCategory(category);
     setShowApprovalModal(true);
   };
 
-  // Handle property rejection
-  const handleRejectProperty = (property) => {
-    setSelectedProperty(property);
+  // Handle category rejection
+  const handleRejectCategory = (category) => {
+    setSelectedCategory(category);
     setRejectionReason("");
     setRejectionError("");
     setFieldErrors({});
@@ -172,33 +199,35 @@ export default function PropertyApproval() {
     setShowRejectionModal(true);
   };
 
-  // Confirm property approval
+  // Confirm category approval
   const confirmApproval = async () => {
-    if (!selectedProperty) return;
+    if (!selectedCategory) return;
 
     setActionLoading(true);
     try {
-      const response = await propertyAPI.approveProperty(selectedProperty._id);
+      const response = await blogCategoryAPI.approveCategory(
+        selectedCategory._id
+      );
       if (response.success) {
         // Refresh the lists
-        fetchPendingProperties();
+        fetchPendingCategories();
         fetchPendingCount();
         setShowApprovalModal(false);
-        setSelectedProperty(null);
-        // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        setSelectedCategory(null);
+        // Redirect to categories-approval page
+        router.push("/admin/categories-approval");
       } else {
-        alert(response.error || "Failed to approve property");
+        alert(response.error || "Failed to approve category");
       }
     } catch (error) {
-      console.error("Error approving property:", error);
-      alert("Failed to approve property. Please try again.");
+      console.error("Error approving category:", error);
+      alert("Failed to approve category. Please try again.");
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Confirm property rejection
+  // Confirm category rejection
   const confirmRejection = async () => {
     // Clear previous errors
     setRejectionError("");
@@ -221,21 +250,24 @@ export default function PropertyApproval() {
 
     setActionLoading(true);
     try {
-      const response = await propertyAPI.rejectProperty(selectedProperty._id, {
-        rejectionReason: rejectionReason.trim(),
-      });
+      const response = await blogCategoryAPI.rejectCategory(
+        selectedCategory._id,
+        {
+          rejectionReason: rejectionReason.trim(),
+        }
+      );
       if (response.success) {
         // Refresh the lists
-        fetchPendingProperties();
+        fetchPendingCategories();
         fetchPendingCount();
         setShowRejectionModal(false);
-        setSelectedProperty(null);
+        setSelectedCategory(null);
         setRejectionReason("");
         setRejectionError("");
         setFieldErrors({});
         setTouchedFields({});
-        // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        // Redirect to categories-approval page
+        router.push("/admin/categories-approval");
       } else {
         // Handle server-side validation errors
         if (response.fieldErrors && typeof response.fieldErrors === "object") {
@@ -243,7 +275,7 @@ export default function PropertyApproval() {
         } else if (response.errors && typeof response.errors === "object") {
           setFieldErrors(response.errors);
         } else {
-          setRejectionError(response.error || "Failed to reject property");
+          setRejectionError(response.error || "Failed to reject category");
         }
       }
     } catch (error) {
@@ -284,22 +316,12 @@ export default function PropertyApproval() {
           );
         }
       } else {
-        console.error("Error rejecting property:", error);
-        setRejectionError("Failed to reject property. Please try again.");
+        console.error("Error rejecting category:", error);
+        setRejectionError("Failed to reject category. Please try again.");
       }
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const formatPrice = (price) => {
-    if (!price) return "Price on request";
-    return new Intl.NumberFormat("en-AE", {
-      style: "currency",
-      currency: "AED",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
   };
 
   const formatDate = (dateString) => {
@@ -307,12 +329,21 @@ export default function PropertyApproval() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getTypeText = (type) => {
-    if (!type) return "Unknown";
-    return type.charAt(0).toUpperCase() + type.slice(1);
+  // Helper function to truncate description
+  const truncateDescription = (description, maxLength = 50) => {
+    if (!description) return "No description provided";
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + "...";
   };
 
-  if (loading && pendingProperties.length === 0) {
+  // Helper function to truncate category name
+  const truncateName = (name, maxLength = 30) => {
+    if (!name) return "Untitled Category";
+    if (name.length <= maxLength) return name;
+    return name.substring(0, maxLength) + "...";
+  };
+
+  if (loading && pendingCategories.length === 0) {
     return (
       <div className="main-content w-100">
         <div className="main-content-inner wrap-dashboard-content">
@@ -321,7 +352,7 @@ export default function PropertyApproval() {
               <div className="spinner-border text-primary" role="status">
                 <span className="sr-only">Loading...</span>
               </div>
-              <p className="mt-3">Loading pending properties...</p>
+              <p className="mt-3">Loading pending categories...</p>
             </div>
           </div>
         </div>
@@ -334,7 +365,7 @@ export default function PropertyApproval() {
       <div className="main-content-inner wrap-dashboard-content">
         <div className="widget-box-2 wd-listing mb-20">
           <div className="d-flex justify-content-between align-items-center mb-20">
-            <h3 className="title">Property Approval Management</h3>
+            <h3 className="title">Category Approval Management</h3>
           </div>
 
           {error && (
@@ -344,7 +375,7 @@ export default function PropertyApproval() {
           )}
 
           {/* Current Workload */}
-          {stats.pending > 0 && (
+          {(stats.pending > 0 || pendingCategories.length > 0) && (
             <div className="flat-counter-v2 tf-counter mb-20">
               <div className="counter-box">
                 <div
@@ -374,14 +405,14 @@ export default function PropertyApproval() {
                     className="title-count text-variant-1"
                     style={{ fontSize: "16px" }}
                   >
-                    Properties Awaiting Your Review
+                    Categories Awaiting Your Review
                   </div>
                   <div className="box-count d-flex align-items-end">
                     <div
                       className="number"
                       style={{ fontSize: "32px", fontWeight: "bold" }}
                     >
-                      {stats.pending}
+                      {stats.pending || pendingCategories.length}
                     </div>
                   </div>
                 </div>
@@ -394,10 +425,8 @@ export default function PropertyApproval() {
               <table>
                 <thead>
                   <tr>
-                    <th>Property</th>
-                    <th>Type</th>
-                    <th>Price</th>
-                    <th>Location</th>
+                    <th>Category</th>
+                    <th>Description</th>
                     <th>Created By</th>
                     <th>Submitted Date</th>
                     <th>Action</th>
@@ -406,7 +435,7 @@ export default function PropertyApproval() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-4">
+                      <td colSpan="5" className="text-center py-4">
                         <div
                           className="spinner-border text-primary"
                           role="status"
@@ -415,77 +444,55 @@ export default function PropertyApproval() {
                         </div>
                       </td>
                     </tr>
-                  ) : pendingProperties.length === 0 ? (
+                  ) : pendingCategories.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-4">
-                        <p className="mb-0">No pending properties found</p>
+                      <td colSpan="5" className="text-center py-4">
+                        <p className="mb-0">No pending categories found</p>
                       </td>
                     </tr>
                   ) : (
-                    pendingProperties.map((property) => (
-                      <tr key={property._id}>
+                    pendingCategories.map((category) => (
+                      <tr key={category._id}>
                         <td>
                           <div className="listing-box">
-                            <div className="images">
-                              <Image
-                                alt="property"
-                                src={
-                                  property.images?.[0]?.url ||
-                                  property.mainImage ||
-                                  "/images/home/house-db-1.jpg"
-                                }
-                                width={50}
-                                height={50}
-                                style={{ borderRadius: "8px" }}
-                              />
-                            </div>
                             <div className="content">
                               <div className="title">
-                                <Link
-                                  href={`/admin/edit-property/${property._id}`}
+                                <span
                                   className="link"
+                                  title={category.name || "Untitled Category"}
                                 >
-                                  {property.title || "Untitled Property"}
-                                </Link>
-                              </div>
-                              <div className="text-date">
-                                {property.details?.bedrooms || 0} beds,{" "}
-                                {property.details?.bathrooms || 0} baths
+                                  {truncateName(category.name)}
+                                </span>
                               </div>
                             </div>
                           </div>
                         </td>
                         <td>
-                          <span className="role-badge role-admin">
-                            {getTypeText(property.propertyType)}
-                          </span>
-                        </td>
-                        <td>
-                          <span>{formatPrice(property.price)}</span>
-                        </td>
-                        <td>
-                          <span>
-                            {property.location?.address ||
-                              "Location not specified"}
+                          <span
+                            title={
+                              category.description || "No description provided"
+                            }
+                          >
+                            {truncateDescription(category.description)}
                           </span>
                         </td>
                         <td>
                           <span>
-                            {property.createdBy?.name || "Unknown"}
+                            {category.createdBy?.name || "Unknown"}
                             <br />
                             <small style={{ color: "#666" }}>
-                              {property.createdBy?.email || ""}
+                              {category.createdBy?.email || ""}
                             </small>
                           </span>
                         </td>
                         <td>
-                          <span>{formatDate(property.createdAt)}</span>
+                          <span>{formatDate(category.createdAt)}</span>
                         </td>
                         <td>
                           <div className="d-flex gap-2">
                             <button
                               className="tf-btn bg-color-primary pd-5"
-                              onClick={() => handleApproveProperty(property)}
+                              onClick={() => handleApproveCategory(category)}
                               style={{
                                 fontSize: "12px",
                                 padding: "5px 10px",
@@ -496,7 +503,7 @@ export default function PropertyApproval() {
                             </button>
                             <button
                               className="tf-btn style-border pd-5"
-                              onClick={() => handleRejectProperty(property)}
+                              onClick={() => handleRejectCategory(category)}
                               style={{
                                 fontSize: "12px",
                                 padding: "5px 10px",
@@ -632,12 +639,12 @@ export default function PropertyApproval() {
             }}
           >
             <div className="modal-header" style={{ marginBottom: "20px" }}>
-              <h4 style={{ margin: 0, color: "#333" }}>Approve Property</h4>
+              <h4 style={{ margin: 0, color: "#333" }}>Approve Category</h4>
             </div>
             <div className="modal-body" style={{ marginBottom: "30px" }}>
               <p style={{ margin: 0, color: "#666", lineHeight: "1.5" }}>
-                Are you sure you want to approve the property{" "}
-                <strong>"{selectedProperty?.title}"</strong>?
+                Are you sure you want to approve the category{" "}
+                <strong>"{selectedCategory?.name}"</strong>?
               </p>
               <p
                 style={{
@@ -646,7 +653,7 @@ export default function PropertyApproval() {
                   fontSize: "14px",
                 }}
               >
-                Once approved, this property will be visible to visitors.
+                Once approved, this category will be available for use.
               </p>
             </div>
             <div className="modal-footer" style={{ textAlign: "right" }}>
@@ -654,7 +661,7 @@ export default function PropertyApproval() {
                 className="tf-btn style-border pd-10"
                 onClick={() => {
                   setShowApprovalModal(false);
-                  setSelectedProperty(null);
+                  setSelectedCategory(null);
                 }}
                 disabled={actionLoading}
                 style={{ marginRight: "10px" }}
@@ -666,7 +673,7 @@ export default function PropertyApproval() {
                 onClick={confirmApproval}
                 disabled={actionLoading}
               >
-                {actionLoading ? "Approving..." : "✅ Approve Property"}
+                {actionLoading ? "Approving..." : "✅ Approve Category"}
               </button>
             </div>
           </div>
@@ -702,7 +709,7 @@ export default function PropertyApproval() {
             }}
           >
             <div className="modal-header" style={{ marginBottom: "20px" }}>
-              <h4 style={{ margin: 0, color: "#333" }}>Reject Property</h4>
+              <h4 style={{ margin: 0, color: "#333" }}>Reject Category</h4>
             </div>
             <div className="modal-body" style={{ marginBottom: "30px" }}>
               <p
@@ -712,8 +719,8 @@ export default function PropertyApproval() {
                   lineHeight: "1.5",
                 }}
               >
-                Please provide a reason for rejecting the property{" "}
-                <strong>"{selectedProperty?.title}"</strong>:
+                Please provide a reason for rejecting the category{" "}
+                <strong>"{selectedCategory?.name}"</strong>:
               </p>
               <textarea
                 className="form-control"
@@ -737,7 +744,9 @@ export default function PropertyApproval() {
                       ? "1px solid #dc3545"
                       : "1px solid #ddd",
                   borderRadius: "4px",
-                  resize: "vertical",
+                  resize: "none",
+                  overflowY: "auto",
+                  scrollbarGutter: "stable",
                 }}
               />
               {/* Character counter */}
@@ -784,7 +793,7 @@ export default function PropertyApproval() {
                 className="tf-btn style-border pd-10"
                 onClick={() => {
                   setShowRejectionModal(false);
-                  setSelectedProperty(null);
+                  setSelectedCategory(null);
                   setRejectionReason("");
                   setRejectionError("");
                   setFieldErrors({});
@@ -806,7 +815,7 @@ export default function PropertyApproval() {
                   opacity: actionLoading ? 0.6 : 1,
                 }}
               >
-                {actionLoading ? "Rejecting..." : "❌ Reject Property"}
+                {actionLoading ? "Rejecting..." : "❌ Reject Category"}
               </button>
             </div>
           </div>

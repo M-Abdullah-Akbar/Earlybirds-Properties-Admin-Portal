@@ -1,7 +1,5 @@
 "use client";
 import { useEffect } from "react";
-import '../styles/_variables.scss';
-import '../styles/_keyframe-animations.scss';
 import "../public/main.scss";
 import "odometer/themes/odometer-theme-default.css"; // Import theme
 import "photoswipe/style.css";
@@ -9,7 +7,7 @@ import "rc-slider/assets/index.css";
 import { usePathname } from "next/navigation";
 import BackToTop from "@/components/common/BackToTop";
 import MobileMenu from "@/components/headers/MobileMenu";
-//import SettingsHandler from "@/components/common/SettingsHandler";
+import SettingsHandler from "@/components/common/SettingsHandler";
 import Login from "@/components/modals/Login";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header1 from "@/components/headers/Header1";
@@ -18,7 +16,6 @@ import Sidebar from "@/components/dashboard/Sidebar";
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-
 
   // Check if current route is a dashboard route
   {
@@ -47,8 +44,13 @@ export default function RootLayout({ children }) {
       pathAfterToken.startsWith("user-profile") ||
       pathAfterToken.startsWith("property-management") ||
       pathAfterToken.startsWith("property-approval") ||
+      pathAfterToken.startsWith("categories-approval") ||
       pathAfterToken.startsWith("edit-property") ||
-      pathAfterToken.startsWith("change-password"));
+      pathAfterToken.startsWith("change-password") ||
+      pathAfterToken.startsWith("blog-management") ||
+      pathAfterToken.startsWith("add-blog") ||
+      pathAfterToken.startsWith("edit-blog") ||
+      pathAfterToken.startsWith("blog-categories"));
 
   // Remove conditional bootstrap import to prevent hydration mismatch
   // Bootstrap will be imported via useEffect instead
@@ -69,6 +71,7 @@ export default function RootLayout({ children }) {
             modalInstance.hide();
           }
         });
+
         // Close any open offcanvas
         const offcanvasElements = document.querySelectorAll(".offcanvas.show");
         offcanvasElements.forEach((offcanvas) => {
@@ -81,11 +84,12 @@ export default function RootLayout({ children }) {
         console.error("Error initializing bootstrap:", error);
       }
     };
+
     initializeBootstrap();
   }, [pathname]); // Runs every time the route changes
 
   useEffect(() => {
-    const WOW = require("@/utils/wow");
+    const WOW = require("@/utlis/wow");
     const wow = new WOW.default({
       animateClass: "animated",
       offset: 100,
@@ -94,7 +98,6 @@ export default function RootLayout({ children }) {
     });
     wow.init();
   }, [pathname]);
-
 
   useEffect(() => {
     const handleSticky = () => {
@@ -141,7 +144,7 @@ export default function RootLayout({ children }) {
               </div>
               <MobileMenu />
               <BackToTop />
-              {/*<SettingsHandler />*/}
+              <SettingsHandler />
               <Login />
             </ProtectedRoute>
           </AuthProvider>
@@ -187,7 +190,7 @@ export default function RootLayout({ children }) {
           {children}
           <MobileMenu />
           <BackToTop />
-          {/*<SettingsHandler />*/}
+          <SettingsHandler />
           <Login />
         </AuthProvider>
       </body>

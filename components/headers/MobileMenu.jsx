@@ -39,9 +39,9 @@ export default function MobileMenu() {
           <Link href={`/dashboard`}>
             <Image
               alt=""
-              src="/images/logo/Earlybird_Logo.png"
-              width={90}
-              height={70}
+              src="/images/logo/logo@2x.png"
+              width={272}
+              height={84}
             />
           </Link>
         </div>

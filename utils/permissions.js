@@ -134,12 +134,21 @@ export const canAccessRoute = (user, route) => {
     "change-password",
     "property-management", // All can view properties
     "add-property", // All can add properties
+    "blog-categories", // All can view blog categories
+    "blog-management", // All can manage blogs
+    "add-blog", // All can add blogs
+    "edit-blog", // All can edit blogs
   ];
 
   if (commonRoutes.includes(route)) return true;
 
   // SuperAdmin-only routes
-  const superAdminRoutes = ["user-management", "add-user", "property-approval"];
+  const superAdminRoutes = [
+    "user-management",
+    "add-user",
+    "property-approval",
+    "categories-approval",
+  ];
 
   if (superAdminRoutes.includes(route)) {
     return userRole === "SuperAdmin";

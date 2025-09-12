@@ -3,7 +3,7 @@ import { safeLocalStorage, safeWindow } from "./clientUtils";
 import { canAccessRoute } from "../utils/permissions";
 
 // Base API configuration
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "https://api.earlybirdsproperties.com/api";
 
 // Create axios instance
 const api = axios.create({
@@ -13,7 +13,7 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    // Skip adding Authorization header for login requests
+    // Skip adding Authorization header for login request
     if (config.url === "/auth/login" || config.url?.includes("/auth/login")) {
       return config;
     }

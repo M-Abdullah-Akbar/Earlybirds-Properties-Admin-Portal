@@ -5,6 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import { propertyAPI, adminUtils } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
+import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function EditProperty({ propertyId }) {
   const { user } = useAuth();
@@ -1938,19 +1941,38 @@ export default function EditProperty({ propertyId }) {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
-                <textarea
-                  name="description"
-                  className={`textarea ${errors.description ? "error" : ""}`}
-                  placeholder="Your Description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  onBlur={handleFieldBlur}
-                  style={{
-                    resize: "none",
-                    overflowY: "auto",
-                    scrollbarGutter: "stable",
-                  }}
-                />
+                <div className={`${errors.description ? "error" : ""}`}>
+                  <PropertyDescriptionEditor
+                    value={formData.description}
+                    onChange={(content) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        description: JSON.stringify(content)
+                      }));
+                      // Clear description error when user starts typing
+                      if (errors.description) {
+                        setErrors(prev => ({
+                          ...prev,
+                          description: null
+                        }));
+                      }
+                    }}
+                    onBlur={(content) => {
+                      // Mark field as touched on blur
+                      setTouchedFields(prev => ({
+                        ...prev,
+                        description: true
+                      }));
+                      // Validate description on blur
+                      const descriptionValue = JSON.stringify(content);
+                      const error = validateField('description', descriptionValue);
+                      setErrors(prev => ({
+                        ...prev,
+                        description: error
+                      }));
+                    }}
+                  />
+                </div>
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>
                 )}

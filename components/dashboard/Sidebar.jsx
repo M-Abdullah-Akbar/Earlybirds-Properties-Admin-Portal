@@ -100,7 +100,7 @@ export default function Sidebar() {
                 Dashboard
               </Link>
             </li>
-            <li
+            {/*<li
               className={`nav-menu-item ${
                 isActiveRoute("my-profile") ? "active" : ""
               } `}
@@ -123,7 +123,7 @@ export default function Sidebar() {
                 </svg>
                 My Profile
               </Link>
-            </li>
+            </li>*/}
             {canAccessRoute(user, "user-management") && (
               <li
                 className={`nav-menu-item ${
@@ -384,7 +384,7 @@ export default function Sidebar() {
                 </Link>
               </li>
             )}
-            <li
+            {/*<li
               className={`nav-menu-item ${
                 isActiveRoute("change-password") ? "active" : ""
               } `}
@@ -424,9 +424,9 @@ export default function Sidebar() {
                 </svg>
                 Change Password
               </Link>
-            </li>
+            </li>*/}
 
-            <li className={`nav-menu-item`}>
+           {/*<li className={`nav-menu-item`}>
               <a
                 className="nav-menu-link"
                 href="#"
@@ -464,7 +464,7 @@ export default function Sidebar() {
                 </svg>
                 Logout
               </a>
-            </li>
+            </li>*/}
           </ul>
         </div>
       </div>

@@ -40,6 +40,26 @@
 .rc-slider .rc-slider-tracks {
   background-color: var(--Primary);
 }
+/* Make header always fixed */
+.header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  background-color: var(--White) !important;
+  box-shadow: 0px 4px 18px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Add top padding to body to compensate for fixed header */
+body {
+  padding-top: 20px !important;
+}
+
 .header.header-10:not(.header-sticky) {
   .row > * {
     padding-left: 0 !important;

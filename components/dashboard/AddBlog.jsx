@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utlis/api";
+import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AddBlog() {

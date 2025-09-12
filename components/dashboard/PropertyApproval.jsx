@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { propertyAPI } from "@/utlis/api";
+import { propertyAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
-import { userAPI } from "@/utlis/api";
+import { userAPI } from "@/utils/api";
 
 export default function EditUser({ userId }) {
   const router = useRouter();

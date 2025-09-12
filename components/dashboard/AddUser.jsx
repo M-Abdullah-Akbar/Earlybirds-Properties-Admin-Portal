@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { userAPI } from "@/utlis/api";
+import { userAPI } from "@/utils/api";
 
 export default function AddUser() {
   const router = useRouter();

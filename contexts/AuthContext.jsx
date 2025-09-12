@@ -1,9 +1,9 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authAPI } from "@/utlis/api";
-import { safeLocalStorage } from "@/utlis/clientUtils";
-import { useClientMount } from "@/utlis/useClientMount";
+import { authAPI } from "@/utils/api";
+import { safeLocalStorage } from "@/utils/clientUtils";
+import { useClientMount } from "@/utils/useClientMount";
 
 const AuthContext = createContext();
 

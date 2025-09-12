@@ -1,8 +1,8 @@
 "use client";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { safeLocalStorage } from "@/utlis/clientUtils";
-import { useClientMount } from "@/utlis/useClientMount";
+import { safeLocalStorage } from "@/utils/clientUtils";
+import { useClientMount } from "@/utils/useClientMount";
 
 export default function SettingsHandler() {
   const pathname = usePathname();

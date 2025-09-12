@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { userAPI } from "@/utlis/api";
+import { userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function UserManagement() {

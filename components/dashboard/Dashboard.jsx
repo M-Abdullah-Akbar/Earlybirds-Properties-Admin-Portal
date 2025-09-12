@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { dashboardAPI } from "@/utlis/api";
+import { dashboardAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessRoute } from "@/utils/permissions";
 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { propertyAPI, userAPI } from "@/utlis/api";
+import { propertyAPI, userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { userAPI } from "@/utlis/api";
+import { userAPI } from "@/utils/api";
 
 export default function Profile() {
   const router = useRouter();

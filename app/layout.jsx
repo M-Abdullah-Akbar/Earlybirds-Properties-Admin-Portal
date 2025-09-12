@@ -89,7 +89,7 @@ export default function RootLayout({ children }) {
   }, [pathname]); // Runs every time the route changes
 
   useEffect(() => {
-    const WOW = require("@/utlis/wow");
+    const WOW = require("@/utils/wow");
     const wow = new WOW.default({
       animateClass: "animated",
       offset: 100,

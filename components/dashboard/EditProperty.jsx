@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-import { propertyAPI, adminUtils } from "@/utlis/api";
+import { propertyAPI, adminUtils } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
 

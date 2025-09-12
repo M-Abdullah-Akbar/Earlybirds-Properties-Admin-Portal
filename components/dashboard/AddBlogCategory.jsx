@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { blogCategoryAPI } from "@/utlis/api";
+import { blogCategoryAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AddBlogCategory() {

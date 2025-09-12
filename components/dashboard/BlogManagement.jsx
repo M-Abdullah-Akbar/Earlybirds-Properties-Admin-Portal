@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { blogAPI, blogCategoryAPI } from "@/utlis/api";
+import { blogAPI, blogCategoryAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function BlogManagement() {

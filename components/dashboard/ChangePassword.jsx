@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authAPI } from "@/utlis/api";
+import { authAPI } from "@/utils/api";
 
 export default function ChangePassword() {
   const router = useRouter();

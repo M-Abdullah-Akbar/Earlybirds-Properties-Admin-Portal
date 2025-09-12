@@ -1,6 +1,6 @@
 ﻿import axios from "axios";
 import { safeLocalStorage, safeWindow } from "./clientUtils";
-import { canAccessRoute } from "../utils/permissions";
+import { canAccessRoute } from "./permissions";
 
 // Base API configuration
 const API_BASE_URL = "https://api.earlybirdsproperties.com/api";

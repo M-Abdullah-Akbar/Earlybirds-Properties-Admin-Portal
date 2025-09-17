@@ -144,7 +144,7 @@ export default function RootLayout({ children }) {
               </div>
               <MobileMenu />
               <BackToTop />
-              <SettingsHandler />
+              {/*<SettingsHandler />*/}
               <Login />
             </ProtectedRoute>
           </AuthProvider>

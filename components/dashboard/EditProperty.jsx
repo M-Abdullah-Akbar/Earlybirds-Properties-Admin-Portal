@@ -6,8 +6,6 @@ import { propertyAPI, adminUtils } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function EditProperty({ propertyId }) {
   const { user } = useAuth();
@@ -135,13 +133,18 @@ export default function EditProperty({ propertyId }) {
     return formData.listingType !== "off plan";
   };
 
-  // Real-time validation functions
+  // Validation function - disabled (no validations)
   const validateField = (name, value, currentFormData = formData) => {
+    // All validations disabled - always return empty string (no error)
+    return "";
+  };
+
+  // Legacy validation code (disabled)
+  const validateFieldLegacy = (name, value, currentFormData = formData) => {
     switch (name) {
       case "title":
-        // Title is now optional
         if (!value || value.trim() === "") {
-          return "";
+          return "Property title is required";
         } else if (value.trim().length < 5) {
           return "Title must be at least 5 characters long";
         } else if (value.trim().length > 200) {
@@ -152,9 +155,8 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "description":
-        // Description is now optional
         if (!value || value.trim() === "") {
-          return "";
+          return "Property description is required";
         } else if (value.trim().length < 200) {
           return "Description must be at least 200 characters long";
         } else if (value.trim().length > 10000) {
@@ -163,9 +165,8 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "propertyType":
-        // Property type is now optional
-        if (!value || value.trim() === "") {
-          return "";
+        if (!value || !value.trim()) {
+          return "Property type is required";
         } else if (typeof value !== "string") {
           return "Property type must be a string";
         } else if (
@@ -182,45 +183,41 @@ export default function EditProperty({ propertyId }) {
         if (currentFormData.listingType === "off plan") {
           return "";
         }
-        // Price is now optional
-        if (!value || value.toString().trim() === "") {
-          return "";
-        }
-        const numPrice = parseFloat(value);
-        if (isNaN(numPrice) || numPrice <= 0) {
+        if (!value || value === "") {
+          return "Price is required";
+        } else if (isNaN(value) || parseFloat(value) <= 0) {
           return "Price must be a positive number";
         }
         return "";
 
       case "listingType":
-        // Listing type is now optional
-        if (!value || value.trim() === "") {
-          return "";
+        if (!value || !value.trim()) {
+          return "Listing type is required";
         }
         return "";
 
       case "location.address":
-        // Address is now optional
-        if (!value || value.trim() === "") {
-          return "";
+      case "address":
+        if (!value || !value.trim()) {
+          return "Address is required";
         } else if (value.trim().length < 5) {
-          return "Address must be at least 5 characters long";
+          return "Address must be at least 5 characters";
         } else if (value.trim().length > 200) {
           return "Address cannot exceed 200 characters";
         }
         return "";
 
       case "location.emirate":
-        // Emirate is now optional
-        if (!value || value.trim() === "") {
-          return "";
+      case "emirate":
+        if (!value || !value.trim()) {
+          return "Emirate is required";
         }
         return "";
 
       case "location.area":
-        // Location area is now optional
+      case "locationArea":
         if (value === "") {
-          return "";
+          return "Location area is required";
         } else if (!currentFormData.location?.emirate) {
           return "Emirate must be selected before area";
         }
@@ -239,9 +236,9 @@ export default function EditProperty({ propertyId }) {
           return "";
         }
 
-        // For all other property types, bedrooms are now optional
+        // For all other property types, bedrooms are required
         if (value === null || value === undefined || value === "") {
-          return "";
+          return "Number of bedrooms is required";
         } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
           return "Bedrooms must be a non-negative integer";
         }
@@ -250,9 +247,8 @@ export default function EditProperty({ propertyId }) {
 
       case "details.bathrooms":
       case "bathrooms":
-        // Bathrooms are now optional
         if (value === null || value === undefined || value === "") {
-          return "";
+          return "Number of bathrooms is required";
         }
 
         const numBathrooms = parseInt(value);
@@ -268,9 +264,8 @@ export default function EditProperty({ propertyId }) {
 
       case "details.area":
       case "area":
-        // Property area is now optional
         if (value === null || value === undefined || value === "") {
-          return "";
+          return "Property area is required";
         }
 
         const numArea = parseFloat(value);
@@ -414,10 +409,11 @@ export default function EditProperty({ propertyId }) {
         return "";
 
       case "images":
-        // Images are now optional
-        if (!value || !Array.isArray(value) || value.length === 0) {
-          return "";
-        } else if (value.length > 10) {
+        // Image validation disabled - allowing empty images
+        // if (!value || !Array.isArray(value) || value.length === 0) {
+        //   return "At least one image is required";
+        // }
+        if (value && Array.isArray(value) && value.length > 10) {
           return "Cannot have more than 10 images";
         }
 
@@ -1120,97 +1116,7 @@ export default function EditProperty({ propertyId }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate all fields before submission
-    const newErrors = {};
-    const fieldsToValidate = [
-      "title",
-      "description",
-      "propertyType",
-      "listingType",
-      "location.address",
-      "location.emirate",
-      "location.area",
-      "details.bathrooms",
-      "details.area",
-      "images",
-      "amenities",
-    ];
-
-    // Add price validation only for non-off plan listing types
-    if (formData.listingType !== "off plan") {
-      fieldsToValidate.push("price");
-    }
-
-    // Add bedrooms validation only for property types that support it
-    if (
-      formData.propertyType !== "office" &&
-      formData.propertyType !== "studio"
-    ) {
-      fieldsToValidate.push("details.bedrooms");
-    }
-
-    // Add conditional field validations
-    if (shouldShowFloorLevel()) {
-      fieldsToValidate.push("details.floorLevel");
-    }
-    if (shouldShowTotalFloors()) {
-      fieldsToValidate.push("details.totalFloors");
-    }
-    if (shouldShowLandArea()) {
-      fieldsToValidate.push("details.landArea");
-    }
-    fieldsToValidate.push("details.yearBuilt");
-
-    // Add parking validations if parking is available
-    if (formData.details?.parking?.available) {
-      fieldsToValidate.push("details.parking.type", "details.parking.spaces");
-    }
-
-    // Validate all fields
-    fieldsToValidate.forEach((fieldName) => {
-      let value;
-      let errorKey = fieldName;
-
-      // Get the value based on field path
-      if (fieldName.includes(".")) {
-        const parts = fieldName.split(".");
-        if (parts.length === 2) {
-          value = formData[parts[0]]?.[parts[1]];
-        } else if (parts.length === 3) {
-          value = formData[parts[0]]?.[parts[1]]?.[parts[2]];
-        }
-
-        // Map to error key
-        if (fieldName === "location.area") errorKey = "locationArea";
-        else if (fieldName === "location.address") errorKey = "address";
-        else if (fieldName === "location.emirate") errorKey = "emirate";
-        else if (fieldName === "details.parking.type") errorKey = "parkingType";
-        else if (fieldName === "details.parking.spaces")
-          errorKey = "parkingSpaces";
-        else errorKey = parts[parts.length - 1];
-      } else {
-        value = formData[fieldName];
-        errorKey = fieldName;
-      }
-
-      const error = validateField(fieldName, value);
-      if (error) {
-        newErrors[errorKey] = error;
-      }
-    });
-
-    // If there are validation errors, don't submit
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      // Mark all fields as touched to show errors
-      const touchedFieldsUpdate = {};
-      fieldsToValidate.forEach((field) => {
-        touchedFieldsUpdate[field] = true;
-      });
-      setTouchedFields((prev) => ({ ...prev, ...touchedFieldsUpdate }));
-      setSaving(false);
-      return;
-    }
+    // Validation disabled - proceed directly to submission
 
     // Check if any changes were made (similar to Profile component)
     const hasChanges = () => {
@@ -1279,7 +1185,9 @@ export default function EditProperty({ propertyId }) {
 
       // Add property data fields
       formDataToSend.append("title", formData.title);
-      formDataToSend.append("description", formData.description);
+      // Convert JSON description back to string for backend
+      const descriptionToSend = typeof formData.description === 'string' ? formData.description : JSON.stringify(formData.description);
+      formDataToSend.append("description", descriptionToSend);
       formDataToSend.append("propertyType", formData.propertyType);
 
       // Add price fields only for non-off plan listing types
@@ -1670,161 +1578,22 @@ export default function EditProperty({ propertyId }) {
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="alert alert-danger mb-20" role="alert">
-            <div className="d-flex align-items-center">
-              <svg
-                className="me-2"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <line
-                  x1="15"
-                  y1="9"
-                  x2="9"
-                  y2="15"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="9"
-                  y1="9"
-                  x2="15"
-                  y2="15"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {errors.submit}
-            </div>
-          </div>
+          <div className="alert alert-danger mb-20">{errors.submit}</div>
         )}
 
         {/* Load Error */}
         {errors.load && (
-          <div className="alert alert-danger mb-20" role="alert">
-            <div className="d-flex align-items-center">
-              <svg
-                className="me-2"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <line
-                  x1="15"
-                  y1="9"
-                  x2="9"
-                  y2="15"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="9"
-                  y1="9"
-                  x2="15"
-                  y2="15"
-                  stroke="#dc3545"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {errors.load}
-            </div>
-          </div>
+          <div className="alert alert-danger mb-20">{errors.load}</div>
         )}
 
         {/* Info Message */}
         {infoMessage && (
-          <div className="alert alert-info mb-20" role="alert">
-            <div className="d-flex align-items-center">
-              <svg
-                className="me-2"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="#0dcaf0"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M12 16v-4"
-                  stroke="#0dcaf0"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M12 8h.01"
-                  stroke="#0dcaf0"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {infoMessage}
-            </div>
-          </div>
+          <div className="alert alert-info mb-20">{infoMessage}</div>
         )}
 
         {/* Success Message */}
         {successMessage && (
-          <div className="alert alert-success mb-20" role="alert">
-            <div className="d-flex align-items-center">
-              <svg
-                className="me-2"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="#198754"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M9 12l2 2 4-4"
-                  stroke="#198754"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {successMessage}
-            </div>
-          </div>
+          <div className="alert alert-success mb-20">{successMessage}</div>
         )}
 
         {/* Upload Media Section */}
@@ -1926,7 +1695,7 @@ export default function EditProperty({ propertyId }) {
                 <input
                   type="text"
                   name="title"
-                  className={`form-control ${errors.title ? "error" : ""}`}
+                  className="form-control"
                   placeholder="Enter property title"
                   value={formData.title}
                   onChange={handleInputChange}
@@ -1941,38 +1710,19 @@ export default function EditProperty({ propertyId }) {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:</label>
-                <div className={`${errors.description ? "error" : ""}`}>
-                  <PropertyDescriptionEditor
-                    value={formData.description}
-                    onChange={(content) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        description: JSON.stringify(content)
-                      }));
-                      // Clear description error when user starts typing
-                      if (errors.description) {
-                        setErrors(prev => ({
-                          ...prev,
-                          description: null
-                        }));
-                      }
-                    }}
-                    onBlur={(content) => {
-                      // Mark field as touched on blur
-                      setTouchedFields(prev => ({
-                        ...prev,
-                        description: true
-                      }));
-                      // Validate description on blur
-                      const descriptionValue = JSON.stringify(content);
-                      const error = validateField('description', descriptionValue);
-                      setErrors(prev => ({
-                        ...prev,
-                        description: error
-                      }));
-                    }}
-                  />
-                </div>
+                <PropertyDescriptionEditor
+                  value={formData.description}
+                  onChange={(content) => {
+                    setFormData((prev) => ({ ...prev, description: JSON.stringify(content) }));
+                    // Clear error when user starts typing
+                    if (errors.description) {
+                      setErrors((prev) => ({ ...prev, description: null }));
+                    }
+                  }}
+                  onBlur={(content) => {
+                    // Handle blur validation if needed
+                  }}
+                />
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>
                 )}
@@ -1987,7 +1737,7 @@ export default function EditProperty({ propertyId }) {
                 <select
                   name="propertyType"
                   className={`form-control ${
-                    errors.propertyType ? "error" : ""
+                    ""
                   }`}
                   value={formData.propertyType}
                   onChange={handleInputChange}
@@ -2013,7 +1763,7 @@ export default function EditProperty({ propertyId }) {
                 <select
                   name="listingType"
                   className={`form-control ${
-                    errors.listingType ? "error" : ""
+                    ""
                   }`}
                   value={formData.listingType}
                   onChange={handleInputChange}
@@ -2064,7 +1814,7 @@ export default function EditProperty({ propertyId }) {
                 <input
                   type="text"
                   name="location.address"
-                  className={`form-control ${errors.address ? "error" : ""}`}
+                  className="form-control"
                   placeholder="Enter property address"
                   value={formData.location.address}
                   onChange={handleInputChange}
@@ -2083,7 +1833,7 @@ export default function EditProperty({ propertyId }) {
                 </label>
                 <select
                   name="location.emirate"
-                  className={`form-control ${errors.emirate ? "error" : ""}`}
+                  className="form-control"
                   value={formData.location.emirate}
                   onChange={handleInputChange}
                   onBlur={handleFieldBlur}
@@ -2108,7 +1858,7 @@ export default function EditProperty({ propertyId }) {
                 <select
                   name="location.area"
                   className={`form-control ${
-                    errors.locationArea ? "error" : ""
+                    ""
                   }`}
                   value={formData.location.area}
                   onChange={handleInputChange}
@@ -2158,7 +1908,7 @@ export default function EditProperty({ propertyId }) {
                   <input
                     type="number"
                     name="price"
-                    className={`form-control ${errors.price ? "error" : ""}`}
+                    className="form-control"
                     placeholder="Enter price"
                     value={formData.price}
                     onChange={handleInputChange}
@@ -2222,7 +1972,7 @@ export default function EditProperty({ propertyId }) {
                   <input
                     type="number"
                     name="details.bedrooms"
-                    className={`form-control ${errors.bedrooms ? "error" : ""}`}
+                    className="form-control"
                     placeholder="Number of bedrooms"
                     value={formData.details.bedrooms}
                     onChange={handleInputChange}
@@ -2241,7 +1991,7 @@ export default function EditProperty({ propertyId }) {
                 <input
                   type="number"
                   name="details.bathrooms"
-                  className={`form-control ${errors.bathrooms ? "error" : ""}`}
+                  className="form-control"
                   placeholder="Number of bathrooms"
                   value={formData.details.bathrooms}
                   onChange={handleInputChange}
@@ -2259,7 +2009,7 @@ export default function EditProperty({ propertyId }) {
                 <input
                   type="number"
                   name="details.area"
-                  className={`form-control ${errors.area ? "error" : ""}`}
+                  className="form-control"
                   placeholder="Area size"
                   value={formData.details.area}
                   onChange={handleInputChange}
@@ -2320,7 +2070,7 @@ export default function EditProperty({ propertyId }) {
                         type="text"
                         name="details.floorLevel"
                         className={`form-control ${
-                          errors.floorLevel ? "error" : ""
+                          ""
                         }`}
                         placeholder="Floor level (optional)"
                         value={formData.details.floorLevel}
@@ -2341,7 +2091,7 @@ export default function EditProperty({ propertyId }) {
                         type="number"
                         name="details.totalFloors"
                         className={`form-control ${
-                          errors.totalFloors ? "error" : ""
+                          ""
                         }`}
                         placeholder="Total floors (optional)"
                         value={formData.details.totalFloors}
@@ -2409,7 +2159,7 @@ export default function EditProperty({ propertyId }) {
                         type="number"
                         name="details.landArea"
                         className={`form-control ${
-                          errors.landArea ? "error" : ""
+                          ""
                         }`}
                         placeholder="Land area (optional)"
                         value={formData.details.landArea}
@@ -2429,7 +2179,7 @@ export default function EditProperty({ propertyId }) {
                         type="number"
                         name="details.yearBuilt"
                         className={`form-control ${
-                          errors.yearBuilt ? "error" : ""
+                          ""
                         }`}
                         placeholder="Year built (optional)"
                         value={formData.details.yearBuilt}
@@ -2474,7 +2224,7 @@ export default function EditProperty({ propertyId }) {
                   <input
                     type="number"
                     name="details.landArea"
-                    className={`form-control ${errors.landArea ? "error" : ""}`}
+                    className="form-control"
                     placeholder="Land area (optional)"
                     value={formData.details.landArea}
                     onChange={handleInputChange}
@@ -2559,7 +2309,7 @@ export default function EditProperty({ propertyId }) {
                     <select
                       name="details.parking.type"
                       className={`form-control ${
-                        errors.parkingType ? "error" : ""
+                        ""
                       }`}
                       value={formData.details.parking.type}
                       onChange={handleInputChange}
@@ -2584,7 +2334,7 @@ export default function EditProperty({ propertyId }) {
                       type="number"
                       name="details.parking.spaces"
                       className={`form-control ${
-                        errors.parkingSpaces ? "error" : ""
+                        ""
                       }`}
                       placeholder="Number of parking spaces"
                       value={formData.details.parking.spaces}

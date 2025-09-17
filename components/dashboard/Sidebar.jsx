@@ -424,9 +424,9 @@ export default function Sidebar() {
                 </svg>
                 Change Password
               </Link>
-            </li>*/}
+            </li>
 
-           {/*<li className={`nav-menu-item`}>
+            <li className={`nav-menu-item`}>
               <a
                 className="nav-menu-link"
                 href="#"

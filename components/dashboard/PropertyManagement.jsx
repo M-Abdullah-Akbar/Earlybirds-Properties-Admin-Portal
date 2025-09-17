@@ -1171,12 +1171,9 @@ export default function PropertyManagement() {
                         <td>
                           <span>
                             {property.location?.address ||
-                              (property.location?.emirate &&
-                              property.location?.area
-                                ? `${property.location.area}, ${property.location.emirate}`
-                                : property.location?.emirate ||
-                                  property.location?.area ||
-                                  "Location not specified")}
+                              (typeof property.location === 'string' ? property.location : 
+                               property.location?.city || property.location?.area || 
+                               "Location not specified")}
                           </span>
                         </td>
                         <td>

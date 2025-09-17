@@ -1,6 +1,6 @@
 ﻿import axios from "axios";
 import { safeLocalStorage, safeWindow } from "./clientUtils";
-import { canAccessRoute } from "./permissions";
+import { canAccessRoute } from "../utils/permissions";
 
 // Base API configuration
 const API_BASE_URL = "https://api.earlybirdsproperties.com/api";
@@ -13,7 +13,7 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    // Skip adding Authorization header for login request
+    // Skip adding Authorization header for login requests
     if (config.url === "/auth/login" || config.url?.includes("/auth/login")) {
       return config;
     }
@@ -382,8 +382,7 @@ export const propertyAPI = {
     if (response.data && response.data.data && response.data.data.property) {
       console.log("âœ… Found property in response.data.data.property");
       response.data.data.property = transformPropertyData(
-        response.data.data.property,
-        "edit"
+        response.data.data.property
       );
     } else if (
       response.data &&
@@ -398,8 +397,7 @@ export const propertyAPI = {
       if (response.data.data.properties.length > 0) {
         console.log("ðŸ”„ Using first property from array");
         response.data.data.property = transformPropertyData(
-          response.data.data.properties[0],
-          "edit"
+          response.data.data.properties[0]
         );
         // Remove the properties array to avoid confusion
         delete response.data.data.properties;
@@ -627,7 +625,7 @@ export const uploadAPI = {
 };
 
 // Helper function to transform backend property data to frontend format
-const transformPropertyData = (property, context = "list") => {
+const transformPropertyData = (property) => {
   if (!property) return null;
 
   console.log("ðŸ”„ Transforming property data:", {
@@ -640,11 +638,7 @@ const transformPropertyData = (property, context = "list") => {
   const transformed = {
     ...property,
     // Ensure we have clean string values for display
-    // For list views, show "Untitled Property" fallback; for edit views, keep empty
-    title:
-      context === "edit"
-        ? property.title || ""
-        : property.title || "Untitled Property",
+    title: property.title || "Untitled Property",
     // Preserve the full location object structure
     location: property.location || "Location not specified",
     // Preserve the full details object structure
@@ -656,7 +650,7 @@ const transformPropertyData = (property, context = "list") => {
     // Preserve other important fields
     featured: property.featured || false,
     status: property.status || "available",
-    listingType: property.listingType || "",
+    listingType: property.listingType || "sale",
     currency: property.currency || "AED",
     priceType: property.priceType || "total",
     slug: property.slug || "",
@@ -667,7 +661,7 @@ const transformPropertyData = (property, context = "list") => {
       property.images?.find((img) => img.isMain)?.url ||
       property.images?.[0]?.url,
     // Preserve the original propertyType, don't override with listingType
-    propertyType: property.propertyType || "",
+    propertyType: property.propertyType || "apartment",
     // Add beds and baths for compatibility (but don't override the original details)
     beds: property.details?.bedrooms || property.bedrooms || 0,
     baths: property.details?.bathrooms || property.bathrooms || 0,
@@ -1325,10 +1319,10 @@ export const blogAPI = {
     return response.data;
   },
 
-  // Create blog - POST /api/blogs/with-images
+  // Create blog - POST /api/blogs
   createBlog: async (blogData) => {
     try {
-      const response = await api.post("/blogs/with-images", blogData, {
+      const response = await api.post("/blogs", blogData, {
         validateStatus: (status) => {
           return status < 500;
         },
@@ -1342,30 +1336,15 @@ export const blogAPI = {
     }
   },
 
-  // Update blog - PUT /api/blogs/:id (unified endpoint - handles both FormData and JSON)
+  // Update blog - PUT /api/blogs/:id
   updateBlog: async (id, blogData) => {
     try {
-      // Check if blogData is FormData (file upload) or regular object
-      if (blogData instanceof FormData) {
-        // File upload - use multipart/form-data (unified endpoint)
-        const response = await api.put(`/blogs/${id}`, blogData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          validateStatus: (status) => {
-            return status < 500;
-          },
-        });
-        return response.data;
-      } else {
-        // Regular JSON data (unified endpoint)
-        const response = await api.put(`/blogs/${id}`, blogData, {
-          validateStatus: (status) => {
-            return status < 500;
-          },
-        });
-        return response.data;
-      }
+      const response = await api.put(`/blogs/${id}`, blogData, {
+        validateStatus: (status) => {
+          return status < 500;
+        },
+      });
+      return response.data;
     } catch (error) {
       if (error.response && error.response.status === 400) {
         return error.response.data;

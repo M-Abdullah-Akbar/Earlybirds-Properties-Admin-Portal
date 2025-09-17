@@ -4,17 +4,18 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
 
 export default function AddBlog() {
   const router = useRouter();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
-  const editorRef = useRef(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [errors, setErrors] = useState({});
+  const [touchedFields, setTouchedFields] = useState({});
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -46,6 +47,65 @@ export default function AddBlog() {
     fetchCategories();
   }, []);
 
+  // Validation function - disabled (no validations)
+  const validateField = (fieldName, value) => {
+    // All validations disabled - always return null (no error)
+    return null;
+  };
+
+  // Legacy validation code (disabled)
+  const validateFieldLegacy = (fieldName, value) => {
+    switch (fieldName) {
+      case "title":
+        if (!value || value.trim().length === 0) {
+          return "Blog title is required";
+        }
+        if (value.trim().length < 3) {
+          return "Blog title must be at least 3 characters long";
+        }
+        if (value.trim().length > 200) {
+          return "Blog title must be less than 200 characters";
+        }
+        break;
+      case "content":
+        if (!value || value.trim().length === 0) {
+          return "Blog content is required";
+        }
+        // Handle JSON content from PropertyDescriptionEditor
+        let textContent = "";
+        try {
+          const contentObj = typeof value === 'string' ? JSON.parse(value) : value;
+          // Extract text from JSON structure
+          const extractText = (node) => {
+            if (node.type === 'text') return node.text || '';
+            if (node.content) {
+              return node.content.map(extractText).join('');
+            }
+            return '';
+          };
+          textContent = extractText(contentObj).trim();
+        } catch (e) {
+          // Fallback for HTML content
+          textContent = value.replace(/<[^>]*>/g, "").trim();
+        }
+        if (textContent.length === 0) {
+          return "Blog content is required";
+        }
+        if (textContent.length < 50) {
+          return "Blog content must be at least 50 characters long";
+        }
+        break;
+      case "category":
+        if (!value) {
+          return "Please select a category";
+        }
+        break;
+      default:
+        return null;
+    }
+    return null;
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -65,37 +125,57 @@ export default function AddBlog() {
     }
   };
 
+  // Handle field blur for validation
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouchedFields((prev) => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    if (error) {
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
   // Handle file selection
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
 
-    // Clear any previous image errors
-    setErrors((prev) => ({
-      ...prev,
-      images: null,
-    }));
+    files.forEach((file) => {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          images: "Please select only image files",
+        }));
+        return;
+      }
 
-    // Only process the first file for blogs (replace existing if any)
-    const file = files[0];
-    if (!file) return;
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          images: "Image size should be less than 5MB",
+        }));
+        return;
+      }
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newImage = {
-        file,
-        preview: e.target.result,
-        isMain: true, // Single image is always main
-        altText: "Blog image",
-        order: 0,
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newImage = {
+          file,
+          preview: e.target.result,
+          isMain: formData.images.length === 0, // First image is main by default
+          altText: `Blog image ${formData.images.length + 1}`,
+        };
+
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, newImage],
+        }));
       };
-
-      setFormData((prev) => ({
-        ...prev,
-        images: [newImage], // Replace any existing image
-      }));
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
 
     // Clear file input
     if (fileInputRef.current) {
@@ -105,22 +185,25 @@ export default function AddBlog() {
 
   // Remove image
   const removeImage = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: [], // For blogs, simply clear the single image
-    }));
-
-    // Clear any image-related errors
-    setErrors((prev) => ({
-      ...prev,
-      images: null,
-    }));
+    setFormData((prev) => {
+      const newImages = prev.images.filter((_, i) => i !== index);
+      // If we removed the main image, make the first remaining image main
+      if (newImages.length > 0 && prev.images[index].isMain) {
+        newImages[0].isMain = true;
+      }
+      return { ...prev, images: newImages };
+    });
   };
 
-  // Set main image - Not needed for blogs since only 1 image allowed
+  // Set main image
   const setMainImage = (index) => {
-    // No-op for blogs since there's only one image which is always main
-    return;
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.map((img, i) => ({
+        ...img,
+        isMain: i === index,
+      })),
+    }));
   };
 
   // Handle form submission
@@ -130,13 +213,17 @@ export default function AddBlog() {
     setError(null);
     setErrors({});
 
+    // Validation disabled - proceed directly to submission
+
     try {
       // Create FormData for multipart request (includes both blog data and images)
       const formDataToSend = new FormData();
 
       // Add blog data fields
       formDataToSend.append("title", formData.title);
-      formDataToSend.append("content", formData.content);
+      // Convert JSON content back to string for backend
+      const contentToSend = typeof formData.content === 'string' ? formData.content : JSON.stringify(formData.content);
+      formDataToSend.append("content", contentToSend);
       formDataToSend.append("category", formData.category);
       formDataToSend.append("status", formData.status);
       formDataToSend.append("featured", formData.featured || false);
@@ -229,6 +316,10 @@ export default function AddBlog() {
               <a
                 href="#"
                 className="tf-btn bg-color-primary pd-10 btn-upload mx-auto"
+                onClick={(e) => {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }}
               >
                 <svg
                   width={21}
@@ -238,49 +329,69 @@ export default function AddBlog() {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    d="M13.625 14.375V17.1875C13.625 17.705 13.205 18.125 12.6875 18.125H4.5625C4.31386 18.125 4.0754 18.0262 3.89959 17.8504C3.72377 17.6746 3.625 17.4361 3.625 17.1875V6.5625C3.625 6.045 4.045 5.625 4.5625 5.625H6.125C6.54381 5.62472 6.96192 5.65928 7.375 5.72834M13.625 14.375H16.4375C16.955 14.375 17.375 13.955 17.375 13.4375V9.375C17.375 5.65834 14.6725 2.57417 11.125 1.97834C10.7119 1.90928 10.2938 1.87472 9.875 1.875H8.3125C7.795 1.875 7.375 2.295 7.375 2.8125V5.72834M13.625 14.375H8.3125C8.06386 14.375 7.8254 14.2762 7.64959 14.1004C7.47377 13.9246 7.375 13.6861 7.375 13.4375V5.72834M17.375 11.25V9.6875C17.375 8.94158 17.0787 8.22621 16.5512 7.69876C16.0238 7.17132 15.3084 6.875 14.5625 6.875H13.3125C13.0639 6.875 12.8254 6.77623 12.6496 6.60041C12.4738 6.4246 12.375 6.18614 12.375 5.9375V4.6875C12.375 4.31816 12.3023 3.95243 12.1609 3.6112C12.0196 3.26998 11.8124 2.95993 11.5512 2.69876C11.2901 2.4376 10.98 2.23043 10.6388 2.08909C10.2976 1.94775 9.93184 1.875 9.5625 1.875H8.625"
+                    d="M18.5 12.5V15.8333C18.5 16.2754 18.3244 16.6993 18.0118 17.0118C17.6993 17.3244 17.2754 17.5 16.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M14.6667 6.66667L10.5 2.5L6.33333 6.66667"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M10.5 2.5V12.5"
                     stroke="white"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
-                Select photo
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="ip-file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                />
+                Choose Images
               </a>
-              <p className="file-name fw-5">
-                or drag photo here <br />
-                <span>(1 photo only)</span>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                multiple
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+              <p className="file-name">
+                Drag your images here, or{" "}
+                <span
+                  className="tf-color"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  browse
+                </span>
+              </p>
+              <p className="list-file">
+                Supported formats: JPEG, PNG, GIF, WebP (Max 5MB each)
               </p>
             </div>
-          </div>
-
-          {errors.images && <span className="error-text">{errors.images}</span>}
-
-          {/* Image Preview */}
-          {formData.images &&
-            Array.isArray(formData.images) &&
-            formData.images.length > 0 && (
-              <div className="box-img-upload">
+            {/* Images error display disabled */}
+            {formData.images.length > 0 && (
+              <div className="image-preview-grid mt-3">
                 {formData.images.map((image, index) => (
-                  <div key={index} className="item-upload file-delete">
+                  <div key={index} className="image-preview-item">
                     <Image
-                      alt="img"
-                      width={615}
-                      height={405}
+                      width={100}
+                      height={100}
+                      alt={`Preview ${index + 1}`}
                       src={image.preview}
                     />
                     <div className="image-controls">
                       <div className="top-controls">
-                        <span className="main-image-badge" title="Blog image">
-                          Blog Image
-                        </span>
+                        {image.isMain && (
+                          <span className="main-image-badge" title="Main image">
+                            Main Image
+                          </span>
+                        )}
                         <span
                           className="icon icon-trashcan1 remove-file"
                           onClick={() => removeImage(index)}
@@ -288,11 +399,24 @@ export default function AddBlog() {
                           title="Remove image"
                         />
                       </div>
+                      <div className="bottom-controls">
+                        {!image.isMain && (
+                          <button
+                            type="button"
+                            className="btn-set-main"
+                            onClick={() => setMainImage(index)}
+                            title="Set as main image"
+                          >
+                            Set as Main
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
         </div>
 
         {/* Basic Information */}
@@ -307,14 +431,13 @@ export default function AddBlog() {
                 <input
                   type="text"
                   name="title"
-                  className={`form-control ${errors.title ? "error" : ""}`}
+                  className="form-control"
                   placeholder="Enter blog title"
                   value={formData.title}
                   onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
                 />
-                {errors.title && (
-                  <span className="error-text">{errors.title}</span>
-                )}
+                {/* Error display disabled */}
               </fieldset>
             </div>
 
@@ -323,32 +446,33 @@ export default function AddBlog() {
                 <label htmlFor="content">
                   Content:<span>*</span>
                 </label>
-                <textarea
-                  name="content"
-                  className={`textarea ${errors.content ? "error" : ""}`}
-                  placeholder="Write your blog content here..."
+                <PropertyDescriptionEditor
                   value={formData.content}
-                  onChange={handleInputChange}
-                  style={{
-                    resize: "none",
-                    overflowY: "auto",
-                    scrollbarGutter: "stable",
+                  onChange={(content) => {
+                    setFormData((prev) => ({ ...prev, content: JSON.stringify(content) }));
+                    // Clear error when user starts typing
+                    if (errors.content) {
+                      setErrors((prev) => ({ ...prev, content: null }));
+                    }
+                  }}
+                  onBlur={(content) => {
+                    // Handle blur validation if needed
                   }}
                 />
-                {errors.content && (
-                  <span className="error-text">{errors.content}</span>
-                )}
               </fieldset>
             </div>
 
             <div className="box grid-layout-2 gap-30">
               <fieldset className="box-fieldset">
-                <label htmlFor="category">Category:</label>
+                <label htmlFor="category">
+                  Category:<span>*</span>
+                </label>
                 <select
                   name="category"
-                  className={`form-control ${errors.category ? "error" : ""}`}
+                  className="form-control"
                   value={formData.category}
                   onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
                 >
                   <option value="">Select Category</option>
                   {categories.map((category) => (
@@ -357,9 +481,7 @@ export default function AddBlog() {
                     </option>
                   ))}
                 </select>
-                {errors.category && (
-                  <span className="error-text">{errors.category}</span>
-                )}
+                {/* Error display disabled */}
               </fieldset>
 
               <fieldset className="box-fieldset">
@@ -384,68 +506,51 @@ export default function AddBlog() {
                   type="text"
                   name="tags"
                   className="form-control"
-                  placeholder="Enter tags separated by commas (e.g., real estate,dubai,property)"
+                  placeholder="Enter tags separated by commas (e.g., real estate, dubai, property)"
                   value={formData.tags}
                   onChange={handleInputChange}
                 />
               </fieldset>
             </div>
+
+            <div className="box">
+              <div className="checkbox-item">
+                <label className="checkbox-item-label">
+                  <input
+                    type="checkbox"
+                    name="featured"
+                    checked={formData.featured}
+                    onChange={handleInputChange}
+                  />
+                  <span className="btn-checkbox" />
+                  Featured Blog
+                </label>
+              </div>
+            </div>
           </form>
         </div>
 
-        {/* Featured Blog */}
+        {/* Action Buttons */}
         <div className="widget-box-2 mb-20">
-          <h5 className="title">Featured Blog</h5>
-          <div className="box-radio-check">
-            <div className="radio-item">
-              <label>
-                <span className="text-1">Mark as Featured Blog</span>
-                <input
-                  type="checkbox"
-                  name="featured"
-                  checked={formData.featured}
-                  onChange={handleInputChange}
-                />
-                <span className="btn-radio" />
-              </label>
-            </div>
+          <div className="d-flex gap-15">
+            <button
+              type="button"
+              className="tf-btn bg-color-secondary pd-23"
+              onClick={() => router.push("/admin/blog-management")}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="tf-btn bg-color-primary pd-23"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating..." : "Create Blog"}
+            </button>
           </div>
         </div>
-
-        {/* Submit Buttons */}
-        <div className="box-btn">
-          <button
-            type="submit"
-            className="tf-btn bg-color-primary pd-13"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create Blog"}
-          </button>
-          <a
-            href="/admin/blog-management"
-            className="tf-btn style-border pd-10"
-          >
-            Cancel
-          </a>
-        </div>
-
-        {/* .footer-dashboard */}
-        <div className="footer-dashboard">
-          <p>Copyright © {new Date().getFullYear()} Popty</p>
-          <ul className="list">
-            <li>
-              <a href="#">Privacy</a>
-            </li>
-            <li>
-              <a href="#">Terms</a>
-            </li>
-            <li>
-              <a href="#">Support</a>
-            </li>
-          </ul>
-        </div>
-        {/* /.footer-dashboard */}
       </div>
     </div>
   );

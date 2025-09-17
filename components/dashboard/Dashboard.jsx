@@ -234,8 +234,9 @@ export default function Dashboard() {
                     <p className="property-location">
                       <i className="icon icon-location"></i>
                       {property.location?.address ||
-                        property.location ||
-                        "Location not specified"}
+                        (typeof property.location === 'string' ? property.location : 
+                         property.location?.city || property.location?.area || 
+                         "Location not specified")}
                     </p>
 
                     <div className="property-details">

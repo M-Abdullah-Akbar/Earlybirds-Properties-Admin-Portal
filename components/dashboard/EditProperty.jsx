@@ -133,10 +133,344 @@ export default function EditProperty({ propertyId }) {
     return formData.listingType !== "off plan";
   };
 
-  // Validation function - disabled (no validations)
+  // Validation function - updated to make fields optional like backend
   const validateField = (name, value, currentFormData = formData) => {
-    // All validations disabled - always return empty string (no error)
-    return "";
+    switch (name) {
+      case "title":
+        // Title is now optional
+        if (!value || value.trim() === "") {
+          return "";
+        } else if (value.trim().length < 5) {
+          return "Title must be at least 5 characters long";
+        } else if (value.trim().length > 200) {
+          return "Title cannot exceed 200 characters";
+        } else if (!/[a-zA-Z]/.test(value.trim())) {
+          return "Title must contain at least some letters";
+        }
+        return "";
+
+      case "description":
+        // Description is now optional
+        if (!value || value.trim() === "") {
+          return "";
+        } else if (value.trim().length < 200) {
+          return "Description must be at least 200 characters long";
+        } else if (value.trim().length > 10000) {
+          return "Description cannot exceed 10000 characters";
+        }
+        return "";
+
+      case "propertyType":
+        // Property type is now optional
+        if (!value || value.trim() === "") {
+          return "";
+        } else if (typeof value !== "string") {
+          return "Property type must be a string";
+        } else if (
+          !/^[a-zA-Z0-9\s-]+$/.test(value) ||
+          value.trim() !== value ||
+          value.includes("  ")
+        ) {
+          return `Invalid property type format: "${value}". Must contain only letters, numbers, spaces, and hyphens, with no leading/trailing spaces.`;
+        }
+        return "";
+
+      case "price":
+        // Skip price validation for off plan listing type
+        if (currentFormData.listingType === "off plan") {
+          return "";
+        }
+        // Price is now optional
+        if (!value || value.toString().trim() === "") {
+          return "";
+        }
+        const numPrice = parseFloat(value);
+        if (isNaN(numPrice) || numPrice <= 0) {
+          return "Price must be a positive number";
+        }
+        return "";
+
+      case "listingType":
+        if (!value || value.trim() === "") {
+          return "Listing type is required";
+        }
+        return "";
+
+      case "location.address":
+        // Address is now optional
+        if (!value || value.trim() === "") {
+          return "";
+        } else if (value.trim().length < 5) {
+          return "Address must be at least 5 characters long";
+        } else if (value.trim().length > 200) {
+          return "Address cannot exceed 200 characters";
+        }
+        return "";
+
+      case "location.emirate":
+        // Emirate is now optional
+        if (!value || value.trim() === "") {
+          return "";
+        }
+        return "";
+
+      case "location.area":
+        // Area is now optional
+        if (value === "") {
+          return "";
+        } else if (!currentFormData.location?.emirate) {
+          return "";
+        }
+        return "";
+
+      case "details.bedrooms":
+        const propertyType = currentFormData.propertyType;
+
+        // For studio and office property types, bedrooms should not be provided
+        if (propertyType === "studio" || propertyType === "office") {
+          // If bedrooms field exists and has a value, reject it
+          if (value !== null && value !== undefined && value !== "") {
+            return `Bedrooms field is not applicable for ${propertyType} property type. Please remove this field.`;
+          }
+          return "";
+        }
+
+        // Bedrooms are now optional for all other property types
+        if (value === null || value === undefined || value === "") {
+          return "";
+        } else if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+          return "Bedrooms must be a non-negative integer";
+        }
+
+        return "";
+
+      case "details.bathrooms":
+        // Bathrooms are now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numBathrooms = parseInt(value);
+        if (
+          isNaN(numBathrooms) ||
+          numBathrooms < 0 ||
+          !Number.isInteger(Number(value))
+        ) {
+          return "Bathrooms must be a non-negative integer";
+        }
+
+        return "";
+
+      case "details.area":
+        // Area is now optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numArea = parseFloat(value);
+        if (isNaN(numArea) || numArea <= 0) {
+          return "Property area must be a positive number";
+        }
+
+        return "";
+
+      case "details.floorLevel":
+        const propertyTypeForFloor = currentFormData.propertyType;
+
+        // For villa, townhouse property types, floorLevel should NOT be provided
+        if (
+          propertyTypeForFloor === "villa" ||
+          propertyTypeForFloor === "townhouse"
+        ) {
+          // If floorLevel field exists and has a value, reject it
+          if (value !== undefined && value !== "") {
+            return `Floor level field is not applicable for ${propertyTypeForFloor} property type. Please remove this field.`;
+          }
+          return "";
+        }
+
+        // For all other property types, floorLevel is optional
+        // No additional validation needed for floorLevel as it's a text field
+        return "";
+
+      case "details.totalFloors":
+        // If totalFloors is not provided (null, undefined, empty string), it's optional
+        if (value === null || value === undefined || value === "") {
+          return "";
+        } else if (!Number.isInteger(Number(value)) || Number(value) <= 0) {
+          return "Total floors must be a positive integer greater than 0";
+        }
+
+        return "";
+
+      case "details.landArea":
+        const propertyTypeForLand = currentFormData.propertyType;
+
+        // For apartment, penthouse, and studio property types, landArea should NOT be provided
+        if (
+          propertyTypeForLand === "apartment" ||
+          propertyTypeForLand === "penthouse" ||
+          propertyTypeForLand === "studio"
+        ) {
+          // If landArea field exists and has a value, reject it
+          if (value !== null && value !== undefined && value !== "") {
+            return `Land area field is not applicable for ${propertyTypeForLand} property type. Please remove this field.`;
+          }
+          return "";
+        }
+
+        // For villa, townhouse, and office property types, landArea is optional
+        else if (value === null || value === undefined || value === "") {
+          return "";
+        }
+
+        const numLandArea = parseFloat(value);
+        if (isNaN(numLandArea) || numLandArea < 0) {
+          return "Land area must be a positive number";
+        }
+
+        return "";
+
+      case "details.yearBuilt":
+        // If yearBuilt is not provided (null, undefined, empty string), it's optional
+        if (value === null || value === "" || value === undefined) {
+          return "";
+        }
+
+        // If provided, validate the range
+        const currentYear = new Date().getFullYear();
+        const minYear = 1990;
+        const maxYear = currentYear + 2;
+
+        if (
+          !Number.isInteger(Number(value)) ||
+          Number(value) < minYear ||
+          Number(value) > maxYear
+        ) {
+          return `Year built must be between ${minYear} and ${maxYear}`;
+        }
+
+        return "";
+
+      case "details.parking.type":
+        const parkingAvailable = currentFormData.details?.parking?.available;
+
+        // Convert string "true"/"false" to boolean for proper comparison
+        const isParkingAvailable =
+          parkingAvailable === true || parkingAvailable === "true";
+
+        // If parking is available, type must be specified
+        if (isParkingAvailable && (!value || value.trim() === "")) {
+          return "Parking type is required when parking is available";
+        }
+        // If parking is not available, type should not be specified
+        else if (!isParkingAvailable && value && value.trim() !== "") {
+          return "Parking type should not be specified when parking is not available";
+        }
+        return "";
+
+      case "details.parking.spaces":
+        const parkingAvailableSpaces =
+          currentFormData.details?.parking?.available;
+
+        // Convert string "true"/"false" to boolean for proper comparison
+        const isParkingAvailableSpaces =
+          parkingAvailableSpaces === true || parkingAvailableSpaces === "true";
+
+        // Parking spaces are now optional even when parking is available
+        if (isParkingAvailableSpaces) {
+          // If spaces is provided, validate it
+          if (value !== null && value !== undefined && value !== "") {
+            // Convert to number and validate
+            const numSpaces = parseInt(value);
+            if (isNaN(numSpaces) || numSpaces <= 0) {
+              return "Number of parking spaces must be greater than 0 when provided";
+            }
+          }
+        }
+        // If parking is not available, spaces should not be specified
+        else if (
+          !isParkingAvailableSpaces &&
+          value &&
+          value !== "0" &&
+          value !== 0
+        ) {
+          return "Parking spaces should not be specified when parking is not available";
+        }
+        return "";
+
+      case "images":
+        // Images are now optional
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          return "";
+        } else if (value.length > 10) {
+          return "Must have between 1 and 10 images";
+        }
+
+        // Check for main image validation
+        let mainImageCount = 0;
+        for (const image of value) {
+          if (image.isMain === true) {
+            mainImageCount++;
+          }
+        }
+
+        if (mainImageCount > 1) {
+          return "Only one image can be marked as main image";
+        }
+
+        return "";
+
+      case "amenities":
+        // Amenities are optional
+        if (!value || value.length === 0) {
+          return "";
+        }
+
+        // Must be an array
+        if (!Array.isArray(value)) {
+          return "Amenities must be an array";
+        } else if (value.length > 50) {
+          return "Cannot have more than 50 amenities";
+        }
+
+        // Check for duplicates
+        const uniqueAmenities = Array.from(new Set(value));
+        if (uniqueAmenities.length !== value.length) {
+          return "Duplicate amenities are not allowed";
+        }
+
+        // Validate each amenity format
+        for (let i = 0; i < value.length; i++) {
+          const amenity = value[i];
+
+          // Must be string
+          if (typeof amenity !== "string") {
+            return `Amenity must be a string: ${amenity}`;
+          }
+
+          // Format validation
+          if (
+            !/^[a-zA-Z0-9\s\-_.,()&]+$/.test(amenity) ||
+            amenity.trim() !== amenity ||
+            amenity.includes("  ")
+          ) {
+            return `Invalid amenity format: "${amenity}". Must contain only letters, numbers, spaces, and common punctuation, with no leading/trailing spaces or double spaces.`;
+          }
+
+          // Length validation
+          if (amenity.length < 2) {
+            return `Amenity must be at least 2 characters long: "${amenity}"`;
+          } else if (amenity.length > 100) {
+            return `Amenity cannot exceed 100 characters: "${amenity}"`;
+          }
+        }
+
+        return "";
+
+      default:
+        return "";
+    }
   };
 
   // Legacy validation code (disabled)

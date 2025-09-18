@@ -36,6 +36,9 @@ export default function Profile() {
         }
       });
       setErrors(fieldErrors);
+      
+      // Use enhanced validation notifications to show backend errors
+      validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
       return true;
     }
 

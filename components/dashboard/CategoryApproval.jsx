@@ -289,8 +289,10 @@ export default function CategoryApproval() {
           typeof errorData.fieldErrors === "object"
         ) {
           setFieldErrors(errorData.fieldErrors);
+          validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
         } else if (errorData.errors && typeof errorData.errors === "object") {
           setFieldErrors(errorData.errors);
+          validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
         } else if (errorData.details && Array.isArray(errorData.details)) {
           // Convert backend validation format to fieldErrors format
           const fieldErrors = {};
@@ -301,6 +303,7 @@ export default function CategoryApproval() {
           });
           if (Object.keys(fieldErrors).length > 0) {
             setFieldErrors(fieldErrors);
+            validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
           } else {
             setRejectionError(
               errorData.error ||

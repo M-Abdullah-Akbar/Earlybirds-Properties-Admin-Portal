@@ -4,7 +4,10 @@ import "../public/main.scss";
 import "odometer/themes/odometer-theme-default.css"; // Import theme
 import "photoswipe/style.css";
 import "rc-slider/assets/index.css";
+import "react-toastify/dist/ReactToastify.css"; // Import react-toastify CSS
+import "../public/toast-notifications.scss"; // Import custom toast styles
 import { usePathname } from "next/navigation";
+import { ToastContainer } from "react-toastify";
 import BackToTop from "@/components/common/BackToTop";
 import MobileMenu from "@/components/headers/MobileMenu";
 import SettingsHandler from "@/components/common/SettingsHandler";
@@ -103,6 +106,15 @@ export default function RootLayout({ children }) {
     const handleSticky = () => {
       const navbar = document.querySelector(".header");
       if (navbar) {
+        // For dashboard routes, keep header always fixed
+        if (isTokenRoute && isTokenDashboardRoute) {
+          navbar.classList.add("fixed");
+          navbar.classList.add("header-sticky");
+          navbar.classList.add("is-sticky");
+          return;
+        }
+        
+        // Original sticky behavior for non-dashboard routes
         if (window.scrollY > 120) {
           navbar.classList.add("fixed");
           navbar.classList.add("header-sticky");
@@ -118,13 +130,18 @@ export default function RootLayout({ children }) {
       }
     };
 
-    window.addEventListener("scroll", handleSticky);
+    // For dashboard routes, apply fixed header immediately
+    if (isTokenRoute && isTokenDashboardRoute) {
+      handleSticky();
+    } else {
+      window.addEventListener("scroll", handleSticky);
+    }
 
     // Cleanup function to remove event listener
     return () => {
       window.removeEventListener("scroll", handleSticky);
     };
-  }, []);
+  }, [isTokenRoute, isTokenDashboardRoute]);
 
   // Dashboard layout for token-prefixed routes
   if (isTokenRoute && isTokenDashboardRoute) {
@@ -146,6 +163,19 @@ export default function RootLayout({ children }) {
               <BackToTop />
               {/*<SettingsHandler />*/}
               <Login />
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+                className="custom-toast-container"
+              />
             </ProtectedRoute>
           </AuthProvider>
         </body>
@@ -192,6 +222,19 @@ export default function RootLayout({ children }) {
           <BackToTop />
           <SettingsHandler />
           <Login />
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            className="custom-toast-container"
+          />
         </AuthProvider>
       </body>
     </html>

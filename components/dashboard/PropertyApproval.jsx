@@ -5,6 +5,10 @@ import Image from "next/image";
 import { propertyAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import {
+  propertyNotifications,
+  apiNotifications,
+} from "@/utils/notifications";
 
 export default function PropertyApproval() {
   const { user } = useAuth();
@@ -180,19 +184,31 @@ export default function PropertyApproval() {
     try {
       const response = await propertyAPI.approveProperty(selectedProperty._id);
       if (response.success) {
+        // Show success notification
+        propertyNotifications.approvalSuccess(`Property "${selectedProperty.title}" has been approved successfully`);
         // Refresh the lists
         fetchPendingProperties();
         fetchPendingCount();
         setShowApprovalModal(false);
         setSelectedProperty(null);
         // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        setTimeout(() => {
+          router.push("/admin/property-approval");
+        }, 1500);
       } else {
-        alert(response.error || "Failed to approve property");
+        const errorMessage = response.error || "Failed to approve property";
+        propertyNotifications.approvalError(errorMessage);
       }
     } catch (error) {
       console.error("Error approving property:", error);
-      alert("Failed to approve property. Please try again.");
+      const errorMessage = "Failed to approve property. Please try again.";
+      
+      // Check if it's a network error
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('CORS') || !error.response) {
+        apiNotifications.networkError();
+      } else {
+        propertyNotifications.approvalError(errorMessage);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -225,6 +241,8 @@ export default function PropertyApproval() {
         rejectionReason: rejectionReason.trim(),
       });
       if (response.success) {
+        // Show success notification
+        propertyNotifications.rejectionSuccess(`Property "${selectedProperty.title}" has been rejected`);
         // Refresh the lists
         fetchPendingProperties();
         fetchPendingCount();
@@ -235,7 +253,9 @@ export default function PropertyApproval() {
         setFieldErrors({});
         setTouchedFields({});
         // Redirect to property-approval page
-        router.push("/admin/property-approval");
+        setTimeout(() => {
+          router.push("/admin/property-approval");
+        }, 1500);
       } else {
         // Handle server-side validation errors
         if (response.fieldErrors && typeof response.fieldErrors === "object") {
@@ -243,7 +263,9 @@ export default function PropertyApproval() {
         } else if (response.errors && typeof response.errors === "object") {
           setFieldErrors(response.errors);
         } else {
-          setRejectionError(response.error || "Failed to reject property");
+          const errorMessage = response.error || "Failed to reject property";
+          setRejectionError(errorMessage);
+          propertyNotifications.rejectionError(errorMessage);
         }
       }
     } catch (error) {
@@ -257,8 +279,10 @@ export default function PropertyApproval() {
           typeof errorData.fieldErrors === "object"
         ) {
           setFieldErrors(errorData.fieldErrors);
+            validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
         } else if (errorData.errors && typeof errorData.errors === "object") {
           setFieldErrors(errorData.errors);
+            validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
         } else if (errorData.details && Array.isArray(errorData.details)) {
           // Convert backend validation format to fieldErrors format
           const fieldErrors = {};
@@ -268,25 +292,35 @@ export default function PropertyApproval() {
             }
           });
           if (Object.keys(fieldErrors).length > 0) {
-            setFieldErrors(fieldErrors);
+              setFieldErrors(fieldErrors);
+              validationNotifications.backendErrors(errorData, "Please fix the validation errors and try again.");
           } else {
-            setRejectionError(
-              errorData.error ||
+            const errorMessage = errorData.error ||
                 errorData.message ||
-                "Please fix the validation errors"
-            );
+                "Please fix the validation errors";
+            setRejectionError(errorMessage);
+            propertyNotifications.rejectionError(errorMessage);
           }
         } else {
-          setRejectionError(
-            errorData.error ||
+          const errorMessage = errorData.error ||
               errorData.message ||
-              "Please fix the validation errors"
-          );
+              "Please fix the validation errors";
+          setRejectionError(errorMessage);
+          propertyNotifications.rejectionError(errorMessage);
         }
       } else {
-        console.error("Error rejecting property:", error);
-        setRejectionError("Failed to reject property. Please try again.");
-      }
+          console.error("Error rejecting property:", error);
+          const errorMessage = "Failed to reject property. Please try again.";
+          
+          // Check if it's a network error
+          if (error.code === 'NETWORK_ERROR' || error.message?.includes('CORS') || !error.response) {
+            apiNotifications.networkError();
+          } else {
+            propertyNotifications.rejectionError(errorMessage);
+          }
+          
+          setRejectionError(errorMessage);
+        }
     } finally {
       setActionLoading(false);
     }

@@ -6,6 +6,11 @@ import { propertyAPI, adminUtils } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { 
+  propertyNotifications, 
+  validationNotifications, 
+  apiNotifications 
+} from "@/utils/notifications";
 
 export default function EditProperty({ propertyId }) {
   const { user } = useAuth();
@@ -1694,8 +1699,12 @@ export default function EditProperty({ propertyId }) {
       );
 
       if (response.success) {
-        // Redirect automatically without alert - user will see the updated status in the property list
-        router.push("/admin/property-management");
+        // Show success notification
+        propertyNotifications.updateSuccess(formData.title);
+        // Redirect after a brief delay to allow notification to show
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -1749,11 +1758,16 @@ export default function EditProperty({ propertyId }) {
           });
           console.log("Final field errors:", fieldErrors);
           setErrors(fieldErrors);
+          
+          // Use enhanced validation notifications to show backend errors
+          validationNotifications.backendErrors(response, "Please fix the validation errors and try again.");
         } else {
+          const errorMessage = response.error || "Failed to update property";
           setErrors((prev) => ({
             ...prev,
-            submit: response.error || "Failed to update property",
+            submit: errorMessage,
           }));
+          propertyNotifications.updateError(errorMessage);
         }
       }
     } catch (error) {
@@ -1816,6 +1830,9 @@ export default function EditProperty({ propertyId }) {
 
           console.log("🟡 EditProperty: Final field errors:", fieldErrors);
           setErrors(fieldErrors);
+          
+          // Use enhanced validation notifications to show backend errors
+          validationNotifications.backendErrors(error.response.data, "Please fix the validation errors and try again.");
           return; // Don't process other error types
         }
 
@@ -1834,6 +1851,7 @@ export default function EditProperty({ propertyId }) {
           ...prev,
           submit: errorMessage,
         }));
+        propertyNotifications.updateError(errorMessage);
         return;
       }
 
@@ -1879,6 +1897,13 @@ export default function EditProperty({ propertyId }) {
         ...prev,
         submit: errorMessage,
       }));
+      
+      // Show appropriate notification based on error type
+      if (error.message && (error.message.includes("Network Error") || error.message.includes("CORS Error"))) {
+        apiNotifications.networkError();
+      } else {
+          propertyNotifications.updateError(errorMessage);
+      }
     } finally {
       setSaving(false);
     }
@@ -1932,7 +1957,7 @@ export default function EditProperty({ propertyId }) {
 
         {/* Upload Media Section */}
         <div className="widget-box-2 mb-20">
-          <h5 className="title">Upload Media</h5>
+          <h5 className="title">Upload Media<span>*</span></h5>
           <div className="box-uploadfile text-center">
             <div className="uploadfile">
               <a
@@ -2043,7 +2068,7 @@ export default function EditProperty({ propertyId }) {
 
             <div className="box">
               <fieldset className="box-fieldset">
-                <label htmlFor="description">Description:</label>
+                <label htmlFor="description">Description:<span>*</span></label>
                 <PropertyDescriptionEditor
                   value={formData.description}
                   onChange={(content) => {
@@ -2143,7 +2168,7 @@ export default function EditProperty({ propertyId }) {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="address">
-                  Address:<span>*</span>
+                  Address:
                 </label>
                 <input
                   type="text"
@@ -2187,7 +2212,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area:<span>*</span>
+                  Area:
                 </label>
                 <select
                   name="location.area"
@@ -2237,7 +2262,7 @@ export default function EditProperty({ propertyId }) {
               <div className="box grid-layout-3 gap-30">
                 <fieldset className="box-fieldset">
                   <label htmlFor="price">
-                    Price:<span>*</span>
+                    Price:
                   </label>
                   <input
                     type="number"
@@ -2301,7 +2326,7 @@ export default function EditProperty({ propertyId }) {
               {shouldShowBedrooms() && (
                 <fieldset className="box-fieldset">
                   <label htmlFor="bedrooms">
-                    Bedrooms:<span>*</span>
+                    Bedrooms:
                   </label>
                   <input
                     type="number"
@@ -2320,7 +2345,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="bathrooms">
-                  Bathrooms:<span>*</span>
+                  Bathrooms:
                 </label>
                 <input
                   type="number"
@@ -2338,7 +2363,7 @@ export default function EditProperty({ propertyId }) {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area Size:<span>*</span>
+                  Area Size:
                 </label>
                 <input
                   type="number"

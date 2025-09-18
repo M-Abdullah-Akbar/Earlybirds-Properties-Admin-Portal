@@ -199,6 +199,9 @@ export default function ChangePassword() {
 
           // Set field-specific errors
           setErrors(fieldErrors);
+          
+          // Use enhanced validation notifications to show backend errors
+          validationNotifications.backendErrors(error.response.data, "Please fix the validation errors and try again.");
         } else {
           // Fallback to generic error message
           let errorMessage = "Please fix the validation errors below";

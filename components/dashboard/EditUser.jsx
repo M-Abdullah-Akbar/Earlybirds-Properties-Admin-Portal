@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { userAPI } from "@/utils/api";
+import { userNotifications } from '../../utils/notifications';
 
 export default function EditUser({ userId }) {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function EditUser({ userId }) {
   useEffect(() => {
     const fetchUser = async () => {
       if (!actualUserId) {
-        alert("User ID not provided!");
+        userNotifications.fetchError("User ID not provided!");
         router.push("/admin/user-management");
         return;
       }
@@ -46,12 +47,12 @@ export default function EditUser({ userId }) {
             isActive: user.isActive !== undefined ? user.isActive : true,
           });
         } else {
-          alert(response.error || "Failed to fetch user data");
+          userNotifications.fetchError(response.error || "Failed to fetch user data");
           router.push("/admin/user-management");
         }
       } catch (error) {
         console.error("Error fetching user:", error);
-        alert(error.response?.data?.error || "Failed to fetch user data");
+        userNotifications.fetchError(error.response?.data?.error || "Failed to fetch user data");
         router.push("/admin/user-management");
       } finally {
         setIsLoading(false);
@@ -82,29 +83,14 @@ export default function EditUser({ userId }) {
             ...prev,
             isActive: checked,
           }));
-          setMessage({
-            type: "success",
-            text: `User ${checked ? "activated" : "deactivated"} successfully`,
-          });
-          // Scroll to top to show the message
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          // Clear message after 5 seconds
-          setTimeout(() => setMessage({ type: "", text: "" }), 5000);
+          userNotifications.statusUpdateSuccess(formData.name, checked ? "activated" : "deactivated");
         } else {
           // Reset the checkbox to its previous state
           setFormData((prev) => ({
             ...prev,
             isActive: !checked,
           }));
-
-          setMessage({
-            type: "error",
-            text: response.error || "Failed to update user status",
-          });
-          // Scroll to top to show the message
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          // Clear message after 5 seconds
-          setTimeout(() => setMessage({ type: "", text: "" }), 5000);
+          userNotifications.statusUpdateError(response.error || "Failed to update user status");
         }
       } catch (error) {
         console.error("Error updating user status:", error);
@@ -117,14 +103,7 @@ export default function EditUser({ userId }) {
 
         const errorMessage =
           error.response?.data?.error || "Failed to update user status";
-        setMessage({
-          type: "error",
-          text: errorMessage,
-        });
-        // Scroll to top to show the message
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        // Clear message after 5 seconds
-        setTimeout(() => setMessage({ type: "", text: "" }), 5000);
+        userNotifications.statusUpdateError(errorMessage);
       }
     } else {
       // If not read-only, just update the form data

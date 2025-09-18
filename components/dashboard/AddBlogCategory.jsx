@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { blogCategoryAPI } from "@/utils/api";
+import { blogCategoryNotifications } from "@/utils/notifications";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AddBlogCategory() {
@@ -123,6 +124,7 @@ export default function AddBlogCategory() {
       const response = await blogCategoryAPI.createCategory(formData);
 
       if (response.success) {
+        blogCategoryNotifications.createSuccess(formData.name || "New Category");
         // Redirect back to blog categories page
         router.push("/admin/blog-categories");
       } else {
@@ -141,15 +143,16 @@ export default function AddBlogCategory() {
 
           // Don't set general error if we have field-specific errors
           if (Object.keys(backendErrors).length === 0) {
-            setError(response.error || "Failed to create category");
+            blogCategoryNotifications.createError(response.error || "Failed to create category");
           }
         } else {
-          setError(response.error || "Failed to create category");
+          blogCategoryNotifications.createError(response.error || "Failed to create category");
         }
       }
     } catch (err) {
       console.error("Error creating category:", err);
-      setError("Failed to create category");
+      const errorMessage = err.response?.data?.error || err.message || "Failed to create category";
+      blogCategoryNotifications.createError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -2,11 +2,15 @@
   --tt-dropdown-menu-bg-color: var(--white);
   --tt-dropdown-menu-border-color: var(--tt-gray-light-a-100);
   --tt-dropdown-menu-text-color: var(--tt-gray-light-a-600);
+  --tt-dropdown-menu-shadow: 0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px rgba(22, 23, 24, 0.2);
+  --tt-dropdown-menu-border-radius: 8px;
+  --tt-dropdown-menu-backdrop-filter: blur(8px);
 
   .dark & {
     --tt-dropdown-menu-border-color: var(--tt-gray-dark-a-50);
     --tt-dropdown-menu-bg-color: var(--tt-gray-dark-50);
     --tt-dropdown-menu-text-color: var(--tt-gray-dark-a-600);
+    --tt-dropdown-menu-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.5), 0 10px 20px -15px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -18,6 +22,21 @@
   outline: none;
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
   max-height: var(--radix-dropdown-menu-content-available-height);
+  
+  /* Enhanced visual design */
+  background-color: var(--tt-dropdown-menu-bg-color);
+  border: 1px solid var(--tt-dropdown-menu-border-color);
+  border-radius: var(--tt-dropdown-menu-border-radius);
+  box-shadow: var(--tt-dropdown-menu-shadow);
+  backdrop-filter: var(--tt-dropdown-menu-backdrop-filter);
+  
+  /* Smooth transitions */
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Improved spacing and typography */
+  padding: 4px;
+  min-width: 160px;
+  color: var(--tt-dropdown-menu-text-color);
 
   > * {
     max-height: var(--radix-dropdown-menu-content-available-height);
@@ -59,5 +78,52 @@
   &[data-side="left-start"],
   &[data-side="left-end"] {
     animation: slideFromRight 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .tiptap-dropdown-menu {
+    /* Better touch targets on mobile */
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+    
+    /* Larger padding for touch interfaces */
+    padding: 8px;
+    
+    /* Improved button sizing for touch */
+    .tiptap-button {
+      min-height: 44px;
+      padding: 12px 16px;
+      font-size: 16px;
+      
+      /* Prevent zoom on iOS */
+      &:focus {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tiptap-dropdown-menu {
+    /* Full width on small screens */
+    min-width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    
+    /* Adjust positioning for small screens */
+    &[data-side="bottom"],
+    &[data-side="bottom-start"],
+    &[data-side="bottom-end"] {
+      margin-top: 4px;
+    }
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .tiptap-dropdown-menu {
+    /* Sharper borders on high DPI */
+    border-width: 0.5px;
   }
 }

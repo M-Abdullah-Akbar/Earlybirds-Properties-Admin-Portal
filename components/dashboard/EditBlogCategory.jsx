@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { blogCategoryAPI } from "@/utils/api";
+import { blogCategoryNotifications } from "@/utils/notifications";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditBlogCategory({ categoryId }) {
@@ -37,11 +38,12 @@ export default function EditBlogCategory({ categoryId }) {
         setFormData(categoryData);
         setOriginalFormData(categoryData); // Store original data for comparison
       } else {
-        setError(response.error || "Failed to fetch category");
+        blogCategoryNotifications.fetchError(response.error || "Failed to fetch category");
       }
     } catch (err) {
       console.error("Error fetching category:", err);
-      setError(err.response?.data?.error || "Failed to fetch category");
+      const errorMessage = err.response?.data?.error || "Failed to fetch category";
+      blogCategoryNotifications.fetchError(errorMessage);
     } finally {
       setFetchLoading(false);
     }
@@ -225,6 +227,7 @@ export default function EditBlogCategory({ categoryId }) {
       );
 
       if (response.success) {
+        blogCategoryNotifications.updateSuccess();
         // Redirect back to blog categories page
         router.push("/admin/blog-categories");
       } else {
@@ -243,15 +246,16 @@ export default function EditBlogCategory({ categoryId }) {
 
           // Don't set general error if we have field-specific errors
           if (Object.keys(backendErrors).length === 0) {
-            setError(response.error || "Failed to update category");
+            blogCategoryNotifications.updateError(response.error || "Failed to update category");
           }
         } else {
-          setError(response.error || "Failed to update category");
+          blogCategoryNotifications.updateError(response.error || "Failed to update category");
         }
       }
     } catch (err) {
       console.error("Error updating category:", err);
-      setError("Failed to update category");
+      const errorMessage = "Failed to update category";
+      blogCategoryNotifications.updateError(errorMessage);
     } finally {
       setLoading(false);
     }

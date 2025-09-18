@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { userNotifications } from "../../utils/notifications";
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -73,13 +74,13 @@ export default function UserManagement() {
   const handleDeleteUser = (user) => {
     // Prevent deletion of SuperAdmin accounts
     if (user.role === "SuperAdmin") {
-      alert("SuperAdmin accounts cannot be deleted.");
+      userNotifications.deleteError("SuperAdmin accounts cannot be deleted.");
       return;
     }
 
     // Prevent users from deleting themselves
     if (currentUser && user._id === currentUser._id) {
-      alert("You cannot delete your own account.");
+      userNotifications.deleteError("You cannot delete your own account.");
       return;
     }
 
@@ -97,15 +98,13 @@ export default function UserManagement() {
       if (response.success) {
         // Refresh the user list and stats
         fetchUsers();
-        // Success - no alert needed, user will see the user disappear from list
+        userNotifications.deleteSuccess(userToDelete.name);
       } else {
-        // Show error message without "Error:" prefix
-        setError(response.error || "Failed to delete user");
+        userNotifications.deleteError(response.error || "Failed to delete user");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
-      // Show error message without "Error:" prefix
-      setError(err.response?.data?.error || "Failed to delete user");
+      userNotifications.deleteError(err.response?.data?.error || "Failed to delete user");
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);

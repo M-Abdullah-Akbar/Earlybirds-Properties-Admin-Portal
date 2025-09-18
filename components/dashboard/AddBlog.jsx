@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { blogNotifications } from "@/utils/notifications";
 
 export default function AddBlog() {
   const router = useRouter();
@@ -37,9 +38,12 @@ export default function AddBlog() {
       const response = await blogCategoryAPI.getCategories(params);
       if (response.success) {
         setCategories(response.data?.categories || []);
+      } else {
+        blogNotifications.fetchError("Failed to load blog categories");
       }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      blogNotifications.fetchError("Failed to load blog categories");
     }
   };
 
@@ -255,6 +259,7 @@ export default function AddBlog() {
       const response = await blogAPI.createBlog(formDataToSend);
 
       if (response.success) {
+        blogNotifications.createSuccess(formData.title || "New Blog");
         router.push("/admin/blog-management");
       } else {
         // Handle backend validation errors
@@ -266,14 +271,13 @@ export default function AddBlog() {
           });
           setErrors(fieldErrors);
         } else {
-          setError(response.error || "Failed to create blog");
+          blogNotifications.createError(response.error || "Failed to create blog");
         }
       }
     } catch (err) {
       console.error("Error creating blog:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to create blog"
-      );
+      const errorMessage = err.response?.data?.error || err.message || "Failed to create blog";
+      blogNotifications.createError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

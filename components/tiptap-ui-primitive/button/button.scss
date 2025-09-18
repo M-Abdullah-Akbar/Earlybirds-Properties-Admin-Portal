@@ -311,4 +311,31 @@
       color: var(--tt-button-disabled-icon-color);
     }
   }
+  
+  /* Enhanced dropdown menu item styling */
+  .tiptap-dropdown-menu & {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 4px;
+    margin: 0;
+    font-weight: 400;
+    
+    /* Better hover states for dropdown items */
+    &:hover:not([disabled]) {
+      background-color: var(--tt-button-hover-bg-color);
+      transform: none;
+    }
+    
+    /* Enhanced focus states */
+    &:focus-visible {
+      outline: 2px solid var(--tt-button-active-icon-color);
+      outline-offset: -2px;
+    }
+    
+    /* Active dropdown item styling */
+    &[data-active-state="on"] {
+      background-color: var(--tt-button-active-bg-color);
+      font-weight: 500;
+    }
+  }
 }

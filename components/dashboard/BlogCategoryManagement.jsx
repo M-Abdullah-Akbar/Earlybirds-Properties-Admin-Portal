@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { blogCategoryAPI } from "@/utils/api";
+import { blogCategoryNotifications } from "@/utils/notifications";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function BlogCategoryManagement() {
@@ -144,13 +145,12 @@ export default function BlogCategoryManagement() {
           rejectedCategories,
         });
       } else {
-        setError(response.error || "Failed to fetch categories");
+        blogCategoryNotifications.fetchError(response.error || "Failed to fetch categories");
       }
     } catch (err) {
       console.error("Error fetching categories:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to fetch categories"
-      );
+      const errorMessage = err.response?.data?.error || err.message || "Failed to fetch categories";
+      blogCategoryNotifications.fetchError(errorMessage);
     } finally {
       if (initialLoad) {
         setLoading(false);
@@ -193,18 +193,18 @@ export default function BlogCategoryManagement() {
     if (!canDeleteCategory(category)) {
       if (user && user.role === "admin") {
         if (category.approvalStatus === "approved") {
-          setError(
+          blogCategoryNotifications.deleteError(
             "You cannot delete an approved category. Please contact a Super Admin if you need to remove this category."
           );
         } else if (category.approvalStatus === "pending") {
-          setError(
+          blogCategoryNotifications.deleteError(
             "You cannot delete a category that is pending approval. Please wait for approval or contact a Super Admin."
           );
         } else {
-          setError("You can only delete your own rejected categories.");
+          blogCategoryNotifications.deleteError("You can only delete your own rejected categories.");
         }
       } else {
-        setError("You don't have permission to delete this category.");
+        blogCategoryNotifications.deleteError("You don't have permission to delete this category.");
       }
       return;
     }
@@ -219,7 +219,7 @@ export default function BlogCategoryManagement() {
 
     // Double-check permissions before deleting
     if (!canDeleteCategory(selectedCategory)) {
-      setError("You don't have permission to delete this category.");
+      blogCategoryNotifications.deleteError("You don't have permission to delete this category.");
       setShowDeleteModal(false);
       setSelectedCategory(null);
       return;
@@ -233,15 +233,17 @@ export default function BlogCategoryManagement() {
       );
 
       if (response.success) {
+        blogCategoryNotifications.deleteSuccess(selectedCategory.name || "Category");
         fetchCategories(); // Refresh both the filtered list and statistics
         setShowDeleteModal(false);
         setSelectedCategory(null);
       } else {
-        setError(response.error || "Failed to delete category");
+        blogCategoryNotifications.deleteError(response.error || "Failed to delete category");
       }
     } catch (err) {
       console.error("Error deleting category:", err);
-      setError(err.response?.data?.error || "Failed to delete category");
+      const errorMessage = err.response?.data?.error || "Failed to delete category";
+      blogCategoryNotifications.deleteError(errorMessage);
     } finally {
       setFormLoading(false);
     }

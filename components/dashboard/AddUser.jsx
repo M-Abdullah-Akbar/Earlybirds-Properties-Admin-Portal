@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { userAPI } from "@/utils/api";
+import { userNotifications } from "../../utils/notifications";
 
 export default function AddUser() {
   const router = useRouter();
@@ -212,12 +213,13 @@ export default function AddUser() {
       const response = await userAPI.createUser(userData);
 
       if (response.success) {
-        // Redirect immediately without showing alert
+        userNotifications.createSuccess(formData.name);
         router.push("/admin/user-management");
       } else {
         // Handle server-side validation errors - merge with existing errors
         if (response.errors && typeof response.errors === "object") {
           setErrors((prevErrors) => ({ ...prevErrors, ...response.errors }));
+          userNotifications.validationError();
         } else if (response.details && Array.isArray(response.details)) {
           // Handle detailed validation errors
           const fieldErrors = {};
@@ -225,8 +227,9 @@ export default function AddUser() {
             fieldErrors[detail.field] = detail.message;
           });
           setErrors((prevErrors) => ({ ...prevErrors, ...fieldErrors }));
+          userNotifications.validationError();
         } else {
-          alert(response.error || "Failed to create user");
+          userNotifications.createError(response.error || "Failed to create user");
         }
       }
     } catch (error) {
@@ -261,7 +264,7 @@ export default function AddUser() {
         } else if (typeof error.response?.data === "string") {
           errorMessage = error.response.data;
         }
-        alert(`Error: ${errorMessage}`);
+        userNotifications.createError(errorMessage);
       }
     } finally {
       setLoading(false);

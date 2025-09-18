@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { blogAPI, blogCategoryAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { blogNotifications } from "@/utils/notifications";
 
 export default function BlogManagement() {
   const { user } = useAuth();
@@ -48,13 +49,12 @@ export default function BlogManagement() {
         setBlogs(response.data?.blogs || []);
         setTotalPages(response.data?.pagination?.pages || 1);
       } else {
-        setError(response.error || "Failed to fetch blogs");
+        blogNotifications.fetchError(response.error || "Failed to fetch blogs");
       }
     } catch (err) {
       console.error("Error fetching blogs:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to fetch blogs"
-      );
+      const errorMessage = err.response?.data?.error || err.message || "Failed to fetch blogs";
+      blogNotifications.fetchError(errorMessage);
     } finally {
       setLoading(false);
       setInitialLoad(false);
@@ -72,9 +72,12 @@ export default function BlogManagement() {
           draft: response.data.draft || 0,
           archived: response.data.archived || 0,
         });
+      } else {
+        blogNotifications.fetchError("Failed to load blog statistics");
       }
     } catch (err) {
       console.error("Error fetching stats:", err);
+      blogNotifications.fetchError("Failed to load blog statistics");
     }
   };
 
@@ -88,9 +91,12 @@ export default function BlogManagement() {
       const response = await blogCategoryAPI.getCategories(params);
       if (response.success) {
         setCategories(response.data?.categories || []);
+      } else {
+        blogNotifications.fetchError("Failed to load blog categories");
       }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      blogNotifications.fetchError("Failed to load blog categories");
     }
   };
 
@@ -108,14 +114,16 @@ export default function BlogManagement() {
     try {
       const response = await blogAPI.deleteBlog(blogToDelete._id);
       if (response.success) {
+        blogNotifications.deleteSuccess(blogToDelete.title || "Blog");
         fetchBlogs();
         fetchStats();
       } else {
-        setError(response.error || "Failed to delete blog");
+        blogNotifications.deleteError(response.error || "Failed to delete blog");
       }
     } catch (err) {
       console.error("Error deleting blog:", err);
-      setError(err.response?.data?.error || "Failed to delete blog");
+      const errorMessage = err.response?.data?.error || "Failed to delete blog";
+      blogNotifications.deleteError(errorMessage);
     } finally {
       setDeleteLoading(false);
       setShowDeleteModal(false);

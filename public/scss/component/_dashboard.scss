@@ -22,6 +22,21 @@
       flex-direction: column;
       justify-content: space-between;
     }
+  }
+  
+  // Ensure proper spacing for fixed header in dashboard
+  &.fixed-header {
+    .main-content-inner {
+      padding-top: 111px;
+    }
+  }
+  
+  .main-content-inner {
+    // Additional spacing for fixed header scenarios
+    min-height: calc(100vh - 111px);
+    &.with-fixed-header {
+      padding-top: 111px !important;
+    }
     .box-btn {
       display: flex;
       justify-content: center;

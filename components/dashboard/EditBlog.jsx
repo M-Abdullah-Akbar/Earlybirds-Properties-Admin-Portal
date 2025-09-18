@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { blogNotifications } from "@/utils/notifications";
 
 export default function EditBlog({ blogId }) {
   const router = useRouter();
@@ -60,11 +61,12 @@ export default function EditBlog({ blogId }) {
           images: existingImages,
         });
       } else {
-        setError("Blog not found");
+        blogNotifications.fetchError("Blog not found");
       }
     } catch (err) {
       console.error("Error fetching blog:", err);
-      setError(err.response?.data?.error || "Failed to fetch blog");
+      const errorMessage = err.response?.data?.error || "Failed to fetch blog";
+      blogNotifications.fetchError(errorMessage);
     } finally {
       setInitialLoading(false);
     }
@@ -210,9 +212,12 @@ export default function EditBlog({ blogId }) {
       const response = await blogCategoryAPI.getCategories(params);
       if (response.success) {
         setCategories(response.data?.categories || []);
+      } else {
+        blogNotifications.fetchError("Failed to load blog categories");
       }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      blogNotifications.fetchError("Failed to load blog categories");
     }
   };
 
@@ -322,6 +327,7 @@ export default function EditBlog({ blogId }) {
       const response = await blogAPI.updateBlog(blogId, formDataToSend);
 
       if (response.success) {
+        blogNotifications.updateSuccess(formData.title || "Blog");
         router.push("/admin/blog-management");
       } else {
         // Handle backend validation errors
@@ -333,14 +339,13 @@ export default function EditBlog({ blogId }) {
           });
           setErrors(fieldErrors);
         } else {
-          setError(response.error || "Failed to update blog");
+          blogNotifications.updateError(response.error || "Failed to update blog");
         }
       }
     } catch (err) {
       console.error("Error updating blog:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to update blog"
-      );
+      const errorMessage = err.response?.data?.error || err.message || "Failed to update blog";
+      blogNotifications.updateError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

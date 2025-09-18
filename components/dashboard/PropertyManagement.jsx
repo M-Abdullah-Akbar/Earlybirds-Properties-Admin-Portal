@@ -5,6 +5,10 @@ import Image from "next/image";
 import { propertyAPI, userAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageProperty } from "@/utils/permissions";
+import {
+  propertyNotifications,
+  apiNotifications,
+} from "@/utils/notifications";
 
 export default function PropertyManagement() {
   const { user } = useAuth();
@@ -197,17 +201,28 @@ export default function PropertyManagement() {
     try {
       const response = await propertyAPI.deleteProperty(propertyToDelete._id);
       if (response.success) {
+        // Show success notification
+        propertyNotifications.deleteSuccess(`Property "${propertyToDelete.title}" has been deleted successfully`);
         // Refresh the property list and stats
         fetchProperties();
-        // Success - no alert needed, user will see the property disappear from list
       } else {
-        // Show error message without "Error:" prefix
-        setError(response.error || "Failed to delete property");
+        // Show error notification
+        const errorMessage = response.error || "Failed to delete property";
+        propertyNotifications.deleteError(errorMessage);
+        setError(errorMessage);
       }
     } catch (err) {
       console.error("Error deleting property:", err);
-      // Show error message without "Error:" prefix
-      setError(err.response?.data?.error || "Failed to delete property");
+      const errorMessage = err.response?.data?.error || "Failed to delete property";
+      
+      // Check if it's a network error
+      if (err.code === 'NETWORK_ERROR' || err.message?.includes('CORS') || !err.response) {
+        apiNotifications.networkError();
+      } else {
+        propertyNotifications.deleteError(errorMessage);
+      }
+      
+      setError(errorMessage);
     } finally {
       // Always close the modal and reset state, regardless of success/failure
       setDeleteLoading(false);

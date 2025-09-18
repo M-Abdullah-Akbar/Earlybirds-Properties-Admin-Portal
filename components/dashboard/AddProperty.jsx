@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utils/api";
 import { safeLocalStorage } from "@/utils/clientUtils";
 import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { 
+  propertyNotifications, 
+  validationNotifications, 
+  apiNotifications 
+} from "@/utils/notifications";
 
 export default function AddProperty() {
   const router = useRouter();
@@ -1488,8 +1493,12 @@ export default function AddProperty() {
       console.log("API Response:", response);
 
       if (response.success) {
-        // Redirect immediately without showing alert
-        router.push("/admin/property-management");
+        // Show success notification
+        propertyNotifications.createSuccess(formData.title);
+        // Redirect after a brief delay to allow notification to show
+        setTimeout(() => {
+          router.push("/admin/property-management");
+        }, 1500);
       } else {
         console.log("Response failed, checking for validation errors...");
         console.log("Response details:", response.details);
@@ -1537,11 +1546,16 @@ export default function AddProperty() {
           });
           console.log("Final field errors:", fieldErrors);
           setErrors(fieldErrors);
+          
+          // Use enhanced validation notifications to show backend errors
+          validationNotifications.backendErrors(response, "Please fix the validation errors and try again.");
         } else {
+          const errorMessage = response.error || "Failed to add property";
           setErrors((prev) => ({
             ...prev,
-            submit: response.error || "Failed to add property",
+            submit: errorMessage,
           }));
+          propertyNotifications.createError(errorMessage);
         }
       }
     } catch (error) {
@@ -1596,6 +1610,9 @@ export default function AddProperty() {
           });
 
           setErrors(fieldErrors);
+          
+          // Use enhanced validation notifications to show backend errors
+          validationNotifications.backendErrors(error.response.data, "Please fix the validation errors and try again.");
           return; // Don't process other error types
         }
 
@@ -1613,6 +1630,7 @@ export default function AddProperty() {
           ...prev,
           submit: errorMessage,
         }));
+        propertyNotifications.createError(errorMessage);
         return;
       }
 
@@ -1660,6 +1678,13 @@ export default function AddProperty() {
         ...prev,
         submit: errorMessage,
       }));
+      
+      // Show appropriate notification based on error type
+      if (error.message && (error.message.includes("Network Error") || error.message.includes("CORS Error"))) {
+        apiNotifications.networkError();
+      } else {
+          propertyNotifications.createError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1911,7 +1936,7 @@ export default function AddProperty() {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="address">
-                  Address:<span>*</span>
+                  Address:
                 </label>
                 <input
                   type="text"
@@ -1955,7 +1980,7 @@ export default function AddProperty() {
 
               <fieldset className="box-fieldset">
                 <label htmlFor="area">
-                  Area:<span>*</span>
+                  Area:
                 </label>
                 <select
                   name="location.area"

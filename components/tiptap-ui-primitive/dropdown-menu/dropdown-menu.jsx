@@ -28,7 +28,16 @@ const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
-const DropdownMenuItem = DropdownMenuPrimitive.Item
+const DropdownMenuItem = React.forwardRef(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(className)}
+    role="menuitem"
+    tabIndex={-1}
+    {...props}
+  />
+))
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuSubTrigger = DropdownMenuPrimitive.SubTrigger
 
@@ -55,6 +64,15 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, porta
       sideOffset={sideOffset}
       onCloseAutoFocus={(e) => e.preventDefault()}
       className={cn("tiptap-dropdown-menu", className)}
+      role="menu"
+      aria-orientation="vertical"
+      onKeyDown={(e) => {
+        // Enhanced keyboard navigation
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
       {...props} />
   )
 

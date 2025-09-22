@@ -6,10 +6,11 @@ export const metadata = {
   description: "Proty - Real Estate React Nextjs Template",
 };
 
-export default function AdminEditBlogPage({ params }) {
+export default async function AdminEditBlogPage({ params }) {
+  const { id } = await params;
   return (
     <>
-      <EditBlog blogId={params.id} />
+      <EditBlog blogId={id} />
     </>
   );
 }

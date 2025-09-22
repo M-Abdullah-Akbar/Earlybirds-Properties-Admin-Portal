@@ -284,7 +284,10 @@ export default function EditBlog({ blogId }) {
       const tags = formData.tags
         ? formData.tags.split(",").map((tag) => tag.trim())
         : [];
-      formDataToSend.append("tags", JSON.stringify(tags));
+      // Send tags as individual array items instead of JSON string
+      tags.forEach(tag => {
+        if (tag) formDataToSend.append("tags", tag);
+      });
 
       // Handle images - separate existing and new images
       const existingImages = formData.images.filter((img) => img.isExisting);

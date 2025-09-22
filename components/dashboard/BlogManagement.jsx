@@ -705,9 +705,9 @@ export default function BlogManagement() {
                                   {blog.title || "Untitled Blog"}
                                 </Link>
                               </div>
-                              <div className="text-date">
+                              {/*<div className="text-date">
                                 {truncateContent(blog.content, 60)}
-                              </div>
+                              </div>*/}
                             </div>
                           </div>
                         </td>

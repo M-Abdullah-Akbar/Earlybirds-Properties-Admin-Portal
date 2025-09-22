@@ -1319,10 +1319,13 @@ export const blogAPI = {
     return response.data;
   },
 
-  // Create blog - POST /api/blogs
+  // Create blog - POST /api/blogs/with-images (handles both form data and images)
   createBlog: async (blogData) => {
     try {
-      const response = await api.post("/blogs", blogData, {
+      const response = await api.post("/blogs/with-images", blogData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
         validateStatus: (status) => {
           return status < 500;
         },
@@ -1336,10 +1339,13 @@ export const blogAPI = {
     }
   },
 
-  // Update blog - PUT /api/blogs/:id
+  // Update blog - PUT /api/blogs/:id/with-images (handles both form data and images)
   updateBlog: async (id, blogData) => {
     try {
-      const response = await api.put(`/blogs/${id}`, blogData, {
+      const response = await api.put(`/blogs/${id}/with-images`, blogData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
         validateStatus: (status) => {
           return status < 500;
         },
@@ -1359,10 +1365,22 @@ export const blogAPI = {
     return response.data;
   },
 
+  // Delete specific image from blog - DELETE /api/blogs/:id/images/:imageId
+  deleteBlogImage: async (blogId, imageId) => {
+    const response = await api.delete(`/blogs/${blogId}/images/${imageId}`);
+    return response.data;
+  },
+
+  // Set image as main blog image - PUT /api/blogs/:id/images/:imageId/main
+  setMainBlogImage: async (blogId, imageId) => {
+    const response = await api.put(`/blogs/${blogId}/images/${imageId}/main`);
+    return response.data;
+  },
+
   // Get blog statistics
   getBlogStats: async () => {
     try {
-      const response = await api.get("/blogs", { params: { limit: 1000 } });
+      const response = await api.get("/blogs", { params: { limit: 10 } });
 
       if (response.data && response.data.data && response.data.data.blogs) {
         const blogs = response.data.data.blogs;

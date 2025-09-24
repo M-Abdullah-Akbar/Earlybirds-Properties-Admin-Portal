@@ -47,7 +47,7 @@ export default function BlogManagement() {
 
       if (response.success) {
         setBlogs(response.data?.blogs || []);
-        setTotalPages(response.data?.pagination?.pages || 1);
+        setTotalPages(response.data?.pagination?.totalPages || 1);
       } else {
         blogNotifications.fetchError(response.error || "Failed to fetch blogs");
       }
@@ -190,12 +190,12 @@ export default function BlogManagement() {
     return (
       <div className="main-content w-100">
         <div className="main-content-inner wrap-dashboard-content">
-          <div className="widget-box-2 wd-listing mb-20">
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+          <div className="widget-box-2 wd-listing">
+            <div className="text-center py-50">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
-              <p className="mt-3">Loading blogs...</p>
+              <p className="mt-20">Loading Blogs...</p>
             </div>
           </div>
         </div>
@@ -747,28 +747,46 @@ export default function BlogManagement() {
                           </span>
                         </td>
                         <td style={{ textAlign: "center" }}>
-                          <div className="list-action">
-                            <Link
-                              href={`/admin/edit-blog/${blog._id}`}
-                              className="item-action-2"
-                              title="Edit Blog"
-                            >
-                              <i className="icon-edit-3" />
-                            </Link>
-                            <button
-                              className="item-action-2 remove-file"
-                              onClick={() => handleDeleteBlog(blog)}
-                              title="Delete Blog"
-                              style={{
-                                background: "none",
-                                border: "none",
-                                padding: "0",
-                                cursor: "pointer",
-                              }}
-                            >
-                              <i className="icon-trash-2" />
-                            </button>
-                          </div>
+                          <ul className="list-action">
+                            <li>
+                              <Link
+                                href={`/admin/edit-blog/${blog._id}`}
+                                className="item-action-2"
+                                title="Edit Blog"
+                              >
+                                <i className="icon-edit-3" />
+                              </Link>
+                            </li>
+                            <li>
+                              <button
+                                className="remove-file item"
+                                onClick={() => handleDeleteBlog(blog)}
+                                title="Delete Blog"
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <svg
+                                  width={16}
+                                  height={16}
+                                  viewBox="0 0 16 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M9.82667 6.00035L9.596 12.0003M6.404 12.0003L6.17333 6.00035M12.8187 3.86035C13.0467 3.89501 13.2733 3.93168 13.5 3.97101M12.8187 3.86035L12.1067 13.1157C12.0776 13.4925 11.9074 13.8445 11.63 14.1012C11.3527 14.3579 10.9886 14.5005 10.6107 14.5003H5.38933C5.0114 14.5005 4.64735 14.3579 4.36999 14.1012C4.09262 13.8445 3.92239 13.4925 3.89333 13.1157L3.18133 3.86035M12.8187 3.86035C12.0492 3.74403 11.2758 3.65574 10.5 3.59568M3.18133 3.86035C2.95333 3.89435 2.72667 3.93101 2.5 3.97035M3.18133 3.86035C3.95076 3.74403 4.72416 3.65575 5.5 3.59568M10.5 3.59568V2.98501C10.5 2.19835 9.89333 1.54235 9.10667 1.51768C8.36908 1.49411 7.63092 1.49411 6.89333 1.51768C6.10667 1.54235 5.5 2.19901 5.5 2.98501V3.59568M10.5 3.59568C8.83581 3.46707 7.16419 3.46707 5.5 3.59568"
+                                    stroke="#A3ABB0"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                Delete
+                              </button>
+                            </li>
+                          </ul>
                         </td>
                       </tr>
                     ))
@@ -780,10 +798,9 @@ export default function BlogManagement() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <ul className="wd-navigation">
-              <li>
+            <ul className="wg-pagination">
+              <li className={`arrow ${currentPage === 1 ? "disabled" : ""}`}>
                 <button
-                  className={`nav-item ${currentPage === 1 ? "disabled" : ""}`}
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                   style={{
@@ -792,44 +809,48 @@ export default function BlogManagement() {
                     cursor: currentPage === 1 ? "not-allowed" : "pointer",
                   }}
                 >
-                  <i className="icon-keyboard_arrow_left" />
+                  <i className="icon-arrow-left" />
                 </button>
               </li>
-              {[...Array(Math.min(totalPages, 5))].map((_, index) => {
-                let pageNumber;
+
+              {/* Generate page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
                 if (totalPages <= 5) {
-                  pageNumber = index + 1;
+                  pageNum = i + 1;
                 } else if (currentPage <= 3) {
-                  pageNumber = index + 1;
+                  pageNum = i + 1;
                 } else if (currentPage >= totalPages - 2) {
-                  pageNumber = totalPages - 4 + index;
+                  pageNum = totalPages - 4 + i;
                 } else {
-                  pageNumber = currentPage - 2 + index;
+                  pageNum = currentPage - 2 + i;
                 }
 
                 return (
-                  <li key={pageNumber}>
+                  <li
+                    key={pageNum}
+                    className={currentPage === pageNum ? "active" : ""}
+                  >
                     <button
-                      className={`nav-item ${
-                        currentPage === pageNumber ? "active" : ""
-                      }`}
-                      onClick={() => setCurrentPage(pageNumber)}
+                      onClick={() => setCurrentPage(pageNum)}
                       style={{
                         background: "none",
                         border: "none",
                         cursor: "pointer",
                       }}
                     >
-                      {pageNumber}
+                      {pageNum}
                     </button>
                   </li>
                 );
               })}
-              <li>
+
+              <li
+                className={`arrow ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
                 <button
-                  className={`nav-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   style={{
@@ -839,7 +860,7 @@ export default function BlogManagement() {
                       currentPage === totalPages ? "not-allowed" : "pointer",
                   }}
                 >
-                  <i className="icon-keyboard_arrow_right" />
+                  <i className="icon-arrow-right" />
                 </button>
               </li>
             </ul>
@@ -849,36 +870,87 @@ export default function BlogManagement() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="modal fade show d-block" tabIndex="-1" role="dialog">
-          <div className="modal-dialog" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
-              </div>
-              <div className="modal-body">
-                <p>
-                  Are you sure you want to delete the blog "
-                  {blogToDelete?.title}"? This action cannot be undone.
-                </p>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={cancelDeleteBlog}
-                  disabled={deleteLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={confirmDeleteBlog}
-                  disabled={deleteLoading}
-                >
-                  {deleteLoading ? "Deleting..." : "Delete"}
-                </button>
-              </div>
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="modal-content"
+            style={{
+              backgroundColor: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "500px",
+              width: "90%",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+            }}
+          >
+            <div className="modal-header" style={{ marginBottom: "20px" }}>
+              <h4 style={{ margin: 0, color: "#333" }}>
+                Confirm Delete Blog
+              </h4>
+            </div>
+            <div className="modal-body" style={{ marginBottom: "30px" }}>
+              <p style={{ margin: 0, color: "#666", lineHeight: "1.5" }}>
+                Are you sure you want to delete the blog{" "}
+                <strong>{blogToDelete?.title}</strong>?
+                <br />
+                <small style={{ color: "#999" }}>
+                  This action cannot be undone.
+                </small>
+              </p>
+            </div>
+            <div
+              className="modal-footer"
+              style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                type="button"
+                onClick={cancelDeleteBlog}
+                disabled={deleteLoading}
+                style={{
+                  padding: "10px 20px",
+                  border: "1px solid #ddd",
+                  backgroundColor: "white",
+                  color: "#666",
+                  borderRadius: "4px",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  opacity: deleteLoading ? 0.6 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteBlog}
+                disabled={deleteLoading}
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  borderRadius: "4px",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  opacity: deleteLoading ? 0.6 : 1,
+                }}
+              >
+                {deleteLoading ? "Deleting..." : "Delete Blog"}
+              </button>
             </div>
           </div>
         </div>

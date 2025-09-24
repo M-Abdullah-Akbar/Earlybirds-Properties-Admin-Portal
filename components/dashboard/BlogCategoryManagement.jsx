@@ -345,12 +345,12 @@ export default function BlogCategoryManagement() {
     return (
       <div className="main-content w-100">
         <div className="main-content-inner wrap-dashboard-content">
-          <div className="widget-box-2 wd-listing mb-20">
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+          <div className="widget-box-2 wd-listing">
+            <div className="text-center py-50">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
-              <p className="mt-3">Loading categories...</p>
+              <p className="mt-20">Loading Blog Categories...</p>
             </div>
           </div>
         </div>

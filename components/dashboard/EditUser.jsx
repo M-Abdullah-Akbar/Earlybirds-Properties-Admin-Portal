@@ -117,9 +117,14 @@ export default function EditUser({ userId }) {
   if (isLoading) {
     return (
       <div className="main-content w-100">
-        <div className="main-content-inner">
-          <div className="text-center">
-            <p>Loading user data...</p>
+        <div className="main-content-inner wrap-dashboard-content">
+          <div className="widget-box-2 wd-listing">
+            <div className="text-center py-50">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-20">Loading User Data...</p>
+            </div>
           </div>
         </div>
       </div>

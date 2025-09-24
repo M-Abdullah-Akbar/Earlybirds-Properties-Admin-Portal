@@ -78,14 +78,15 @@ export default function AddBlog() {
         // Handle JSON content from PropertyDescriptionEditor
         let textContent = "";
         try {
-          const contentObj = typeof value === 'string' ? JSON.parse(value) : value;
+          const contentObj =
+            typeof value === "string" ? JSON.parse(value) : value;
           // Extract text from JSON structure
           const extractText = (node) => {
-            if (node.type === 'text') return node.text || '';
+            if (node.type === "text") return node.text || "";
             if (node.content) {
-              return node.content.map(extractText).join('');
+              return node.content.map(extractText).join("");
             }
-            return '';
+            return "";
           };
           textContent = extractText(contentObj).trim();
         } catch (e) {
@@ -226,7 +227,10 @@ export default function AddBlog() {
       // Add blog data fields
       formDataToSend.append("title", formData.title);
       // Convert JSON content back to string for backend
-      const contentToSend = typeof formData.content === 'string' ? formData.content : JSON.stringify(formData.content);
+      const contentToSend =
+        typeof formData.content === "string"
+          ? formData.content
+          : JSON.stringify(formData.content);
       formDataToSend.append("content", contentToSend);
       formDataToSend.append("category", formData.category);
       formDataToSend.append("status", formData.status);
@@ -238,7 +242,7 @@ export default function AddBlog() {
         ? formData.tags.split(",").map((tag) => tag.trim())
         : [];
       // Send tags as individual array items instead of JSON string
-      tags.forEach(tag => {
+      tags.forEach((tag) => {
         if (tag) formDataToSend.append("tags", tag);
       });
 
@@ -274,12 +278,15 @@ export default function AddBlog() {
           });
           setErrors(fieldErrors);
         } else {
-          blogNotifications.createError(response.error || "Failed to create blog");
+          blogNotifications.createError(
+            response.error || "Failed to create blog"
+          );
         }
       }
     } catch (err) {
       console.error("Error creating blog:", err);
-      const errorMessage = err.response?.data?.error || err.message || "Failed to create blog";
+      const errorMessage =
+        err.response?.data?.error || err.message || "Failed to create blog";
       blogNotifications.createError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -289,13 +296,13 @@ export default function AddBlog() {
   if (loading) {
     return (
       <div className="main-content w-100">
-        <div className="main-content-inner">
-          <div className="widget-box-2 mb-20">
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+        <div className="main-content-inner wrap-dashboard-content">
+          <div className="widget-box-2 wd-listing">
+            <div className="text-center py-50">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
-              <p className="mt-3">Loading categories...</p>
+              <p className="mt-20">Loading Blogs...</p>
             </div>
           </div>
         </div>
@@ -456,7 +463,10 @@ export default function AddBlog() {
                 <PropertyDescriptionEditor
                   value={formData.content}
                   onChange={(content) => {
-                    setFormData((prev) => ({ ...prev, content: JSON.stringify(content) }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      content: JSON.stringify(content),
+                    }));
                     // Clear error when user starts typing
                     if (errors.content) {
                       setErrors((prev) => ({ ...prev, content: null }));

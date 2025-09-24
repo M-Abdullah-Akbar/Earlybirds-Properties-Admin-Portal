@@ -103,7 +103,7 @@ export default function Dashboard() {
               <div className="spinner-border" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
-              <p className="mt-20">Loading dashboard...</p>
+              <p className="mt-20">Loading Dashboard...</p>
             </div>
           </div>
         </div>

@@ -357,13 +357,13 @@ export default function EditBlog({ blogId }) {
   if (initialLoading) {
     return (
       <div className="main-content w-100">
-        <div className="main-content-inner">
-          <div className="widget-box-2 mb-20">
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+        <div className="main-content-inner wrap-dashboard-content">
+          <div className="widget-box-2 wd-listing">
+            <div className="text-center py-50">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
-              <p className="mt-3">Loading blog...</p>
+              <p className="mt-20">Loading Blog Data...</p>
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { propertyAPI, uploadAPI, adminUtils } from "@/utils/api";
 import { safeLocalStorage } from "@/utils/clientUtils";
-import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { LexkitPropertyDescriptionEditor } from "@/components/lexkit-editor/lexkit-property-description-editor";
 import { 
   propertyNotifications, 
   validationNotifications, 
@@ -24,6 +24,9 @@ export default function AddProperty() {
     listingType: "",
     status: "draft",
     featured: false,
+    metaTitle: "",
+    metaDescription: "",
+    focusKeyword: "",
     location: {
       address: "",
       emirate: "",
@@ -1343,6 +1346,11 @@ export default function AddProperty() {
       formDataToSend.append("listingType", formData.listingType);
       formDataToSend.append("status", formData.status);
       formDataToSend.append("featured", formData.featured || false);
+      
+      // Add META Information
+      formDataToSend.append("metaTitle", formData.metaTitle);
+      formDataToSend.append("metaDescription", formData.metaDescription);
+      formDataToSend.append("focusKeyword", formData.focusKeyword);
 
       // Add location data
       formDataToSend.append(
@@ -1810,6 +1818,65 @@ export default function AddProperty() {
             )}
         </div>
 
+        {/*META Information */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">META Information</h5>
+          <form className="box-info-property">
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="metaTitle">Meta Title:<span>*</span></label>
+        
+                <input
+                  type="text"
+                  name="metaTitle"
+                  className="form-control"
+                  placeholder="Enter meta title"
+                  value={formData.metaTitle}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.metaTitle && (
+                  <span className="error-text">{errors.metaTitle}</span>
+                )}
+              </fieldset>
+            </div>
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="metaDescription">Meta Description:<span>*</span></label>
+                <input
+                  type="text"
+                  name="metaDescription"
+                  className="form-control"
+                  placeholder="Enter meta description"
+                  value={formData.metaDescription}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.metaDescription && (
+                  <span className="error-text">{errors.metaDescription}</span>
+                )}
+              </fieldset>
+            </div>
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="focusKeyword">Focus Keyword:<span>*</span></label>
+                <input
+                  type="text"
+                  name="focusKeyword"
+                  className="form-control"
+                  placeholder="Enter focus keyword (used for URL slug)"
+                  value={formData.focusKeyword}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.focusKeyword && (
+                  <span className="error-text">{errors.focusKeyword}</span>
+                )}
+              </fieldset>
+            </div>
+          </form>
+        </div>
+
         {/* Basic Information */}
         <div className="widget-box-2 mb-20">
           <h5 className="title">Basic Information</h5>
@@ -1837,18 +1904,17 @@ export default function AddProperty() {
             <div className="box">
               <fieldset className="box-fieldset">
                 <label htmlFor="description">Description:<span>*</span></label>
-                <PropertyDescriptionEditor
+                <LexkitPropertyDescriptionEditor
                   value={formData.description}
                   onChange={(content) => {
-                    setFormData((prev) => ({ ...prev, description: JSON.stringify(content) }));
+                    setFormData((prev) => ({ ...prev, description: content }));
                     // Clear error when user starts typing
                     if (errors.description) {
                       setErrors((prev) => ({ ...prev, description: null }));
                     }
                   }}
-                  onBlur={(content) => {
-                    // Handle blur validation if needed
-                  }}
+                  placeholder="Enter property description..."
+                  error={!!errors.description}
                 />
                 {errors.description && (
                   <span className="error-text">{errors.description}</span>

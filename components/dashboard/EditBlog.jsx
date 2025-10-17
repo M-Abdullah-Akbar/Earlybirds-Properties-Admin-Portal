@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { blogAPI, blogCategoryAPI, uploadAPI } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { PropertyDescriptionEditor } from "@/components/tiptap-templates/property/property-description-editor";
+import { LexkitPropertyDescriptionEditor } from "@/components/lexkit-editor/lexkit-property-description-editor";
 import { blogNotifications } from "@/utils/notifications";
 
 export default function EditBlog({ blogId }) {
@@ -27,6 +27,9 @@ export default function EditBlog({ blogId }) {
     featured: false,
     featuredImage: null,
     images: [],
+    metaTitle: "",
+    metaDescription: "",
+    focusKeyword: "",
   });
 
   // Fetch blog data
@@ -59,6 +62,9 @@ export default function EditBlog({ blogId }) {
           featured: blog.featured || false,
           featuredImage: blog.featuredImage || null,
           images: existingImages,
+          metaTitle: blog.metaTitle || "",
+          metaDescription: blog.metaDescription || "",
+          focusKeyword: blog.focusKeyword || "",
         });
       } else {
         blogNotifications.fetchError("Blog not found");
@@ -279,6 +285,11 @@ export default function EditBlog({ blogId }) {
       formDataToSend.append("category", formData.category);
       formDataToSend.append("status", formData.status);
       formDataToSend.append("featured", formData.featured || false);
+      
+      // Add META Information
+      formDataToSend.append("metaTitle", formData.metaTitle);
+      formDataToSend.append("metaDescription", formData.metaDescription);
+      formDataToSend.append("focusKeyword", formData.focusKeyword);
 
       // Add tags
       const tags = formData.tags
@@ -514,6 +525,65 @@ export default function EditBlog({ blogId }) {
           </div>
         </div>
 
+        {/*META Information */}
+        <div className="widget-box-2 mb-20">
+          <h5 className="title">META Information</h5>
+          <form className="box-info-property">
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="metaTitle">Meta Title:<span>*</span></label>
+        
+                <input
+                  type="text"
+                  name="metaTitle"
+                  className="form-control"
+                  placeholder="Enter meta title"
+                  value={formData.metaTitle}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.metaTitle && (
+                  <span className="error-text">{errors.metaTitle}</span>
+                )}
+              </fieldset>
+            </div>
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="metaDescription">Meta Description:<span>*</span></label>
+                <input
+                  type="text"
+                  name="metaDescription"
+                  className="form-control"
+                  placeholder="Enter meta description"
+                  value={formData.metaDescription}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.metaDescription && (
+                  <span className="error-text">{errors.metaDescription}</span>
+                )}
+              </fieldset>
+            </div>
+            <div className="box">
+              <fieldset className="box-fieldset">
+                <label htmlFor="focusKeyword">Focus Keyword:<span>*</span></label>
+                <input
+                  type="text"
+                  name="focusKeyword"
+                  className="form-control"
+                  placeholder="Enter focus keyword (used for URL slug)"
+                  value={formData.focusKeyword}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                />
+                {errors.focusKeyword && (
+                  <span className="error-text">{errors.focusKeyword}</span>
+                )}
+              </fieldset>
+            </div>
+          </form>
+        </div>
+
         {/* Basic Information */}
         <div className="widget-box-2 mb-20">
           <h5 className="title">Basic Information</h5>
@@ -541,18 +611,17 @@ export default function EditBlog({ blogId }) {
                 <label htmlFor="content">
                   Content:<span>*</span>
                 </label>
-                <PropertyDescriptionEditor
+                <LexkitPropertyDescriptionEditor
                   value={formData.content}
                   onChange={(content) => {
-                    setFormData((prev) => ({ ...prev, content: JSON.stringify(content) }));
+                    setFormData((prev) => ({ ...prev, content: content }));
                     // Clear error when user starts typing
                     if (errors.content) {
                       setErrors((prev) => ({ ...prev, content: null }));
                     }
                   }}
-                  onBlur={(content) => {
-                    // Handle blur validation if needed
-                  }}
+                  placeholder="Enter blog content..."
+                  error={!!errors.content}
                 />
               </fieldset>
             </div>

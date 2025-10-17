@@ -986,10 +986,10 @@ export default function PropertyManagement() {
                         className="text-center py-4"
                       >
                         <div
-                          className="spinner-border text-primary"
+                          className="spinner-border"
                           role="status"
                         >
-                          <span className="sr-only">Loading...</span>
+                          <span className="visually-hidden">Loading...</span>
                         </div>
                       </td>
                     </tr>

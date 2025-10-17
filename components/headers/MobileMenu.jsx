@@ -1,5 +1,5 @@
 "use client";
-import { blogMenu, homes, otherPages, propertyLinks } from "@/data/menu";
+//import { blogMenu, homes, otherPages, propertyLinks } from "@/data/menu";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

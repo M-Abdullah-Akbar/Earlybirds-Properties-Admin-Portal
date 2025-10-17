@@ -665,10 +665,10 @@ export default function BlogManagement() {
                     <tr>
                       <td colSpan="6" className="text-center py-4">
                         <div
-                          className="spinner-border text-primary"
+                          className="spinner-border"
                           role="status"
                         >
-                          <span className="sr-only">Loading...</span>
+                          <span className="visually-hidden">Loading...</span>
                         </div>
                       </td>
                     </tr>

@@ -148,6 +148,23 @@ export default function AddBlog() {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
 
+    // Limit to 1 image for blogs
+    if (files.length > 1) {
+      setErrors((prev) => ({
+        ...prev,
+        images: "Blogs can only have one image. Please select only one image.",
+      }));
+      return;
+    }
+
+    // If there's already an image, replace it
+    if (formData.images.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        images: [], // Clear existing images
+      }));
+    }
+
     files.forEach((file) => {
       // Validate file type
       if (!file.type.startsWith("image/")) {
@@ -173,13 +190,13 @@ export default function AddBlog() {
         const newImage = {
           file,
           preview: e.target.result,
-          isMain: formData.images.length === 0, // First image is main by default
-          altText: `Blog image ${formData.images.length + 1}`,
+          isMain: true, // Only image is always main
+          altText: `Blog image`,
         };
 
         setFormData((prev) => ({
           ...prev,
-          images: [...prev.images, newImage],
+          images: [newImage], // Replace with single image
         }));
       };
       reader.readAsDataURL(file);

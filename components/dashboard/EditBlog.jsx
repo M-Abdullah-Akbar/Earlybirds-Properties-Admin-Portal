@@ -141,6 +141,23 @@ export default function EditBlog({ blogId }) {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
 
+    // Limit to 1 image for blogs
+    if (files.length > 1) {
+      setErrors((prev) => ({
+        ...prev,
+        images: "Blogs can only have one image. Please select only one image.",
+      }));
+      return;
+    }
+
+    // If there's already an image, replace it
+    if (formData.images.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        images: [], // Clear existing images
+      }));
+    }
+
     files.forEach((file) => {
       // Validate file type
       if (!file.type.startsWith("image/")) {
@@ -166,14 +183,14 @@ export default function EditBlog({ blogId }) {
         const newImage = {
           file,
           preview: e.target.result,
-          isMain: formData.images.length === 0, // First image is main by default
-          altText: `Blog image ${formData.images.length + 1}`,
+          isMain: true, // Only image is always main
+          altText: `Blog image`,
           isExisting: false, // Flag for new images
         };
 
         setFormData((prev) => ({
           ...prev,
-          images: [...prev.images, newImage],
+          images: [newImage], // Replace with single image
         }));
       };
       reader.readAsDataURL(file);
@@ -304,21 +321,19 @@ export default function EditBlog({ blogId }) {
       const existingImages = formData.images.filter((img) => img.isExisting);
       const newImages = formData.images.filter((img) => !img.isExisting);
 
-      // Add existing images metadata
-      if (existingImages.length > 0) {
-        formDataToSend.append(
-          "existingImages",
-          JSON.stringify(
-            existingImages.map((img, index) => ({
-              _id: img._id,
-              url: img.url,
-              isMain: img.isMain,
-              altText: img.altText,
-              order: formData.images.indexOf(img),
-            }))
-          )
-        );
-      }
+      // Always send existingImages field - empty array means remove all existing images
+      formDataToSend.append(
+        "existingImages",
+        JSON.stringify(
+          existingImages.map((img, index) => ({
+            _id: img._id,
+            url: img.url,
+            isMain: img.isMain,
+            altText: img.altText,
+            order: formData.images.indexOf(img),
+          }))
+        )
+      );
 
       // Add new images if any
       if (newImages.length > 0) {

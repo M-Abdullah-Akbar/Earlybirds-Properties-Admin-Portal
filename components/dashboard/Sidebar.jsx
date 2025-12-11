@@ -298,6 +298,51 @@ export default function Sidebar() {
             </li>
             <li
               className={`nav-menu-item ${
+                isActiveRoute("job-management") ||
+                isActiveRoute("add-job") ||
+                isActiveRoute("edit-job")
+                  ? "active"
+                  : ""
+              } `}
+            >
+              <Link
+                className="nav-menu-link"
+                href={getRouteHref("job-management")}
+              >
+               <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M17.5 13.3333V6.66667C17.5 5.74619 16.7538 5 15.8333 5H4.16667C3.24619 5 2.5 5.74619 2.5 6.66667V13.3333C2.5 14.2538 3.24619 15 4.16667 15H15.8333C16.7538 15 17.5 14.2538 17.5 13.3333Z"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M6.66797 5V3.33333C6.66797 2.8731 7.04106 2.5 7.5013 2.5H12.5013C12.9615 2.5 13.3346 2.8731 13.3346 3.33333V5"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M10 9.16663V10.8333"
+                    stroke="#A8ABAE"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Job Management
+              </Link>
+            </li>
+            <li
+              className={`nav-menu-item ${
                 isActiveRoute("blog-categories") ||
                 isActiveRoute("add-blog-category") ||
                 isActiveRoute("edit-blog-category")

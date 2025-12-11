@@ -1543,4 +1543,37 @@ export const blogCategoryAPI = {
   },
 };
 
+// Job API functions - matches backend /api/jobs routes exactly
+export const jobAPI = {
+  // Get all jobs (admin) - GET /api/jobs/admin/all
+  getAllJobsAdmin: async (params = {}) => {
+    const response = await api.get("/jobs/admin/all", { params });
+    return response.data;
+  },
+
+  // Get single job - GET /api/jobs/:id
+  getJob: async (id) => {
+    const response = await api.get(`/jobs/${id}`);
+    return response.data;
+  },
+
+  // Create job - POST /api/jobs
+  createJob: async (jobData) => {
+    const response = await api.post("/jobs", jobData);
+    return response.data;
+  },
+
+  // Update job - PUT /api/jobs/:id
+  updateJob: async (id, jobData) => {
+    const response = await api.put(`/jobs/${id}`, jobData);
+    return response.data;
+  },
+
+  // Delete job - DELETE /api/jobs/:id
+  deleteJob: async (id) => {
+    const response = await api.delete(`/jobs/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

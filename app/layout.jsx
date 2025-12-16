@@ -53,7 +53,10 @@ export default function RootLayout({ children }) {
       pathAfterToken.startsWith("blog-management") ||
       pathAfterToken.startsWith("add-blog") ||
       pathAfterToken.startsWith("edit-blog") ||
-      pathAfterToken.startsWith("blog-categories"));
+      pathAfterToken.startsWith("blog-categories") ||
+      pathAfterToken.startsWith("job-management") ||
+      pathAfterToken.startsWith("add-job") ||
+      pathAfterToken.startsWith("edit-job"));
 
   // Remove conditional bootstrap import to prevent hydration mismatch
   // Bootstrap will be imported via useEffect instead
@@ -113,7 +116,7 @@ export default function RootLayout({ children }) {
           navbar.classList.add("is-sticky");
           return;
         }
-        
+
         // Original sticky behavior for non-dashboard routes
         if (window.scrollY > 120) {
           navbar.classList.add("fixed");

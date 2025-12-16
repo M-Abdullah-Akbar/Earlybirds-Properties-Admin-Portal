@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import "../public/main.scss";
-import "odometer/themes/odometer-theme-default.css"; // Import theme
+import "../public/css/odometer.min.css"; // Import local odometer CSS (compatible with Next.js 16)
 import "photoswipe/style.css";
 import "rc-slider/assets/index.css";
 import "react-toastify/dist/ReactToastify.css"; // Import react-toastify CSS

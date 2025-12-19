@@ -358,7 +358,10 @@ export const dashboardAPI = {
 export const propertyAPI = {
   // Get all properties with filtering and pagination - GET /api/properties
   getProperties: async (params = {}) => {
-    const response = await api.get("/properties", { params });
+    // Add cache-busting timestamp to prevent stale data after CRUD operations
+    const response = await api.get("/properties", {
+      params: { ...params, _t: Date.now() }
+    });
 
     // Transform the response data to ensure React compatibility
     if (response.data && response.data.data && response.data.data.properties) {
@@ -1303,7 +1306,10 @@ export const adminUtils = {
 export const blogAPI = {
   // Get all blogs with filtering and pagination - GET /api/blogs
   getBlogs: async (params = {}) => {
-    const response = await api.get("/blogs", { params });
+    // Add cache-busting timestamp to prevent stale data after CRUD operations
+    const response = await api.get("/blogs", {
+      params: { ...params, _t: Date.now() }
+    });
     return response.data;
   },
 
@@ -1426,7 +1432,10 @@ export const blogAPI = {
 export const blogCategoryAPI = {
   // Get all blog categories - GET /api/blog-categories
   getCategories: async (params = {}) => {
-    const response = await api.get("/blog-categories", { params });
+    // Add cache-busting timestamp to prevent stale data after CRUD operations
+    const response = await api.get("/blog-categories", {
+      params: { ...params, _t: Date.now() }
+    });
     return response.data;
   },
 
@@ -1479,8 +1488,9 @@ export const blogCategoryAPI = {
   // Get pending categories for approval - GET /api/blog-category-approval/pending
   getPendingCategories: async (params = {}) => {
     try {
+      // Add cache-busting timestamp to prevent stale data after CRUD operations
       const response = await api.get("/blog-category-approval/pending", {
-        params,
+        params: { ...params, _t: Date.now() },
       });
       return response.data;
     } catch (error) {
@@ -1547,7 +1557,10 @@ export const blogCategoryAPI = {
 export const jobAPI = {
   // Get all jobs (admin) - GET /api/jobs/admin/all
   getAllJobsAdmin: async (params = {}) => {
-    const response = await api.get("/jobs/admin/all", { params });
+    // Add cache-busting timestamp to prevent stale data after CRUD operations
+    const response = await api.get("/jobs/admin/all", {
+      params: { ...params, _t: Date.now() }
+    });
     return response.data;
   },
 
